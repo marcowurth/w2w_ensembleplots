@@ -3,6 +3,8 @@
 ###  downloads latest run                                                ###
 ############################################################################
 
+# nohup python download_icon_eu-eps.py > /dev/null 2>&1 &
+
 import os
 
 import sys

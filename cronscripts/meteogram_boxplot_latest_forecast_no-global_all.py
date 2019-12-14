@@ -8,7 +8,6 @@ ex_op_str = current_path[current_path.index('scripts')+8 : current_path.index('w
 sys.path.append('/lsdfos/kit/imk-tro/projects/MOD/Gruppe_Knippertz/nw5893/scripts/{}'.format(ex_op_str))
 from w2w_ensembleplots.core.meteogram_boxplot import boxplot_forecast
 
-### copy terminal line: nohup python boxplot_forecast_icon-eu-eps_all.py > /dev/null 2>&1 &
 
 def main():
 

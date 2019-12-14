@@ -13,8 +13,8 @@ current_path = sys.path[0]
 ex_op_str = current_path[current_path.index('scripts')+8 : current_path.index('w2w_ensembleplots')-1]
 sys.path.append('/lsdfos/kit/imk-tro/projects/MOD/Gruppe_Knippertz/nw5893/scripts/{}'.format(ex_op_str))
 from w2w_ensembleplots.core.download_forecast import calc_latest_run_time
-from w2w_ensembleplots.core.extract_point_from_grib import which_grid_point
-from w2w_ensembleplots.core.extract_point_from_grib import get_latlon_filter_distance
+from w2w_ensembleplots.core.grid_information_around_point import which_grid_point
+from w2w_ensembleplots.core.grid_information_around_point import get_latlon_filter_distance
 
 
 ########################################################################
