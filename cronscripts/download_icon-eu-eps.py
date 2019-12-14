@@ -27,7 +27,7 @@ def main():
     # explicit download options #
 
    ###########################################################
-    date = dict(year = 2019, month = 12, day = 13, hour = 0)
+    #date = dict(year = 2019, month = 12, day = 13, hour = 6)
    ###########################################################
 
     print('download run_{}{:02}{:02}{:02}'.format(
