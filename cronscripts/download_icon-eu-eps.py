@@ -42,7 +42,8 @@ def main():
         var_list = [['tot_prec','sl'],['t_2m','sl'],['u_10m','sl'],['v_10m','sl'],['ps','sl'],['clct','sl'],
                     ['aswdir_s','sl'],['aswdifd_s','sl'],['vmax_10m','sl'],['tqv','sl'],
                     ['fi','500hPa'],['t','500hPa'],['u','500hPa'],['v','500hPa'],
-                    ['fi','850hPa'],['t','850hPa'],['u','850hPa'],['v','850hPa']]
+                    ['fi','850hPa'],['t','850hPa'],['u','850hPa'],['v','850hPa'],
+                    ['fi','300hPa'],['u','300hPa'],['v','300hPa']]
 
     elif date['hour'] == 6 or date['hour'] == 18:
         var_list = [['tot_prec','sl'],['t_2m','sl'],['u_10m','sl'],['v_10m','sl'],['ps','sl'],['clct','sl'],

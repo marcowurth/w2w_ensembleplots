@@ -37,8 +37,12 @@ def triangle_contourplot(variable, run, domain, stat_processing, plot_type):
             path['plots'] = 'plots/operational/prob_of_exc/mslp/'
         elif variable['name'] == 'wind_10m':
             path['plots'] = 'plots/operational/prob_of_exc/wind_10m/'
+        elif variable['name'] == 'wind_300hpa':
+            path['plots'] = 'plots/operational/prob_of_exc/wind_300hpa/'
         elif variable['name'] == 'gph_500hpa':
             path['plots'] = 'plots/operational/prob_of_exc/gph_500hpa/'
+        elif variable['name'] == 'gph_300hpa':
+            path['plots'] = 'plots/operational/prob_of_exc/gph_300hpa/'
         elif variable['name'] == 'tqv':
             path['plots'] = 'plots/operational/prob_of_exc/tqv/'
         else:
@@ -91,12 +95,21 @@ def triangle_contourplot(variable, run, domain, stat_processing, plot_type):
         dwd_varname = 'u_10m'
         path['data_subfolder'] = 'run_{:4d}{:02d}{:02d}{:02d}/u_10m/'.format(\
                                     run['year'], run['month'], run['day'], run['hour'])
+    elif variable['name'] == 'wind_300hpa':
+        filename_beginning = 'icon-eu-eps_europe_icosahedral_pressure-level'
+        dwd_varname = '300_u'
+        path['data_subfolder'] = 'run_{:4d}{:02d}{:02d}{:02d}/u_300hPa/'.format(\
+                                    run['year'], run['month'], run['day'], run['hour'])
     elif variable['name'] == 'gph_500hpa':
         filename_beginning = 'icon-eu-eps_europe_icosahedral_pressure-level'
         dwd_varname = '500_fi'
         path['data_subfolder'] = 'run_{:4d}{:02d}{:02d}{:02d}/fi_500hPa/'.format(\
                                     run['year'], run['month'], run['day'], run['hour'])
-
+    elif variable['name'] == 'gph_300hpa':
+        filename_beginning = 'icon-eu-eps_europe_icosahedral_pressure-level'
+        dwd_varname = '300_fi'
+        path['data_subfolder'] = 'run_{:4d}{:02d}{:02d}{:02d}/fi_300hPa/'.format(\
+                                    run['year'], run['month'], run['day'], run['hour'])
     elif variable['name'] == 'tqv':
         filename_beginning = 'icon-eu-eps_europe_icosahedral_single-level'
         dwd_varname = 'tqv'
@@ -127,14 +140,18 @@ def triangle_contourplot(variable, run, domain, stat_processing, plot_type):
 
     # set path and filenames for second grib file variable #
 
-    if variable['name'] == 'mslp' or variable['name'] == 'wind_10m':
+    if variable['name'] == 'mslp' or variable['name'] == 'wind_10m' or variable['name'] == 'wind_300hpa':
         if variable['name'] == 'mslp':
             dwd_varname = 't_2m'
             path['data_subfolder'] = 'run_{:4d}{:02d}{:02d}{:02d}/t_2m/'.format(\
                                       run['year'], run['month'], run['day'], run['hour'])
-        if variable['name'] == 'wind_10m':
+        elif variable['name'] == 'wind_10m':
             dwd_varname = 'v_10m'
             path['data_subfolder'] = 'run_{:4d}{:02d}{:02d}{:02d}/v_10m/'.format(\
+                                      run['year'], run['month'], run['day'], run['hour'])
+        elif variable['name'] == 'wind_300hpa':
+            dwd_varname = '300_v'
+            path['data_subfolder'] = 'run_{:4d}{:02d}{:02d}{:02d}/v_300hPa/'.format(\
                                       run['year'], run['month'], run['day'], run['hour'])
         filenames_all = []
         for hour in hours:
@@ -533,7 +550,16 @@ def plot_prob_of_exc(path, run, data_array, data_array2, variable, domain, stat_
                                     + data_array2[hours.index(variable['hour']), :, :]**2) * 3.6
         data_processed = np.where(data_wind10m_hour >= stat_processing['threshold'], 1, 0).sum(axis=0) / 40 * 100
 
+    if variable['name'] == 'wind_300hpa':
+        data_wind10m_hour = np.sqrt(data_array[hours.index(variable['hour']), :, :]**2\
+                                    + data_array2[hours.index(variable['hour']), :, :]**2) * 3.6
+        data_processed = np.where(data_wind10m_hour >= stat_processing['threshold'], 1, 0).sum(axis=0) / 40 * 100
+
     if variable['name'] == 'gph_500hpa':
+        data_gph_500hpa_hour = data_array[hours.index(variable['hour']), :, :] / 98.0665
+        data_processed = np.where(data_gph_500hpa_hour >= stat_processing['threshold'], 1, 0).sum(axis=0) / 40 * 100
+
+    if variable['name'] == 'gph_300hpa':
         data_gph_500hpa_hour = data_array[hours.index(variable['hour']), :, :] / 98.0665
         data_processed = np.where(data_gph_500hpa_hour >= stat_processing['threshold'], 1, 0).sum(axis=0) / 40 * 100
 
@@ -865,7 +891,13 @@ def plot_prob_of_exc(path, run, data_array, data_array2, variable, domain, stat_
         elif variable['name'] == 'wind_10m':
             threshold_str = '{:.0f}'.format(stat_processing['threshold'])
             unit_str = 'km/h'
+        elif variable['name'] == 'wind_300hpa':
+            threshold_str = '{:.0f}'.format(stat_processing['threshold'])
+            unit_str = 'km/h'
         elif variable['name'] == 'gph_500hpa':
+            threshold_str = '{:.0f}'.format(stat_processing['threshold'])
+            unit_str = 'gpdm'
+        elif variable['name'] == 'gph_300hpa':
             threshold_str = '{:.0f}'.format(stat_processing['threshold'])
             unit_str = 'gpdm'
         elif variable['name'] == 'tqv':
@@ -881,7 +913,11 @@ def plot_prob_of_exc(path, run, data_array, data_array2, variable, domain, stat_
         if stat_processing['threshold'] == 0.1:
             x = 0.33
         else:
-            if variable['name'] == 'mslp' or variable['name'] == 'wind_10m' or variable['name'] == 'gph_500hpa':
+            if variable['name'] == 'mslp'\
+             or variable['name'] == 'wind_10m'\
+             or variable['name'] == 'wind_300hpa'\
+             or variable['name'] == 'gph_500hpa'\
+             or variable['name'] == 'gph_300hpa':
                 x = 0.31
             else:
                 x = 0.36
@@ -903,8 +939,12 @@ def plot_prob_of_exc(path, run, data_array, data_array2, variable, domain, stat_
             text1 = 'Probability of exceedance: mean sea level pressure'
         elif variable['name'] == 'wind_10m':
             text1 = 'Probability of exceedance: 10m-wind speed'
+        elif variable['name'] == 'wind_300hpa':
+            text1 = 'Probability of exceedance: 300hPa-wind speed'
         elif variable['name'] == 'gph_500hpa':
             text1 = 'Probability of exceedance: 500hPa-geopotential height'
+        elif variable['name'] == 'gph_300hpa':
+            text1 = 'Probability of exceedance: 300hPa-geopotential height'
         elif variable['name'] == 'tqv':
             text1 = 'Probability of exceedance: total column water vapour'
 
@@ -930,7 +970,9 @@ def plot_prob_of_exc(path, run, data_array, data_array2, variable, domain, stat_
         elif variable['name'] == 't_850hpa'\
          or variable['name'] == 'mslp'\
          or variable['name'] == 'wind_10m'\
+         or variable['name'] == 'wind_300hpa'\
          or variable['name'] == 'gph_500hpa'\
+         or variable['name'] == 'gph_300hpa'\
          or variable['name'] == 'tqv':
             valid_time = run_time + datetime.timedelta(0, 3600 * int(variable['hour']))
             text3 = 'Valid time: {}, {:02}{}'.format(valid_time.strftime('%a., %d %b. %Y'), valid_time.hour, time_code)
