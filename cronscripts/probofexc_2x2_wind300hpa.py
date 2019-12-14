@@ -13,7 +13,7 @@ from w2w_ensembleplots.core.probofexc_2x2 import plot_prob_of_exc_2x2_pointintim
 def main():
 
     variable = dict(name = 'wind_300hpa', unit = 'kmh')
-    thresholds = [150.0, 200.0, 250.0, 300.0, 10.0]
+    thresholds = [100.0, 150.0, 200.0, 250.0, 100.0]
     title_pos = 110
     only_0utc_12utc_runs = True
 
