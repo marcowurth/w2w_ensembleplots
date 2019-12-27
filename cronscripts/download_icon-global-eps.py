@@ -56,8 +56,8 @@ def main():
         path['subdir'] = temp_subdir + '/'
 
         for fcst_hour in fcst_hours_list:
-            if fcst_hour == 120 and var_list[i] != 'tot_prec':
-                continue
+            #if fcst_hour == 120 and var_list[i] != 'tot_prec':
+            #    continue
 
             filename = 'icon-eps_global_icosahedral_single-level_{}{:02}{:02}{:02}_{:03}_{}.grib2.bz2'.format(
                         date['year'], date['month'], date['day'], date['hour'], fcst_hour, var_list[i])

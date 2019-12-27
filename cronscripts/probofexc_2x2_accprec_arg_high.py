@@ -12,20 +12,22 @@ from w2w_ensembleplots.core.probofexc_2x2 import plot_prob_of_exc_2x2_pointintim
 
 def main():
 
-    variable = dict(name = 'wind_10m', unit = 'kmh')
-    thresholds = [30.0, 50.0, 75.0, 100.0, 10.0]
-    title_pos = 125
-    only_0utc_12utc_runs = False
-    model = 'icon-eu-eps'
-    #model = 'icon-global-eps'
+    variable = dict(name = 'acc_prec', unit = 'mm')
+    #thresholds = [40.0, 60.0, 80.0, 100.0, 0.1]
+    #thresholds = [10.0, 20.0, 30.0, 40.0, 0.1]
+    thresholds = [50.0, 100.0, 150.0, 200.0, 0.1]
+    title_pos = 90
+    only_0utc_12utc_runs = True
+    #model = 'icon-eu-eps'
+    model = 'icon-global-eps'
 
     domains = []
-    domains.append(dict(method = 'centerpoint', radius = 1400, deltalat =   0, deltalon =   0,
-                  lat = 48.0, lon =  9.0, name = 'europe'))
+    #domains.append(dict(method = 'centerpoint', radius = 1400, deltalat =   0, deltalon =   0,
+    #              lat = 48.0, lon =  9.0, name = 'europe'))
     #domains.append(dict(method = 'deltalatlon', radius =    0, deltalat = 500, deltalon = 550,
     #              lat = 50.8, lon = 10.0, name = 'germany'))
-    #domains.append(dict(method = 'deltalatlon', radius =    0, deltalat = 900, deltalon = 990,
-    #              lat = -34.5, lon = -61.0, name = 'central_argentina'))
+    domains.append(dict(method = 'deltalatlon', radius =    0, deltalat = 900, deltalon = 990,
+                  lat = -34.5, lon = -61.0, name = 'central_argentina'))
 
     plot_prob_of_exc_2x2_pointintime(variable, thresholds, domains, model, title_pos, only_0utc_12utc_runs)
 

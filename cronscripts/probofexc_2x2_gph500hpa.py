@@ -16,8 +16,18 @@ def main():
     thresholds = [520.0, 536.0, 552.0, 568.0, 552.0]
     title_pos = 95
     only_0utc_12utc_runs = True
+    model = 'icon-eu-eps'
+    #model = 'icon-global-eps'
 
-    plot_prob_of_exc_2x2_pointintime(variable, thresholds, title_pos, only_0utc_12utc_runs)
+    domains = []
+    domains.append(dict(method = 'centerpoint', radius = 1400, deltalat =   0, deltalon =   0,
+                  lat = 48.0, lon =  9.0, name = 'europe'))
+    #domains.append(dict(method = 'deltalatlon', radius =    0, deltalat = 500, deltalon = 550,
+    #              lat = 50.8, lon = 10.0, name = 'germany'))
+    #domains.append(dict(method = 'deltalatlon', radius =    0, deltalat = 900, deltalon = 990,
+    #              lat = -34.5, lon = -61.0, name = 'central_argentina'))
+
+    plot_prob_of_exc_2x2_pointintime(variable, thresholds, domains, model, title_pos, only_0utc_12utc_runs)
 
 
     return

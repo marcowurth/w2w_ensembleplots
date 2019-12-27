@@ -14,16 +14,23 @@ sys.path.append('/lsdfos/kit/imk-tro/projects/MOD/Gruppe_Knippertz/nw5893/script
 from w2w_ensembleplots.core.download_forecast import get_timeshift
 
 
-def triangle_contourplot(variable, run, domain, stat_processing, plot_type):
+def triangle_contourplot(variable, run, domain, model, stat_processing, plot_type):
+
+    # set data path and hours list #
+
+    if model == 'icon-eu-eps':
+        model_path_deprec = 'icon-eu-eps'
+        hours = list(range(0,48,1)) + list(range(48,72,3)) + list(range(72,120+1,6))
+    elif model == 'icon-global-eps':
+        model_path_deprec = 'icon-eps'
+        hours = list(range(0,48,1)) + list(range(48,72,3)) + list(range(72,120,6)) + list(range(120,180+1,12))
 
     path = dict(base = '/lsdfos/kit/imk-tro/projects/MOD/Gruppe_Knippertz/nw5893/',
-                data = 'forecast_archive/icon-eu-eps/raw_grib/',
-                grid = 'forecast_archive/icon-eu-eps/grid/',
+                data = 'forecast_archive/{}/raw_grib/'.format(model_path_deprec),
+                grid = 'forecast_archive/{}/grid/'.format(model_path_deprec),
                 plots = 'plots/operational/triangle_contourplots/',
                 colorpalette = 'additional_data/colorpalettes/',
-                topo = 'forecast_archive/icon-eu-eps/invariant/')
-
-    hours = list(range(0,48,1)) + list(range(48,72,3)) + list(range(72,120+1,6))
+                topo = 'forecast_archive/{}/invariant/'.format(model_path_deprec))
 
 
     # set basic plot path #
@@ -31,6 +38,10 @@ def triangle_contourplot(variable, run, domain, stat_processing, plot_type):
     if plot_type == 'small_map_only' or plot_type == 'labelBar1' or plot_type == 'labelBar2' or plot_type == 'text':
         if variable['name'] == 'tot_prec_24h':
             path['plots'] = 'plots/operational/prob_of_exc/tot_prec_24h/'
+        elif variable['name'] == 'tot_prec_48h':
+            path['plots'] = 'plots/operational/prob_of_exc/tot_prec_48h/'
+        elif variable['name'] == 'acc_prec':
+            path['plots'] = 'plots/operational/prob_of_exc/acc_prec/'
         elif variable['name'] == 't_850hpa':
             path['plots'] = 'plots/operational/prob_of_exc/t_850hpa/'
         elif variable['name'] == 'mslp':
@@ -75,8 +86,13 @@ def triangle_contourplot(variable, run, domain, stat_processing, plot_type):
 
     # set path and filenames for first grib file variable #
 
-    if variable['name'] == 'tot_prec_24h':
-        filename_beginning = 'icon-eu-eps_europe_icosahedral_single-level'
+    if variable['name'] == 'tot_prec_24h'\
+     or variable['name'] == 'tot_prec_48h'\
+     or variable['name'] == 'acc_prec':
+        if model == 'icon-eu-eps':
+            filename_beginning = 'icon-eu-eps_europe_icosahedral_single-level'
+        elif model == 'icon-global-eps':
+            filename_beginning = 'icon-eps_global_icosahedral_single-level'
         dwd_varname = 'tot_prec'
         path['data_subfolder'] = 'run_{:4d}{:02d}{:02d}{:02d}/tot_prec/'.format(\
                                     run['year'], run['month'], run['day'], run['hour'])
@@ -91,7 +107,10 @@ def triangle_contourplot(variable, run, domain, stat_processing, plot_type):
         path['data_subfolder'] = 'run_{:4d}{:02d}{:02d}{:02d}/ps/'.format(\
                                     run['year'], run['month'], run['day'], run['hour'])
     elif variable['name'] == 'wind_10m':
-        filename_beginning = 'icon-eu-eps_europe_icosahedral_single-level'
+        if model == 'icon-eu-eps':
+            filename_beginning = 'icon-eu-eps_europe_icosahedral_single-level'
+        elif model == 'icon-global-eps':
+            filename_beginning = 'icon-eps_global_icosahedral_single-level'
         dwd_varname = 'u_10m'
         path['data_subfolder'] = 'run_{:4d}{:02d}{:02d}{:02d}/u_10m/'.format(\
                                     run['year'], run['month'], run['day'], run['hour'])
@@ -125,7 +144,10 @@ def triangle_contourplot(variable, run, domain, stat_processing, plot_type):
                                 filename_beginning, run['year'], run['month'], run['day'], run['hour'],\
                                 hour, dwd_varname))
 
-    data_array = np.empty((len(hours), 40, 75948), dtype='float32')
+    if model == 'icon-eu-eps':
+        data_array = np.empty((len(hours), 40, 75948), dtype='float32')
+    elif model == 'icon-global-eps':
+        data_array = np.empty((len(hours), 40, 327680), dtype='float32')
     with ExitStack() as stack:
         files_all = [stack.enter_context(open(path['base'] + path['data'] + path['data_subfolder'] + filename,'rb'))\
                      for filename in filenames_all]
@@ -162,7 +184,10 @@ def triangle_contourplot(variable, run, domain, stat_processing, plot_type):
 
         # load second grib file variable #
 
-        data_array2 = np.empty((len(hours), 40, 75948), dtype='float32')
+        if model == 'icon-eu-eps':
+            data_array2 = np.empty((len(hours), 40, 75948), dtype='float32')
+        elif model == 'icon-global-eps':
+            data_array2 = np.empty((len(hours), 40, 327680), dtype='float32')
         with ExitStack() as stack:
             files_all = [stack.enter_context(open(path['base'] + path['data'] + path['data_subfolder']\
                                                   + filename,'rb')) for filename in filenames_all]
@@ -188,7 +213,8 @@ def triangle_contourplot(variable, run, domain, stat_processing, plot_type):
             stat_processing['member'] = int(stat_processing['member'])
 
     if stat_processing['method'] == 'prob_of_exc':
-        plot_prob_of_exc(path, run, data_array, data_array2, variable, domain, stat_processing, plot_type)
+        plot_prob_of_exc(path, run, hours, data_array, data_array2, variable, domain, model, stat_processing,
+                         plot_type)
     else:
         plot_statistical_value_around_point(path, run, data_array, variable, domain, stat_processing)
 
@@ -519,15 +545,18 @@ def plot_statistical_value_around_point(path, run, data_tot_prec, variable, doma
 ########################################################################
 ########################################################################
 
-def plot_prob_of_exc(path, run, data_array, data_array2, variable, domain, stat_processing, plot_type):
+def plot_prob_of_exc(path, run, hours, data_array, data_array2, variable, domain, model, stat_processing, plot_type):
 
     # calculated probabilities of variables #
 
-    hours = list(range(0,48,1)) + list(range(48,72,3)) + list(range(72,120+1,6))
-
-    if variable['name'] == 'tot_prec_24h':
+    if variable['name'] == 'tot_prec_24h' or variable['name'] == 'tot_prec_48h':
         data_tot_prec_timespan = data_array[hours.index(variable['hour_end']), :, :]\
                                 - data_array[hours.index(variable['hour_start']), :, :]
+        data_processed = np.where(data_tot_prec_timespan >= stat_processing['threshold'], 1, 0).sum(axis=0) / 40 * 100
+
+    if variable['name'] == 'acc_prec':
+        data_tot_prec_timespan = data_array[hours.index(variable['hour']), :, :]\
+                                - data_array[0, :, :]
         data_processed = np.where(data_tot_prec_timespan >= stat_processing['threshold'], 1, 0).sum(axis=0) / 40 * 100
 
     if variable['name'] == 't_850hpa':
@@ -574,7 +603,11 @@ def plot_prob_of_exc(path, run, data_array, data_array2, variable, domain, stat_
 
     # load grid information #
 
-    mpi_file = nc.Dataset(path['base'] + path['grid'] + 'icon_grid_0028_R02B07_N02.nc', 'r')
+    if model == 'icon-eu-eps':
+        mpi_file = nc.Dataset(path['base'] + path['grid'] + 'icon_grid_0028_R02B07_N02.nc', 'r')
+    elif model == 'icon-global-eps':
+        mpi_file = nc.Dataset(path['base'] + path['grid'] + 'icon_grid_0024_R02B06_G.nc', 'r')
+
     vlat = mpi_file.variables['clat_vertices'][:].data * 180./np.pi
     vlon = mpi_file.variables['clon_vertices'][:].data * 180./np.pi
     clat = mpi_file.variables['clat'][:].data * 180./np.pi
@@ -584,18 +617,32 @@ def plot_prob_of_exc(path, run, data_array, data_array2, variable, domain, stat_
 
     # set plotname #
 
-    if variable['name'] == 'tot_prec_24h':
+    if model == 'icon-eu-eps':
+        model_acr = 'iconeueps'
+    elif model == 'icon-global-eps':
+        model_acr = 'iconglobaleps'
+
+    if variable['name'] == 'tot_prec_24h'\
+     or variable['name'] == 'tot_prec_48h':
         if stat_processing['threshold'] >= 1.0:
             threshold_str = '{:03d}'.format(int(stat_processing['threshold']))
         else:
             threshold_str = '{:.1f}'.format(stat_processing['threshold'])
-        plot_name = 'iconeueps_{}_{}_{}{}_{:03d}-{:03d}h_{}_{}'.format(
-                     stat_processing['method'], variable['name'], threshold_str, variable['unit'],
+        plot_name = '{}_{}_{}_{}{}_{:03d}-{:03d}h_{}_{}'.format(
+                     model_acr, stat_processing['method'], variable['name'], threshold_str, variable['unit'],
                      variable['hour_start'], variable['hour_end'], domain['name'], plot_type)
+    elif variable['name'] == 'acc_prec':
+        if stat_processing['threshold'] >= 1.0:
+            threshold_str = '{:03d}'.format(int(stat_processing['threshold']))
+        else:
+            threshold_str = '{:.1f}'.format(stat_processing['threshold'])
+        plot_name = '{}_{}_{}_{:.0f}{}_{:03d}h_{}_{}'.format(
+                     model_acr, stat_processing['method'], variable['name'], stat_processing['threshold'],
+                     variable['unit'], variable['hour'], domain['name'], plot_type)
     else:
-        plot_name = 'iconeueps_{}_{}_{:.0f}{}_{:03d}h_{}_{}'.format(
-                     stat_processing['method'], variable['name'], stat_processing['threshold'], variable['unit'],
-                     variable['hour'], domain['name'], plot_type)
+        plot_name = '{}_{}_{}_{:.0f}{}_{:03d}h_{}_{}'.format(
+                     model_acr, stat_processing['method'], variable['name'], threshold_str,
+                     variable['unit'], variable['hour'], domain['name'], plot_type)
 
 
     # load colormap #
@@ -876,7 +923,9 @@ def plot_prob_of_exc(path, run, data_array, data_array2, variable, domain, stat_
 
         # map thresholds #
 
-        if variable['name'] == 'tot_prec_24h':
+        if variable['name'] == 'tot_prec_24h'\
+         or variable['name'] == 'tot_prec_48h'\
+         or variable['name'] == 'acc_prec':
             if stat_processing['threshold'] >= 1.0:
                 threshold_str = '{:d}'.format(int(stat_processing['threshold']))
             else:
@@ -932,7 +981,11 @@ def plot_prob_of_exc(path, run, data_array, data_array2, variable, domain, stat_
         # 2x2 plot title #
 
         if variable['name'] == 'tot_prec_24h':
-            text1 = 'Probability of exceedance: 24h-precipitation, 01CET-01CET'
+                text1 = 'Probability of exceedance: 24h-precipitation'
+        elif variable['name'] == 'tot_prec_48h':
+                text1 = 'Probability of exceedance: 48h-precipitation'
+        elif variable['name'] == 'acc_prec':
+                text1 = 'Probability of exceedance: accumulated precipitation'
         elif variable['name'] == 't_850hpa':
             text1 = 'Probability of exceedance: 850hPa-temperature'
         elif variable['name'] == 'mslp':
@@ -952,22 +1005,38 @@ def plot_prob_of_exc(path, run, data_array, data_array2, variable, domain, stat_
         # initial, valid and forecast time texts #
 
         run_time = datetime.datetime(run['year'], run['month'], run['day'], run['hour'])
-        timeshift = get_timeshift()
-        if timeshift == 1:
-            time_code = 'CET'                           # UTC+1
-        elif timeshift == 2:
-            time_code = 'CEST'                          # UTC+2
-        run_time = run_time + datetime.timedelta(0, 3600 * int(timeshift))
 
-        text2 = 'Initial time: {}, {:02}{}'.format(run_time.strftime('%a., %d %b. %Y'), run_time.hour, time_code)
+        if domain['name'] == 'central_argentina':
+            time_code = 'UTC'
+        else:
+            timeshift = get_timeshift()
+            if timeshift == 1:
+                time_code = 'CET'                           # UTC+1
+            elif timeshift == 2:
+                time_code = 'CEST'                          # UTC+2
+            run_time = run_time + datetime.timedelta(0, 3600 * int(timeshift))
 
-        if variable['name'] == 'tot_prec_24h':
-            valid_time = run_time + datetime.timedelta(0, 3600 * int(variable['hour_start'] + 12))
-            text3 = 'Valid time: {}'.format(valid_time.strftime('%a., %d %b. %Y'))
-            text4 = 'Model: ICON-EU-EPS (40 Members), Forecast time: {}-{}h'.format(
-                     variable['hour_start'], variable['hour_end'])
+        text2 = 'Initial time: {}, {:02}{}'.format(
+                 run_time.strftime('%a., %d %b. %Y'), run_time.hour, time_code)
 
-        elif variable['name'] == 't_850hpa'\
+        if model == 'icon-eu-eps':
+            model_text = 'ICON-EU-EPS'
+        elif model == 'icon-global-eps':
+            model_text = 'ICON-Global-EPS'
+
+        if variable['name'] == 'tot_prec_24h'\
+         or variable['name'] == 'tot_prec_48h':
+            valid_time_start = run_time + datetime.timedelta(0, 3600 * int(variable['hour_start']))
+            valid_time_end = run_time + datetime.timedelta(0, 3600 * int(variable['hour_end']))
+            text3 = 'Valid:   From {}, {:02}{}'.format(
+                     valid_time_start.strftime('%a., %d %b. %Y'), valid_time_start.hour, time_code)
+            text5 = 'To {}, {:02}{}'.format(
+                     valid_time_end.strftime('%a., %d %b. %Y'), valid_time_end.hour, time_code)
+            text4 = 'Model: {} from DWD (40 Members), Forecast time: {}-{}h'.format(
+                     model_text, variable['hour_start'], variable['hour_end'])
+
+        elif variable['name'] == 'acc_prec'\
+         or variable['name'] == 't_850hpa'\
          or variable['name'] == 'mslp'\
          or variable['name'] == 'wind_10m'\
          or variable['name'] == 'wind_300hpa'\
@@ -975,9 +1044,10 @@ def plot_prob_of_exc(path, run, data_array, data_array2, variable, domain, stat_
          or variable['name'] == 'gph_300hpa'\
          or variable['name'] == 'tqv':
             valid_time = run_time + datetime.timedelta(0, 3600 * int(variable['hour']))
-            text3 = 'Valid time: {}, {:02}{}'.format(valid_time.strftime('%a., %d %b. %Y'), valid_time.hour, time_code)
-            text4 = 'Model: ICON-EU-EPS (40 Members), Forecast time: {}h'.format(
-                     variable['hour'])
+            text3 = 'Valid time: {}, {:02}{}'.format(
+                     valid_time.strftime('%a., %d %b. %Y'), valid_time.hour, time_code)
+            text4 = 'Model: {} from DWD (40 Members), Forecast time: {}h'.format(
+                     model_text, variable['hour'])
 
         text_res_1 = Ngl.Resources()
         text_res_1.txJust           = 'BottomLeft'
@@ -992,15 +1062,20 @@ def plot_prob_of_exc(path, run, data_array, data_array2, variable, domain, stat_
         y = 0.93
         Ngl.text_ndc(wks, text2, x, y, text_res_1)
 
-        text_res_1.txFontHeightF    = 0.014
         x = 0.575
         y = 0.93
         Ngl.text_ndc(wks, text3, x, y, text_res_1)
 
-        text_res_1.txFontHeightF    = 0.014
         x = 0.025
         y = 0.192
         Ngl.text_ndc(wks, text4, x, y, text_res_1)
+
+        if variable['name'] == 'tot_prec_24h'\
+         or variable['name'] == 'tot_prec_48h':
+            x = 0.70
+            y = 0.192
+            Ngl.text_ndc(wks, text5, x, y, text_res_1)
+
         del text_res_1
 
     else:
