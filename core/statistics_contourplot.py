@@ -637,11 +637,11 @@ def plot_prob_of_exc(path, run, hours, data_array, data_array2, variable, domain
         else:
             threshold_str = '{:.1f}'.format(stat_processing['threshold'])
         plot_name = '{}_{}_{}_{:.0f}{}_{:03d}h_{}_{}'.format(
-                     model_acr, stat_processing['method'], variable['name'], stat_processing['threshold'],
+                     model_acr, stat_processing['method'], variable['name'], threshold_str,
                      variable['unit'], variable['hour'], domain['name'], plot_type)
     else:
         plot_name = '{}_{}_{}_{:.0f}{}_{:03d}h_{}_{}'.format(
-                     model_acr, stat_processing['method'], variable['name'], threshold_str,
+                     model_acr, stat_processing['method'], variable['name'], stat_processing['threshold'],
                      variable['unit'], variable['hour'], domain['name'], plot_type)
 
 

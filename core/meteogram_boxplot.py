@@ -253,7 +253,8 @@ def plot_in_magics_boxplot(path, date, pointname, var, meta, y_axis_range, filen
     ########################################################################
 
     if var == 'wind_10m' or var == 'mslp' or var == 'clct' or var == 'prec_sum' or var == 'vmax_10m' or var == 'tqv'\
-     or var == 't_850hPa' or var == 'gph_500hPa' or var == 'wind_850hPa' or var == 'shear_0-6km' or var == 'lapse_rate_850hPa-500hPa':
+     or var == 't_850hPa' or var == 'gph_500hPa' or var == 'wind_850hPa' or var == 'shear_0-6km'\
+     or var == 'lapse_rate_850hPa-500hPa':
         bar_minmax_eu_all = magics.mgraph(
                 graph_type = 'bar',
                 graph_bar_colour = 'black',
@@ -306,7 +307,8 @@ def plot_in_magics_boxplot(path, date, pointname, var, meta, y_axis_range, filen
 
     ########################################################################
 
-    if include_global and (var == 't_2m' or var == 'prec_rate' or var == 'prec_sum' or var == 'wind_10m' or var == 'clct'):
+    if include_global \
+     and (var == 't_2m' or var == 'prec_rate' or var == 'prec_sum' or var == 'wind_10m' or var == 'clct'):
         bar_minmax_global = magics.mgraph(
                 graph_type = 'bar',
                 graph_bar_colour = 'black',
@@ -708,7 +710,8 @@ def plot_in_magics_boxplot(path, date, pointname, var, meta, y_axis_range, filen
 
     ########################################################################
 
-    if include_global and (var == 't_2m' or var == 'prec_rate' or var == 'prec_sum' or var == 'wind_10m' or var == 'clct'):
+    if include_global \
+     and (var == 't_2m' or var == 'prec_rate' or var == 'prec_sum' or var == 'wind_10m' or var == 'clct'):
         if var == 't_2m':
             legend = magics.mlegend(
                     legend_text_font_size = 0.7,
@@ -1100,7 +1103,8 @@ def plot_in_magics_boxplot(path, date, pointname, var, meta, y_axis_range, filen
                         date5_label,
                         )
     if var == 'wind_10m' or var == 'mslp' or var == 'clct' or var == 'prec_sum' or var == 'vmax_10m' or var == 'tqv'\
-     or var == 't_850hPa' or var == 'gph_500hPa' or var == 'wind_850hPa' or var == 'shear_0-6km' or var == 'lapse_rate_850hPa-500hPa':
+     or var == 't_850hPa' or var == 'gph_500hPa' or var == 'wind_850hPa' or var == 'shear_0-6km' \
+     or var == 'lapse_rate_850hPa-500hPa':
         if include_global and (var == 'wind_10m' or var == 'clct' or var == 'prec_sum'):
             magics.plot(
                         output_layout,
@@ -1537,8 +1541,9 @@ def boxplot_forecast(pointnames, date_user, include_global, latest_fcst, verbose
 
                 ##### get data from icon-eu-eps #####
 
-                path_old['points_eu_eps'] = 'forecast_archive/icon-eu-eps/extracted_points/run_{}{:02}{:02}{:02}/{}/'.format(\
-                                    old_run_date['year'], old_run_date['month'], old_run_date['day'], old_run_date['hour'], var_str)
+                path_old['points_eu_eps'] = \
+                 'forecast_archive/icon-eu-eps/extracted_points/run_{}{:02}{:02}{:02}/{}/'.format(
+                  old_run_date['year'], old_run_date['month'], old_run_date['day'], old_run_date['hour'], var_str)
 
                 first_run_not_found = False
                 try:
@@ -1567,11 +1572,14 @@ def boxplot_forecast(pointnames, date_user, include_global, latest_fcst, verbose
 
                 ##### get data from icon-eps #####
 
-                if include_global and (var == 't_2m' or var == 'prec_rate' or var == 'prec_sum' or var == 'wind_10m' or var == 'clct'):
-                    path_old['points_global_eps'] = 'forecast_archive/icon-eps/extracted_points/run_{}{:02}{:02}{:02}/{}/'.format(\
-                                        old_run_date['year'], old_run_date['month'], old_run_date['day'], old_run_date['hour'], var_str)
+                if include_global \
+                 and (var == 't_2m' or var == 'prec_rate' or var == 'prec_sum' or var == 'wind_10m' or var == 'clct'):
+                    path_old['points_global_eps'] = \
+                     'forecast_archive/icon-eps/extracted_points/run_{}{:02}{:02}{:02}/{}/'.format(
+                      old_run_date['year'], old_run_date['month'], old_run_date['day'], old_run_date['hour'], var_str)
                     try:
-                        point_values_old_global_eps = read_data(path_old, old_run_date, var_str, pointname, 'icon-global-eps')
+                        point_values_old_global_eps = read_data(path_old, old_run_date, var_str, pointname, 
+                                                                'icon-global-eps')
                         if i == 0 and first_run_not_found:
                             y_axis_range['min'] = np.amin(point_values_old_global_eps)
                             y_axis_range['max'] = np.amax(point_values_old_global_eps)
@@ -1782,7 +1790,8 @@ def boxplot_forecast(pointnames, date_user, include_global, latest_fcst, verbose
                 if latest_fcst:
                     temp_subdir = 'plots/operational/boxplots_forecast/latest_forecast/'
                 else:
-                    temp_subdir = 'plots/operational/boxplots_forecast/comparison_forecast/{:03}h_ago/'.format(lead_time)
+                    temp_subdir = 'plots/operational/boxplots_forecast/comparison_forecast/{:03}h_ago/'.format(
+                                   lead_time)
 
                 temp_subdir = temp_subdir + pointname
                 if not os.path.isdir(path['base'] + temp_subdir):
@@ -1796,8 +1805,9 @@ def boxplot_forecast(pointnames, date_user, include_global, latest_fcst, verbose
                 ##### get data from icon-eu-eps #####
 
                 try:
-                    path['points_eu_eps'] = 'forecast_archive/icon-eu-eps/extracted_points/run_{}{:02}{:02}{:02}/{}/'.format(\
-                                            date_run['year'], date_run['month'], date_run['day'], date_run['hour'], var_str)
+                    path['points_eu_eps'] = \
+                     'forecast_archive/icon-eu-eps/extracted_points/run_{}{:02}{:02}{:02}/{}/'.format(\
+                      date_run['year'], date_run['month'], date_run['day'], date_run['hour'], var_str)
                     point_values_eu_eps = read_data(path, date_run, var_str, pointname, 'icon-eu-eps')
 
                     #if var == 'prec_sum':
@@ -1813,14 +1823,17 @@ def boxplot_forecast(pointnames, date_user, include_global, latest_fcst, verbose
 
                 ##### get data from icon-eps #####
 
-                if include_global and (var == 't_2m' or var == 'prec_rate' or var == 'prec_sum' or var == 'wind_10m' or var == 'clct'):
+                if include_global \
+                 and (var == 't_2m' or var == 'prec_rate' or var == 'prec_sum' or var == 'wind_10m' or var == 'clct'):
                     try:
-                        path['points_global_eps'] = 'forecast_archive/icon-eps/extracted_points/run_{}{:02}{:02}{:02}/{}/'.format(\
-                                                date_run['year'], date_run['month'], date_run['day'], date_run['hour'], var)
+                        path['points_global_eps'] = \
+                         'forecast_archive/icon-eps/extracted_points/run_{}{:02}{:02}{:02}/{}/'.format(
+                          date_run['year'], date_run['month'], date_run['day'], date_run['hour'], var)
                         point_values_global_eps = read_data(path, date_run, var_str, pointname, 'icon-global-eps')
 
                     except (FileNotFoundError, AssertionError):
-                        if var == 't_2m' or var == 'wind_10m' or var == 'clct' or var == 'prec_sum' or var == 'prec_rate':
+                        if var == 't_2m' or var == 'wind_10m' or var == 'clct' or var == 'prec_sum' \
+                         or var == 'prec_rate':
                             print('no icon-global-eps data')
                         point_values_global_eps = np.ones((5, 40)) * -100   # will be out of plot
 
@@ -1830,8 +1843,10 @@ def boxplot_forecast(pointnames, date_user, include_global, latest_fcst, verbose
                 # data_percentiles_eu: 65 timesteps x 7 percentiles
                 # data_percentiles_global: 5 timesteps x 7 percentiles
                 data_percentiles_eu_eps = np.percentile(point_values_eu_eps, [0,10,25,50,75,90,100], axis = 1).T
-                if include_global and (var == 't_2m' or var == 'prec_rate' or var == 'prec_sum' or var == 'wind_10m' or var == 'clct'):
-                    data_percentiles_global_eps = np.percentile(point_values_global_eps, [0,10,25,50,75,90,100], axis = 1).T
+                if include_global \
+                 and (var == 't_2m' or var == 'prec_rate' or var == 'prec_sum' or var == 'wind_10m' or var == 'clct'):
+                    data_percentiles_global_eps = np.percentile(point_values_global_eps, 
+                                                                [0,10,25,50,75,90,100], axis = 1).T
                 else:
                     data_percentiles_global_eps = None
 

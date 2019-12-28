@@ -18,7 +18,7 @@ def main():
     #thresholds = [40.0, 60.0, 80.0, 100.0, 0.1]
     title_pos = 130
     #only_0utc_12utc_runs = False
-    only_0utc_12utc_runs = True
+    only_0utc_12utc_runs = False
     model = 'icon-eu-eps'
     #model = 'icon-global-eps'
 
