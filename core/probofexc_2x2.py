@@ -201,7 +201,7 @@ def plot_prob_of_exc_2x2_pointintime(variable, thresholds, domains, model, title
             img_combined.paste(image_valid_time.crop((450, 40, 730, 60)), (460, 45))
             image_model = Image.open(path['base'] + path['plots_general'] + path['plots_labelBar_text']
                                      + filenames['text'])
-            img_combined.paste(image_model.crop((5, 630, 540, 650)), (3, 80+360-15+360-20+75+70))
+            img_combined.paste(image_model.crop((5, 630, 550, 650)), (3, 80+360-15+360-20+75+70))
 
             img_combined.save(path['base'] + path['plots_general'] + path['plots_maps']\
                               + filenames['finalplot'],'png')
@@ -238,29 +238,43 @@ def plot_prob_of_exc_2x2_timespan(variable, thresholds, domains, model, title_po
 
     # automatic time settings #
 
+    run = calc_latest_run_time(model)
+
     if model == 'icon-eu-eps':
         max_hour = 120
     elif model == 'icon-global-eps':
-        max_hour = 180
+        if variable['name'] == 'tot_prec_24h'\
+         or variable['name'] == 'tot_prec_48h':
+            max_hour = 180
+        elif variable['name'] == 'tot_prec_06h':
+            max_hour = 120
+        elif variable['name'] == 'tot_prec_03h':
+            max_hour = 72
+        elif variable['name'] == 'tot_prec_01h':
+            max_hour = 48
 
     timespan = int(variable['name'][-3:-1])
 
-    run = calc_latest_run_time(model)
-    if run['hour'] == 0:
-        hours = list(range(timespan, max_hour+1, 24))
+    if variable['name'] == 'tot_prec_24h'\
+     or variable['name'] == 'tot_prec_48h':
+        if run['hour'] == 0:
+            hours = list(range(timespan, max_hour+1, 24))
+        else:
+            hours = list(range(timespan + 24 - run['hour'], max_hour+1, 24))
     else:
-        hours = list(range(timespan + 24 - run['hour'], max_hour+1, 24))
+        hours = list(range(0, max_hour+1, timespan))
 
 
     # explicit time settings #
 
-    #run = dict(year = 2019, month = 12, day = 26, hour = 12)
+    #run = dict(year = 2019, month = 12, day = 28, hour = 0)
 
     #hours = list(range(24, 120+1, 24))       # 00Z run
     #hours = list(range(24+18, 120+1, 24))    # 06Z run
     #hours = list(range(24+12, 120+1, 24))    # 12Z run
     #hours = list(range(24+6, 120+1, 24))     # 18Z run
-    #hours = [132]
+    #hours = list(range(30, 120+1, 6))
+    #hours = [10]
 
 
     stat_processing_list = []
@@ -423,7 +437,7 @@ def plot_prob_of_exc_2x2_timespan(variable, thresholds, domains, model, title_po
             img_combined.paste(image_valid_time_end.crop((560, 630, 775, 650)), (525, 65))
             image_model = Image.open(path['base'] + path['plots_general'] + path['plots_labelBar_text']
                                      + filenames['text'])
-            img_combined.paste(image_model.crop((5, 630, 540, 650)), (3, 95+360-15+360-20+75+70))
+            img_combined.paste(image_model.crop((5, 630, 550, 650)), (3, 95+360-15+360-20+75+70))
 
             img_combined.save(path['base'] + path['plots_general'] + path['plots_maps']\
                               + filenames['finalplot'],'png')

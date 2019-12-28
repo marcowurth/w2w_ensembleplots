@@ -40,6 +40,12 @@ def triangle_contourplot(variable, run, domain, model, stat_processing, plot_typ
             path['plots'] = 'plots/operational/prob_of_exc/tot_prec_24h/'
         elif variable['name'] == 'tot_prec_48h':
             path['plots'] = 'plots/operational/prob_of_exc/tot_prec_48h/'
+        elif variable['name'] == 'tot_prec_06h':
+            path['plots'] = 'plots/operational/prob_of_exc/tot_prec_06h/'
+        elif variable['name'] == 'tot_prec_03h':
+            path['plots'] = 'plots/operational/prob_of_exc/tot_prec_03h/'
+        elif variable['name'] == 'tot_prec_01h':
+            path['plots'] = 'plots/operational/prob_of_exc/tot_prec_01h/'
         elif variable['name'] == 'acc_prec':
             path['plots'] = 'plots/operational/prob_of_exc/acc_prec/'
         elif variable['name'] == 't_850hpa':
@@ -88,6 +94,9 @@ def triangle_contourplot(variable, run, domain, model, stat_processing, plot_typ
 
     if variable['name'] == 'tot_prec_24h'\
      or variable['name'] == 'tot_prec_48h'\
+     or variable['name'] == 'tot_prec_06h'\
+     or variable['name'] == 'tot_prec_03h'\
+     or variable['name'] == 'tot_prec_01h'\
      or variable['name'] == 'acc_prec':
         if model == 'icon-eu-eps':
             filename_beginning = 'icon-eu-eps_europe_icosahedral_single-level'
@@ -549,7 +558,11 @@ def plot_prob_of_exc(path, run, hours, data_array, data_array2, variable, domain
 
     # calculated probabilities of variables #
 
-    if variable['name'] == 'tot_prec_24h' or variable['name'] == 'tot_prec_48h':
+    if variable['name'] == 'tot_prec_24h'\
+     or variable['name'] == 'tot_prec_48h'\
+     or variable['name'] == 'tot_prec_06h'\
+     or variable['name'] == 'tot_prec_03h'\
+     or variable['name'] == 'tot_prec_01h':
         data_tot_prec_timespan = data_array[hours.index(variable['hour_end']), :, :]\
                                 - data_array[hours.index(variable['hour_start']), :, :]
         data_processed = np.where(data_tot_prec_timespan >= stat_processing['threshold'], 1, 0).sum(axis=0) / 40 * 100
@@ -623,7 +636,10 @@ def plot_prob_of_exc(path, run, hours, data_array, data_array2, variable, domain
         model_acr = 'iconglobaleps'
 
     if variable['name'] == 'tot_prec_24h'\
-     or variable['name'] == 'tot_prec_48h':
+     or variable['name'] == 'tot_prec_48h'\
+     or variable['name'] == 'tot_prec_06h'\
+     or variable['name'] == 'tot_prec_03h'\
+     or variable['name'] == 'tot_prec_01h':
         if stat_processing['threshold'] >= 1.0:
             threshold_str = '{:03d}'.format(int(stat_processing['threshold']))
         else:
@@ -925,6 +941,9 @@ def plot_prob_of_exc(path, run, hours, data_array, data_array2, variable, domain
 
         if variable['name'] == 'tot_prec_24h'\
          or variable['name'] == 'tot_prec_48h'\
+         or variable['name'] == 'tot_prec_06h'\
+         or variable['name'] == 'tot_prec_03h'\
+         or variable['name'] == 'tot_prec_01h'\
          or variable['name'] == 'acc_prec':
             if stat_processing['threshold'] >= 1.0:
                 threshold_str = '{:d}'.format(int(stat_processing['threshold']))
@@ -984,6 +1003,12 @@ def plot_prob_of_exc(path, run, hours, data_array, data_array2, variable, domain
                 text1 = 'Probability of exceedance: 24h-precipitation'
         elif variable['name'] == 'tot_prec_48h':
                 text1 = 'Probability of exceedance: 48h-precipitation'
+        elif variable['name'] == 'tot_prec_06h':
+                text1 = 'Probability of exceedance: 6h-precipitation'
+        elif variable['name'] == 'tot_prec_03h':
+                text1 = 'Probability of exceedance: 3h-precipitation'
+        elif variable['name'] == 'tot_prec_01h':
+                text1 = 'Probability of exceedance: 1h-precipitation'
         elif variable['name'] == 'acc_prec':
                 text1 = 'Probability of exceedance: accumulated precipitation'
         elif variable['name'] == 't_850hpa':
@@ -1025,7 +1050,10 @@ def plot_prob_of_exc(path, run, hours, data_array, data_array2, variable, domain
             model_text = 'ICON-Global-EPS'
 
         if variable['name'] == 'tot_prec_24h'\
-         or variable['name'] == 'tot_prec_48h':
+         or variable['name'] == 'tot_prec_48h'\
+         or variable['name'] == 'tot_prec_06h'\
+         or variable['name'] == 'tot_prec_03h'\
+         or variable['name'] == 'tot_prec_01h':
             valid_time_start = run_time + datetime.timedelta(0, 3600 * int(variable['hour_start']))
             valid_time_end = run_time + datetime.timedelta(0, 3600 * int(variable['hour_end']))
             text3 = 'Valid:   From {}, {:02}{}'.format(
@@ -1071,7 +1099,10 @@ def plot_prob_of_exc(path, run, hours, data_array, data_array2, variable, domain
         Ngl.text_ndc(wks, text4, x, y, text_res_1)
 
         if variable['name'] == 'tot_prec_24h'\
-         or variable['name'] == 'tot_prec_48h':
+         or variable['name'] == 'tot_prec_48h'\
+         or variable['name'] == 'tot_prec_06h'\
+         or variable['name'] == 'tot_prec_03h'\
+         or variable['name'] == 'tot_prec_01h':
             x = 0.70
             y = 0.192
             Ngl.text_ndc(wks, text5, x, y, text_res_1)
