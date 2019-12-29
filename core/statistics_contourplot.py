@@ -648,13 +648,14 @@ def plot_prob_of_exc(path, run, hours, data_array, data_array2, variable, domain
                      model_acr, stat_processing['method'], variable['name'], threshold_str, variable['unit'],
                      variable['hour_start'], variable['hour_end'], domain['name'], plot_type)
     elif variable['name'] == 'acc_prec':
-        if stat_processing['threshold'] >= 1.0:
-            threshold_str = '{:03d}'.format(int(stat_processing['threshold']))
+        if plot_type == 'small_map_only':
+            plot_name = '{}_{}_{}_{:.0f}{}_{:03d}h_{}_{}'.format(
+                         model_acr, stat_processing['method'], variable['name'], stat_processing['threshold'],
+                         variable['unit'], variable['hour'], domain['name'], plot_type)
         else:
-            threshold_str = '{:.1f}'.format(stat_processing['threshold'])
-        plot_name = '{}_{}_{}_{:.0f}{}_{:03d}h_{}_{}'.format(
-                     model_acr, stat_processing['method'], variable['name'], threshold_str,
-                     variable['unit'], variable['hour'], domain['name'], plot_type)
+            plot_name = '{}_{}_{}_1{}_{:03d}h_{}_{}'.format(
+                             model_acr, stat_processing['method'], variable['name'],
+                             variable['unit'], variable['hour'], domain['name'], plot_type)
     else:
         plot_name = '{}_{}_{}_{:.0f}{}_{:03d}h_{}_{}'.format(
                      model_acr, stat_processing['method'], variable['name'], stat_processing['threshold'],

@@ -38,7 +38,10 @@ def plot_prob_of_exc_2x2_pointintime(variable, thresholds, domains, model, title
         hours = list(range(0,72,3)) + list(range(72,120+1,6))
     elif model == 'icon-global-eps':
         #hours = list(range(0,72,3)) + list(range(72,120,6)) + list(range(120,180+1,12))
-        hours = list(range(0,180+1,12))
+        if variable['name'] == 'acc_prec':
+            hours = list(range(12,180+1,12))
+        else:
+            hours = list(range(0,180+1,12))
 
 
     # explicit time settings #
@@ -262,7 +265,7 @@ def plot_prob_of_exc_2x2_timespan(variable, thresholds, domains, model, title_po
         else:
             hours = list(range(timespan + 24 - run['hour'], max_hour+1, 24))
     else:
-        hours = list(range(0, max_hour+1, timespan))
+        hours = list(range(timespan, max_hour+1, timespan))
 
 
     # explicit time settings #

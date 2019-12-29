@@ -13,7 +13,7 @@ from w2w_ensembleplots.core.probofexc_2x2 import plot_prob_of_exc_2x2_timespan
 def main():
 
     variable = dict(name = 'tot_prec_06h', unit = 'mm')
-    thresholds = [0.1, 10.0, 20.0, 30.0, 0.1]
+    thresholds = [0.1, 20.0, 40.0, 60.0, 0.1]
     title_pos = 130
     #only_0utc_12utc_runs = False
     only_0utc_12utc_runs = True
