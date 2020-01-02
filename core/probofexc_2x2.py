@@ -46,13 +46,13 @@ def plot_prob_of_exc_2x2_pointintime(variable, thresholds, domains, model, title
 
     # explicit time settings #
 
-    #run = dict(year = 2019, month = 12, day = 5, hour = 0)
+    #run = dict(year = 2019, month = 12, day = 25, hour = 0)
 
     #hours = list(range(24, 120+1, 24))       # 00Z run
     #hours = list(range(24+18, 120+1, 24))    # 06Z run
     #hours = list(range(24+12, 120+1, 24))    # 12Z run
     #hours = list(range(24+6, 120+1, 24))     # 18Z run
-    #hours = [120]
+    #hours = [180]
 
 
     stat_processing_list = []

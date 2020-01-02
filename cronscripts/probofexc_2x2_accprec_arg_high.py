@@ -16,6 +16,7 @@ def main():
     #thresholds = [40.0, 60.0, 80.0, 100.0, 1]
     #thresholds = [10.0, 20.0, 30.0, 40.0, 1]
     thresholds = [50.0, 100.0, 150.0, 200.0, 1]
+    #thresholds = [0.1, 29.0, 71.0, 134.0, 1]
     title_pos = 90
     only_0utc_12utc_runs = True
     #model = 'icon-eu-eps'

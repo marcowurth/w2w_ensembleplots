@@ -100,6 +100,6 @@ PATH=/lsdfos/kit/imk-tro/projects/MOD/Gruppe_Knippertz/nw5893/miniconda3/bin:/us
 38   5,17          * * *   python /lsdfos/kit/imk-tro/projects/MOD/Gruppe_Knippertz/nw5893/scripts/operational/w2w_ensembleplots/cronscripts/probofexc_2x2_prec6h_arg.py > /dev/null 2>&1
 38   5,17          * * *   python /lsdfos/kit/imk-tro/projects/MOD/Gruppe_Knippertz/nw5893/scripts/operational/w2w_ensembleplots/cronscripts/probofexc_2x2_prec1h_arg.py > /dev/null 2>&1
 44   5,17          * * *   python /lsdfos/kit/imk-tro/projects/MOD/Gruppe_Knippertz/nw5893/scripts/operational/w2w_ensembleplots/cronscripts/probofexc_2x2_accprec_arg_low.py > /dev/null 2>&1
-44   5,17          * * *   python /lsdfos/kit/imk-tro/projects/MOD/Gruppe_Knippertz/nw5893/scripts/operational/w2w_ensembleplots/cronscripts/probofexc_2x2_accprec_arg_high.py > /dev/null 2>&1
+30   6,18          * * *   python /lsdfos/kit/imk-tro/projects/MOD/Gruppe_Knippertz/nw5893/scripts/operational/w2w_ensembleplots/cronscripts/probofexc_2x2_accprec_arg_high.py > /dev/null 2>&1
 20   0,7,12,19     * * *   python /lsdfos/kit/imk-tro/projects/MOD/Gruppe_Knippertz/nw5893/scripts/operational/w2w_ensembleplots/cronscripts/plot_t2m_uncertainty_shades.py > /lsdfos/kit/imk-tro/projects/MOD/Gruppe_Knippertz/nw5893/logs/scripts/plot_t2m_uncertainty_shades.log 2> /lsdfos/kit/imk-tro/projects/MOD/Gruppe_Knippertz/nw5893/logs/errors/plot_t2m_uncertainty_shades.log
 #-----------------------------------------------------------------
