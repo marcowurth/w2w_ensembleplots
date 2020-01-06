@@ -28,7 +28,7 @@ def main():
     #domains.append(dict(method = 'deltalatlon', radius =    0, deltalat = 500, deltalon = 550,
     #              lat = 50.8, lon = 10.0, name = 'germany'))
     domains.append(dict(method = 'deltalatlon', radius =    0, deltalat = 900, deltalon = 990,
-                  lat = -34.5, lon = -61.0, name = 'central_argentina'))
+                  lat = -33.3, lon = -61.7, name = 'central_argentina'))
 
     plot_prob_of_exc_2x2_timespan(variable, thresholds, domains, model, title_pos, only_0utc_12utc_runs)
 

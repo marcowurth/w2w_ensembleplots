@@ -3,6 +3,7 @@ import numpy as np
 import eccodes
 import netCDF4 as nc
 import Ngl
+import Nio
 import os
 import datetime
 from contextlib import ExitStack
@@ -30,6 +31,7 @@ def triangle_contourplot(variable, run, domain, model, stat_processing, plot_typ
                 grid = 'forecast_archive/{}/grid/'.format(model_path_deprec),
                 plots = 'plots/operational/triangle_contourplots/',
                 colorpalette = 'additional_data/colorpalettes/',
+                shapefiles = 'additional_data/shapefiles/',
                 topo = 'forecast_archive/{}/invariant/'.format(model_path_deprec))
 
 
@@ -930,8 +932,31 @@ def plot_prob_of_exc(path, run, hours, data_array, data_array2, variable, domain
 
 
     resources.nglFrame = False
+    resources.nglDraw  = False
     #Ngl.draw_colormap(wks)
     plot = Ngl.contour_map(wks, data_processed, resources)
+
+
+    # plot national and extra borders #
+
+    if domain['name'] == 'central_argentina':
+        shp_filenames = []
+        shp_filenames.append('gadm36_ARG_1.shp')
+        shp_filenames.append('gadm36_BRA_1.shp')
+        shp_filenames.append('gadm36_CHL_1.shp')
+
+        for shp_filename in shp_filenames:
+            shpf = Nio.open_file(path['base'] + path['shapefiles'] + shp_filename, 'r')
+            shpf_lon = np.ravel(shpf.variables['x'][:])
+            shpf_lat = np.ravel(shpf.variables['y'][:])
+            shpf_segments = shpf.variables['segments'][:, 0]
+
+            plres = Ngl.Resources()
+            plres.gsLineColor = 'black'
+            plres.gsLineThicknessF = 0.2
+            plres.gsSegments = shpf_segments
+            Ngl.add_polyline(wks, plot, shpf_lon, shpf_lat, plres)
+            del shpf, shpf_lat, shpf_lon, shpf_segments
 
 
     # plot texts #
@@ -1161,8 +1186,10 @@ def plot_prob_of_exc(path, run, hours, data_array, data_array2, variable, domain
         del text_res_1
 
 
+    Ngl.draw(plot)
     Ngl.frame(wks)
     Ngl.destroy(wks)
+    Ngl.end()
 
     del data_array, data_processed, vlat, vlon, clat, clon
 
