@@ -42,7 +42,22 @@ def which_grid_point(pointname, model):
                     dict(lat = 50.848, lon =  4.351, name = 'Brussels'),\
                     dict(lat =-34.617, lon =-58.416, name = 'BuenosAires'),\
                     dict(lat =-34.617, lon =-58.416, name = 'Kapstadt'),\
-                    dict(lat = 47.373, lon =  8.539, name = 'Zurich')]
+                    dict(lat = 47.373, lon =  8.539, name = 'Zurich'),\
+                    dict(lat = 6.375881, lon = 2.388944, name = 'Cotonou'),\
+                    dict(lat = 5.594600, lon = -0.186631, name = 'Accra'),\
+                    dict(lat = 6.681215, lon = -1.616109, name = 'Kumasi'),\
+                    dict(lat = 5.349118, lon = -4.011950, name = 'Abidjan'),\
+                    dict(lat = 16.740040, lon = -22.931181, name = 'Sal'),\
+                    dict(lat = 14.712010, lon = -17.467545, name = 'Dakar'),\
+                    dict(lat = 12.625956, lon = -7.990719, name = 'Bamako'),\
+                    dict(lat = 12.365190, lon = -1.522427, name = 'Ouagadougou'),\
+                    dict(lat = 13.505415, lon = 2.125209, name = 'Niamey'),\
+                    dict(lat = 4.046175, lon = 9.758281, name = 'Douala'),\
+                    dict(lat = 7.330163, lon = 13.571784, name = 'Ngaoundere'),\
+                    dict(lat = 9.079396, lon = 7.424556, name = 'Abuja'),\
+                    dict(lat = 16.972738, lon = 7.986168, name = 'Agadez'),\
+                    dict(lat = 9.343885, lon = 2.610282, name = 'Parakou'),\
+                    dict(lat = 0.405716, lon = 9.459336, name = 'Libreville')]
     elif model == 'icon-eu-eps':
         allpoints =[dict(lat = 49.014, lon =  8.350, name = 'Karlsruhe'),\
                     dict(lat = 50.003, lon =  8.268, name = 'Mainz'),\
@@ -91,7 +106,22 @@ def which_grid_point(pointname, model):
                     dict(lat = 50.930, lon =  4.330, name = 'Brussels'),\
                     dict(lat = 46.949, lon =  7.448, name = 'Bern'),\
                     dict(lat =-34.800, lon =-58.400, name = 'BuenosAires'),\
-                    dict(lat = 47.373, lon =  8.539, name = 'Zurich')]
+                    dict(lat = 47.373, lon =  8.539, name = 'Zurich'),\
+                    dict(lat = 6.375881, lon = 2.388944, name = 'Cotonou'),\
+                    dict(lat = 5.594600, lon = -0.186631, name = 'Accra'),\
+                    dict(lat = 6.681215, lon = -1.616109, name = 'Kumasi'),\
+                    dict(lat = 5.349118, lon = -4.011950, name = 'Abidjan'),\
+                    dict(lat = 16.740040, lon = -22.931181, name = 'Sal'),\
+                    dict(lat = 14.712010, lon = -17.467545, name = 'Dakar'),\
+                    dict(lat = 12.625956, lon = -7.990719, name = 'Bamako'),\
+                    dict(lat = 12.365190, lon = -1.522427, name = 'Ouagadougou'),\
+                    dict(lat = 13.505415, lon = 2.125209, name = 'Niamey'),\
+                    dict(lat = 4.046175, lon = 9.758281, name = 'Douala'),\
+                    dict(lat = 7.330163, lon = 13.571784, name = 'Ngaoundere'),\
+                    dict(lat = 9.079396, lon = 7.424556, name = 'Abuja'),\
+                    dict(lat = 16.972738, lon = 7.986168, name = 'Agadez'),\
+                    dict(lat = 9.343885, lon = 2.610282, name = 'Parakou'),\
+                    dict(lat = 0.405716, lon = 9.459336, name = 'Libreville')]
     elif model == 'icon-eu-det':
         allpoints =[dict(lat = 49.014, lon =  8.404, name = 'Karlsruhe'),\
                     dict(lat = 50.001, lon =  8.265, name = 'Mainz'),\
