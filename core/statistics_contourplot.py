@@ -39,31 +39,31 @@ def triangle_contourplot(variable, run, domain, model, stat_processing, plot_typ
 
     if plot_type == 'small_map_only' or plot_type == 'labelBar1' or plot_type == 'labelBar2' or plot_type == 'text':
         if variable['name'] == 'tot_prec_24h':
-            path['plots'] = 'plots/operational/prob_of_exc/tot_prec_24h/'
+            path['plots'] = 'plots/operational/prob_of_exc/forecast/tot_prec_24h/'
         elif variable['name'] == 'tot_prec_48h':
-            path['plots'] = 'plots/operational/prob_of_exc/tot_prec_48h/'
+            path['plots'] = 'plots/operational/prob_of_exc/forecast/tot_prec_48h/'
         elif variable['name'] == 'tot_prec_06h':
-            path['plots'] = 'plots/operational/prob_of_exc/tot_prec_06h/'
+            path['plots'] = 'plots/operational/prob_of_exc/forecast/tot_prec_06h/'
         elif variable['name'] == 'tot_prec_03h':
-            path['plots'] = 'plots/operational/prob_of_exc/tot_prec_03h/'
+            path['plots'] = 'plots/operational/prob_of_exc/forecast/tot_prec_03h/'
         elif variable['name'] == 'tot_prec_01h':
-            path['plots'] = 'plots/operational/prob_of_exc/tot_prec_01h/'
+            path['plots'] = 'plots/operational/prob_of_exc/forecast/tot_prec_01h/'
         elif variable['name'] == 'acc_prec':
-            path['plots'] = 'plots/operational/prob_of_exc/acc_prec/'
+            path['plots'] = 'plots/operational/prob_of_exc/forecast/acc_prec/'
         elif variable['name'] == 't_850hpa':
-            path['plots'] = 'plots/operational/prob_of_exc/t_850hpa/'
+            path['plots'] = 'plots/operational/prob_of_exc/forecast/t_850hpa/'
         elif variable['name'] == 'mslp':
-            path['plots'] = 'plots/operational/prob_of_exc/mslp/'
+            path['plots'] = 'plots/operational/prob_of_exc/forecast/mslp/'
         elif variable['name'] == 'wind_10m':
-            path['plots'] = 'plots/operational/prob_of_exc/wind_10m/'
+            path['plots'] = 'plots/operational/prob_of_exc/forecast/wind_10m/'
         elif variable['name'] == 'wind_300hpa':
-            path['plots'] = 'plots/operational/prob_of_exc/wind_300hpa/'
+            path['plots'] = 'plots/operational/prob_of_exc/forecast/wind_300hpa/'
         elif variable['name'] == 'gph_500hpa':
-            path['plots'] = 'plots/operational/prob_of_exc/gph_500hpa/'
+            path['plots'] = 'plots/operational/prob_of_exc/forecast/gph_500hpa/'
         elif variable['name'] == 'gph_300hpa':
-            path['plots'] = 'plots/operational/prob_of_exc/gph_300hpa/'
+            path['plots'] = 'plots/operational/prob_of_exc/forecast/gph_300hpa/'
         elif variable['name'] == 'tqv':
-            path['plots'] = 'plots/operational/prob_of_exc/tqv/'
+            path['plots'] = 'plots/operational/prob_of_exc/forecast/tqv/'
         else:
             print('error: variable unknown')
 

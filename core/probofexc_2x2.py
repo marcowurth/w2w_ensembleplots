@@ -16,7 +16,7 @@ def plot_prob_of_exc_2x2_pointintime(variable, thresholds, domains, model, title
 
     path = dict(base = '/lsdfos/kit/imk-tro/projects/MOD/Gruppe_Knippertz/nw5893/',
                 scripts = 'scripts/operational/w2w_ensembleplots/cronscripts/',
-                plots_general = 'plots/operational/prob_of_exc/{}/'.format(variable['name']))
+                plots_general = 'plots/operational/prob_of_exc/forecast/{}/'.format(variable['name']))
     scriptname = 'callfile_probofexc_2x2_pointintime.py'
     #colormap_name = '_greenblackblue'
     colormap_name = ''
@@ -242,7 +242,7 @@ def plot_prob_of_exc_2x2_timespan(variable, thresholds, domains, model,\
                 scripts = 'scripts/operational/w2w_ensembleplots/cronscripts/',
                 data = 'forecast_archive/{}/raw_grib/'.format(model_path_deprec),
                 obs = 'plots/observations/argentina/',
-                plots_general = 'plots/operational/prob_of_exc/{}/'.format(variable['name']),
+                plots_general = 'plots/operational/prob_of_exc/forecast/{}/'.format(variable['name']),
                 plots_leadtime = 'plots/operational/prob_of_exc/leadtime/{}/'.format(variable['name']))
     scriptname = 'callfile_probofexc_2x2_timespan.py'
     #colormap_name = '_greenblackblue'
