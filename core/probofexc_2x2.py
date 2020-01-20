@@ -363,10 +363,13 @@ def plot_prob_of_exc_2x2_timespan(variable, thresholds, domains, model,\
                      run['year'], run['month'], run['day'], run['hour'])
         if model == 'icon-eu-eps':
             filename_beginning = 'icon-eu-eps_europe_icosahedral_single-level'
+            model_max_hour = 120
         elif model == 'icon-global-eps':
             filename_beginning = 'icon-eps_global_icosahedral_single-level'
-        test_filename = '{}_{:4d}{:02d}{:02d}{:02d}_180_tot_prec.grib2'.format(
-                         filename_beginning, run['year'], run['month'], run['day'], run['hour'])
+            model_max_hour = 180
+        test_filename = '{}_{:4d}{:02d}{:02d}{:02d}_{:03d}_tot_prec.grib2'.format(
+                         filename_beginning, run['year'], run['month'], run['day'], run['hour'],
+                         model_max_hour)
         if not os.path.isfile(path['base'] + path['data'] + subfolder + test_filename):
             print('no data!')
             print('---------------------------------------------------')
