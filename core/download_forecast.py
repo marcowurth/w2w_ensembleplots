@@ -5,8 +5,10 @@
 import requests
 import bz2
 import os
+import fnmatch
 import datetime
 import numpy as np
+import xarray as xr
 
 
 ########################################################################
@@ -37,10 +39,24 @@ def unzip(path, filename):
                     except OSError:
                         unzippedfile.write(decompressor.decompress(datapart))
 
-
     os.remove(path['base'] + path['subdir'] + filename)
     return newfilename
-    
+
+########################################################################
+########################################################################
+########################################################################
+
+def convert_gribfiles_to_one_netcdf(path, grib_filename, netcdf_filename):
+    ds = xr.open_mfdataset(path['base'] + path['subdir'] + grib_filename, engine='cfgrib',
+                           combine='nested', concat_dim='step', parallel=False, backend_kwargs={'errors': 'ignore'})
+    ds.to_netcdf(path['base'] + path['subdir'] + netcdf_filename)
+    ds.close()
+    del ds
+
+    for idx_filename in fnmatch.filter(os.listdir(path['base'] + path['subdir']), '*.idx'):
+        os.remove(path['base'] + path['subdir'] + idx_filename)
+    return
+
 ########################################################################
 ########################################################################
 ########################################################################

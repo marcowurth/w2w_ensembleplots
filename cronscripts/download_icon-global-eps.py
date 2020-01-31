@@ -10,6 +10,7 @@ current_path = sys.path[0]
 ex_op_str = current_path[current_path.index('scripts')+8 : current_path.index('w2w_ensembleplots')-1]
 sys.path.append('/lsdfos/kit/imk-tro/projects/MOD/Gruppe_Knippertz/nw5893/scripts/{}'.format(ex_op_str))
 from w2w_ensembleplots.core.download_forecast import download, unzip, calc_latest_run_time
+from w2w_ensembleplots.core.download_forecast import convert_gribfiles_to_one_netcdf
 
 
 def main():
@@ -41,32 +42,33 @@ def main():
 
     # download data #
     
-    path = dict(base = '/lsdfos/kit/imk-tro/projects/MOD/Gruppe_Knippertz/nw5893/forecast_archive/icon-eps/',
-                subdir = '')
-    temp_subdir = 'raw_grib/run_{}{:02}{:02}{:02}'.format(
-                   date['year'], date['month'], date['day'], date['hour'])
-    if not os.path.isdir(path['base'] + temp_subdir):
-        os.mkdir(path['base'] + temp_subdir)
-    subdir_run = temp_subdir + '/'
+    path = dict(base = '/lsdfos/kit/imk-tro/projects/MOD/Gruppe_Knippertz/nw5893/')
+    path['data'] = 'forecast_archive/icon-eps/raw_grib/run_{}{:02}{:02}{:02}'.format(
+                    date['year'], date['month'], date['day'], date['hour'])
+    if not os.path.isdir(path['base'] + path['data']):
+        os.mkdir(path['base'] + path['data'])
+    path['data'] = path['data'] + '/'
 
-    for i in range(len(var_list)):
-        temp_subdir = subdir_run + var_list[i]
+    for var in var_list:
+        temp_subdir = path['data'] + var
         if not os.path.isdir(path['base'] + temp_subdir):
             os.mkdir(path['base'] + temp_subdir)
         path['subdir'] = temp_subdir + '/'
 
         for fcst_hour in fcst_hours_list:
-            #if fcst_hour == 120 and var_list[i] != 'tot_prec':
-            #    continue
-
             filename = 'icon-eps_global_icosahedral_single-level_{}{:02}{:02}{:02}_{:03}_{}.grib2.bz2'.format(
-                        date['year'], date['month'], date['day'], date['hour'], fcst_hour, var_list[i])
-
+                        date['year'], date['month'], date['day'], date['hour'], fcst_hour, var)
             url = 'https://opendata.dwd.de/weather/nwp/icon-eps/grib/{:02}/{}/'.format(
-                   date['hour'], var_list[i])
+                   date['hour'], var)
 
             if download(url, filename, path):
                 filename = unzip(path, filename)
+
+        grib_filename = 'icon-eps_global_icosahedral_single-level_{}{:02}{:02}{:02}_*_{}.grib2'.format(
+                         date['year'], date['month'], date['day'], date['hour'], var)
+        netcdf_filename = 'icon-eps_global_icosahedral_single-level_{}{:02}{:02}{:02}_{}.nc'.format(
+                           date['year'], date['month'], date['day'], date['hour'], var)
+        convert_gribfiles_to_one_netcdf(path, grib_filename, netcdf_filename)
 
     return
     

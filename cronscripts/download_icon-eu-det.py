@@ -42,16 +42,15 @@ def main():
 
     # download data #
     
-    path = dict(base = '/lsdfos/kit/imk-tro/projects/MOD/Gruppe_Knippertz/nw5893/forecast_archive/icon-eu/',
-                subdir = '')
-    temp_subdir = 'raw_grib/run_{}{:02}{:02}{:02}'.format(
-                   date['year'], date['month'], date['day'], date['hour'])
-    if not os.path.isdir(path['base'] + temp_subdir):
-        os.mkdir(path['base'] + temp_subdir)
-    subdir_run = temp_subdir + '/'
+    path = dict(base = '/lsdfos/kit/imk-tro/projects/MOD/Gruppe_Knippertz/nw5893/')
+    path['data'] = 'forecast_archive/icon-eu/raw_grib/run_{}{:02}{:02}{:02}'.format(
+                    date['year'], date['month'], date['day'], date['hour'])
+    if not os.path.isdir(path['base'] + path['data']):
+        os.mkdir(path['base'] + path['data'])
+    path['data'] = path['data'] + '/'
 
-    for i in range(len(var_list)):
-        temp_subdir = subdir_run + var_list[i]
+    for i, var in enumerate(var_list):
+        temp_subdir = path['data'] + var
         if not os.path.isdir(path['base'] + temp_subdir):
             os.mkdir(path['base'] + temp_subdir)
         path['subdir'] = temp_subdir + '/'
@@ -60,7 +59,8 @@ def main():
             filename = 'icon-eu_europe_regular-lat-lon_single-level_{}{:02}{:02}{:02}_{:03}_{}.grib2.bz2'.format(
                         date['year'], date['month'], date['day'], date['hour'], fcst_hour, var_list_capitalized[i])
             url = 'https://opendata.dwd.de/weather/nwp/icon-eu/grib/{:02}/{}/'.format(
-                   date['hour'], var_list[i])
+                   date['hour'], var)
+
             if download(url, filename, path):
                 filename = unzip(path, filename)
 
