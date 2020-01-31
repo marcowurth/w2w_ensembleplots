@@ -47,8 +47,10 @@ def main():
 
         #point = dict(lat = 49.01, lon =  8.40, name = 'Karlsruhe')
         #point = dict(lat = 50.82, lon =  8.92, name = 'Kirchhain')
-        domain = dict(method = 'deltalatlon', radius =    0, deltalat = 700, deltalon = 760,\
-                      lat = 48.7, lon =  5.4, name = 'france-germany')
+        #domain = dict(method = 'deltalatlon', radius =    0, deltalat = 700, deltalon = 760,\
+        #              lat = 48.7, lon =  5.4, name = 'france-germany')
+        domain = dict(method = 'deltalatlon', radius =    0, deltalat = 850, deltalon = 680,\
+                      lat = 48.4, lon =  5.0, name = 'france-germany')
 
         #stat_processing = dict(method = 'max')
         #stat_processing = dict(method = 'min')
@@ -59,8 +61,8 @@ def main():
         thresholds = []
         #thresholds.append(30.0)
         thresholds.append(36.0)
-        thresholds.append(38.0)
-        thresholds.append(40.0)
+        #thresholds.append(38.0)
+        #thresholds.append(40.0)
 
 
         ##### call plotting function #####
@@ -300,7 +302,7 @@ def plot_prob_of_exceedance_around_point(path, run, data_tmax_24h, domain, thres
 
     ########################################################################
 
-    color = 'rosarot'
+    color = 'heat'
     plot_name = 'iconeueps_tmax_24h_prob_over_{:.0f}C_run_{:02d}.{:02d}._{}_{}'.format(\
                     threshold, run['day'], run['month'], domain['name'], color)
 
@@ -396,8 +398,8 @@ def plot_prob_of_exceedance_around_point(path, run, data_tmax_24h, domain, thres
 
     ########################################################################
 
-    x_resolution        = 800
-    y_resolution        = 800
+    x_resolution        = 1200
+    y_resolution        = 1200
     wks_res             = Ngl.Resources()
     wks_res.wkWidth     = x_resolution
     wks_res.wkHeight    = y_resolution
@@ -526,7 +528,7 @@ def plot_prob_of_exceedance_around_point(path, run, data_tmax_24h, domain, thres
     resources.pmLabelBarWidthF      = 0.10
     #resources.lbLabelStrings        = label_str_list
     resources.lbLabelStride         = 4
-    resources.lbLabelFontHeightF    = 0.012
+    resources.lbLabelFontHeightF    = 0.018
     #resources.lbBoxCount            = 40
     resources.lbBoxSeparatorLinesOn = False
     resources.lbBoxLineThicknessF   = 4.0
@@ -534,7 +536,7 @@ def plot_prob_of_exceedance_around_point(path, run, data_tmax_24h, domain, thres
     resources.lbLabelAlignment      = 'BoxCenters'
 
     resources.lbTitleString         = '%'
-    resources.lbTitleFontHeightF    = 0.012
+    resources.lbTitleFontHeightF    = 0.018
     resources.lbTitlePosition       = 'Right'
     resources.lbTitleDirection      = 'Across'
     #resources.lbTitleAngleF         = 90.0
@@ -572,34 +574,35 @@ def plot_prob_of_exceedance_around_point(path, run, data_tmax_24h, domain, thres
         time_code = 'CEST'                          # UTC+2
     run_time = run_time + datetime.timedelta(0, 3600 * int(timeshift))
     valid_time = run_time + datetime.timedelta(0, 3600 * int(4*24 + 12))
-
-    text1 = 'Probability of exceedance: Tmax over {:d}C'.format(int(threshold))
-    text2 = 'Initial time: {}, {:02}{}'.format(run_time.strftime('%a., %d %b. %Y'), run_time.hour, time_code)
-    text3 = 'Valid time: {}'.format(valid_time.strftime('%a., %d %b. %Y'))
-    text4 = 'Model: ICON-EU-EPS'
+    text1 = '4-Tages-Vorhersage der Maximaltemperatur vom 21.07.19: \
+ Wahrscheinlichkeit, dass am 25.07.19 Temperaturen von \
+36 ~S~o~N~C, 38 ~S~o~N~C, 40 ~S~o~N~C u~H-13V2F35~H~FV-2H3~berschritten werden'
+    text1 = 'Vorhersage der Hitzewelle '
+    text1 = 'Modell: ICON-EU-EPS, Bildautor: Marco Wurth, IMK-TRO (KIT)'
+    #text2 = 'Wahrscheinlichkeit fu~H-13V2F35~H~FV-2H3~r u~H-13V2F35~H~FV-2H3~ber {:d} ~S~o~N~C'.format(int(threshold))
 
     text_res_1 = Ngl.Resources()
     text_res_1.txJust           = 'BottomLeft'
 
-    text_res_1.txFontHeightF    = 0.016
-    x = 0.22
-    y = 0.965
+    text_res_1.txFontHeightF    = 0.009
+    x = 0.01
+    y = 0.01
     Ngl.text_ndc(wks, text1, x, y, text_res_1)
 
-    text_res_1.txFontHeightF    = 0.014
-    x = 0.025
-    y = 0.93
-    Ngl.text_ndc(wks, text2, x, y, text_res_1)
+    text_res_1.txFontHeightF    = 0.018
+    x = 0.25
+    y = 0.94
+    #Ngl.text_ndc(wks, text2, x, y, text_res_1)
 
     text_res_1.txFontHeightF    = 0.014
     x = 0.575
     y = 0.93
-    Ngl.text_ndc(wks, text3, x, y, text_res_1)
+    #Ngl.text_ndc(wks, text3, x, y, text_res_1)
 
     text_res_1.txFontHeightF    = 0.014
     x = 0.025
     y = 0.192
-    Ngl.text_ndc(wks, text4, x, y, text_res_1)
+    #Ngl.text_ndc(wks, text4, x, y, text_res_1)
 
 
     Ngl.frame(wks)
