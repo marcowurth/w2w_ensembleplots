@@ -2,8 +2,6 @@
 ###  script for plotting boxplot meteograms of point data of icon-eu-eps    ###
 ###############################################################################
 
-from sys import argv
-
 import sys
 current_path = sys.path[0]
 ex_op_str = current_path[current_path.index('scripts')+8 : current_path.index('w2w_ensembleplots')-1]
@@ -39,6 +37,6 @@ def main(pointname):
 if __name__ == '__main__':
     import time
     t1 = time.time()
-    main(argv[1])
+    main(sys.argv[1])
     t2 = time.time()
     print('total script time:  {:.1f}s'.format(t2-t1))

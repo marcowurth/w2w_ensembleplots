@@ -12,7 +12,7 @@ from w2w_ensembleplots.core.meteogram_boxplot import boxplot_forecast
 def main():
 
   ###########################################################
-    date = dict(year = 2019, month = 12, day = 12, hour = 6)
+    #date = dict(year = 2019, month = 12, day = 12, hour = 6)
     date = None     # if None: get latest run
     include_global = False
     latest_fcst = True
