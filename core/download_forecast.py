@@ -16,7 +16,7 @@ import xarray as xr
 ########################################################################
 
 def download(url, filename, path):
-    r = requests.get(url + filename, timeout=3)
+    r = requests.get(url + filename, timeout=10)
     with open(path['base'] + path['subdir'] + filename, 'wb') as file:
         file.write(r.content)
     return 1

@@ -7,8 +7,8 @@ import os
 
 import sys
 current_path = sys.path[0]
-ex_op_str = current_path[current_path.index('scripts')+8 : current_path.index('w2w_ensembleplots')-1]
-sys.path.append('/lsdfos/kit/imk-tro/projects/MOD/Gruppe_Knippertz/nw5893/scripts/{}'.format(ex_op_str))
+ex_op_str = current_path[current_path.index('progs')+6: current_path.index('w2w_ensembleplots')-1]
+sys.path.append('/progs/{}'.format(ex_op_str))
 from w2w_ensembleplots.core.download_forecast import download, unzip, calc_latest_run_time
 
 
@@ -40,10 +40,10 @@ def main():
     var_list_capitalized = ['TOT_PREC','T_2M','U_10M','V_10M','PMSL','CLCT','ASWDIR_S','ASWDIFD_S']
 
 
-    # download data #
-    
-    path = dict(base = '/lsdfos/kit/imk-tro/projects/MOD/Gruppe_Knippertz/nw5893/')
-    path['data'] = 'forecast_archive/icon-eu/raw_grib/run_{}{:02}{:02}{:02}'.format(
+    # create paths if necessary
+
+    path = dict(base = '/')
+    path['data'] = 'data/model_data/icon-eu-det/forecasts/run_{}{:02}{:02}{:02}'.format(
                     date['year'], date['month'], date['day'], date['hour'])
     if not os.path.isdir(path['base'] + path['data']):
         os.mkdir(path['base'] + path['data'])
@@ -54,6 +54,9 @@ def main():
         if not os.path.isdir(path['base'] + temp_subdir):
             os.mkdir(path['base'] + temp_subdir)
         path['subdir'] = temp_subdir + '/'
+
+
+        # download all grib files from website
 
         for fcst_hour in fcst_hours_list:
             filename = 'icon-eu_europe_regular-lat-lon_single-level_{}{:02}{:02}{:02}_{:03}_{}.grib2.bz2'.format(

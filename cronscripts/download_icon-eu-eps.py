@@ -9,8 +9,8 @@ import os
 
 import sys
 current_path = sys.path[0]
-ex_op_str = current_path[current_path.index('scripts')+8 : current_path.index('w2w_ensembleplots')-1]
-sys.path.append('/lsdfos/kit/imk-tro/projects/MOD/Gruppe_Knippertz/nw5893/scripts/{}'.format(ex_op_str))
+ex_op_str = current_path[current_path.index('progs')+6: current_path.index('w2w_ensembleplots')-1]
+sys.path.append('/progs/{}'.format(ex_op_str))
 from w2w_ensembleplots.core.download_forecast import download, unzip, calc_latest_run_time
 from w2w_ensembleplots.core.download_forecast import convert_gribfiles_to_one_netcdf
 
@@ -51,17 +51,17 @@ def main():
                     ['aswdir_s','sl'],['aswdifd_s','sl'],['vmax_10m','sl']]
 
 
-    # download data #
-    
-    path = dict(base = '/lsdfos/kit/imk-tro/projects/MOD/Gruppe_Knippertz/nw5893/')
-    path['data'] = 'forecast_archive/icon-eu-eps/raw_grib/run_{}{:02}{:02}{:02}'.format(
+    # create paths if necessary #
+
+    path = dict(base = '/')
+    path['data'] = 'data/model_data/icon-eu-eps/forecasts/run_{}{:02}{:02}{:02}'.format(
                     date['year'], date['month'], date['day'], date['hour'])
     if not os.path.isdir(path['base'] + path['data']):
         os.mkdir(path['base'] + path['data'])
     path['data'] = path['data'] + '/'
 
     for var in var_list:
-        if var[1] == 'sl':
+        if var[1] == 'sl':      # sl = single-level
             temp_subdir = path['data'] + var[0]
         else:
             temp_subdir = path['data'] + var[0] + '_' + var[1]
@@ -69,6 +69,9 @@ def main():
         if not os.path.isdir(path['base'] + temp_subdir):
             os.mkdir(path['base'] + temp_subdir)
         path['subdir'] = temp_subdir + '/'
+
+
+        # download all grib files from website #
 
         for fcst_hour in fcst_hours_list:
             if var[0] == 'vmax_10m' and fcst_hour == 0:
@@ -87,6 +90,8 @@ def main():
             if download(url, filename, path):
                 filename = unzip(path, filename)
 
+
+        # read in all grib files of variable and save as one combined netcdf file #
 
         if var[1] == 'sl':
             grib_filename = 'icon-eu-eps_europe_icosahedral_single-level_{}{:02}{:02}{:02}_*_{}.grib2'.format(

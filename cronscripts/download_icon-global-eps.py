@@ -7,8 +7,8 @@ import os
 
 import sys
 current_path = sys.path[0]
-ex_op_str = current_path[current_path.index('scripts')+8 : current_path.index('w2w_ensembleplots')-1]
-sys.path.append('/lsdfos/kit/imk-tro/projects/MOD/Gruppe_Knippertz/nw5893/scripts/{}'.format(ex_op_str))
+ex_op_str = current_path[current_path.index('progs')+6: current_path.index('w2w_ensembleplots')-1]
+sys.path.append('/progs/{}'.format(ex_op_str))
 from w2w_ensembleplots.core.download_forecast import download, unzip, calc_latest_run_time
 from w2w_ensembleplots.core.download_forecast import convert_gribfiles_to_one_netcdf
 
@@ -40,10 +40,10 @@ def main():
     var_list = ['tot_prec','t_2m','u_10m','v_10m','clct']
 
 
-    # download data #
-    
-    path = dict(base = '/lsdfos/kit/imk-tro/projects/MOD/Gruppe_Knippertz/nw5893/')
-    path['data'] = 'forecast_archive/icon-eps/raw_grib/run_{}{:02}{:02}{:02}'.format(
+    # create paths if necessary #
+
+    path = dict(base = '/')
+    path['data'] = 'data/model_data/icon-global-eps/forecasts/run_{}{:02}{:02}{:02}'.format(
                     date['year'], date['month'], date['day'], date['hour'])
     if not os.path.isdir(path['base'] + path['data']):
         os.mkdir(path['base'] + path['data'])
@@ -55,6 +55,9 @@ def main():
             os.mkdir(path['base'] + temp_subdir)
         path['subdir'] = temp_subdir + '/'
 
+
+        # download all grib files from website #
+
         for fcst_hour in fcst_hours_list:
             filename = 'icon-eps_global_icosahedral_single-level_{}{:02}{:02}{:02}_{:03}_{}.grib2.bz2'.format(
                         date['year'], date['month'], date['day'], date['hour'], fcst_hour, var)
@@ -64,6 +67,9 @@ def main():
             if download(url, filename, path):
                 filename = unzip(path, filename)
 
+
+        # read in all grib files of variable and save as one combined netcdf file #
+
         grib_filename = 'icon-eps_global_icosahedral_single-level_{}{:02}{:02}{:02}_*_{}.grib2'.format(
                          date['year'], date['month'], date['day'], date['hour'], var)
         netcdf_filename = 'icon-eps_global_icosahedral_single-level_{}{:02}{:02}{:02}_{}.nc'.format(
@@ -71,7 +77,7 @@ def main():
         convert_gribfiles_to_one_netcdf(path, grib_filename, netcdf_filename)
 
     return
-    
+
 ########################################################################
 ########################################################################
 ########################################################################
