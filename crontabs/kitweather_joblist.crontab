@@ -3,7 +3,7 @@
 SHELL=/bin/bash
 #
 # PATH variable for cron
-PATH=/lsdfos/kit/imk-tro/projects/MOD/Gruppe_Knippertz/nw5893/miniconda3/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/usr/lpp/mmfs/bin:/opt/ibutils/bin:/lsdf/kit/imk-tro/nw5893/.local/bin:/lsdf/kit/imk-tro/nw5893/bin
+PATH=/home/iconeps/miniconda3/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin
 #
 #M   S     T M W   Befehl
 #-----------------------------------------------------------------
