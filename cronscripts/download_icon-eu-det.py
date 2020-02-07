@@ -10,6 +10,7 @@ current_path = sys.path[0]
 ex_op_str = current_path[current_path.index('progs')+6: current_path.index('w2w_ensembleplots')-1]
 sys.path.append('/progs/{}'.format(ex_op_str))
 from w2w_ensembleplots.core.download_forecast import download, unzip, calc_latest_run_time
+from w2w_ensembleplots.core.download_forecast import convert_gribfiles_to_one_netcdf
 
 
 def main():
@@ -36,8 +37,8 @@ def main():
 
     # list of dwd variable names #
 
-    var_list = ['tot_prec','t_2m','u_10m','v_10m','pmsl','clct','aswdir_s','aswdifd_s']
-    var_list_capitalized = ['TOT_PREC','T_2M','U_10M','V_10M','PMSL','CLCT','ASWDIR_S','ASWDIFD_S']
+    var_list = ['tot_prec','t_2m','u_10m','v_10m','pmsl','clct','aswdir_s','aswdifd_s','vmax_10m']
+    var_list_capitalized = ['TOT_PREC','T_2M','U_10M','V_10M','PMSL','CLCT','ASWDIR_S','ASWDIFD_S','VMAX_10M']
 
 
     # create paths if necessary
@@ -67,8 +68,17 @@ def main():
             if download(url, filename, path):
                 filename = unzip(path, filename)
 
+
+        # read in all grib files of variable and save as one combined netcdf file #
+
+        grib_filename = 'icon-eu_europe_regular-lat-lon_single-level_{}{:02}{:02}{:02}_*_{}.grib2'.format(
+                         date['year'], date['month'], date['day'], date['hour'], var_list_capitalized[i])
+        netcdf_filename = 'icon-eu_europe_regular-lat-lon_single-level_{}{:02}{:02}{:02}_{}.nc'.format(
+                           date['year'], date['month'], date['day'], date['hour'], var)
+        convert_gribfiles_to_one_netcdf(path, grib_filename, netcdf_filename)
+
     return
-    
+
 ########################################################################
 ########################################################################
 ########################################################################

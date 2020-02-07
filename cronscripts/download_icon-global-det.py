@@ -10,6 +10,7 @@ current_path = sys.path[0]
 ex_op_str = current_path[current_path.index('progs')+6: current_path.index('w2w_ensembleplots')-1]
 sys.path.append('/progs/{}'.format(ex_op_str))
 from w2w_ensembleplots.core.download_forecast import download, unzip, calc_latest_run_time
+from w2w_ensembleplots.core.download_forecast import convert_gribfiles_to_one_netcdf
 
 
 def main():
@@ -66,6 +67,15 @@ def main():
 
             if download(url, filename, path):
                 filename = unzip(path, filename)
+
+
+        # read in all grib files of variable and save as one combined netcdf file #
+
+        grib_filename = 'icon_global_icosahedral_single-level_{}{:02}{:02}{:02}_*_{}.grib2'.format(
+                         date['year'], date['month'], date['day'], date['hour'], var_list_capitalized[i])
+        netcdf_filename = 'icon_global_icosahedral_single-level_{}{:02}{:02}{:02}_{}.nc'.format(
+                           date['year'], date['month'], date['day'], date['hour'], var)
+        convert_gribfiles_to_one_netcdf(path, grib_filename, netcdf_filename)
 
     return
 
