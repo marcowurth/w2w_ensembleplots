@@ -7,6 +7,7 @@ PATH=/home/iconeps/miniconda3/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/s
 #
 #M   S     T M W   Befehl
 #-----------------------------------------------------------------
+0    0             * * *   python /progs/operational/w2w_ensembleplots/cronscripts/delete_old_forecast_data.py > /data/logs/scripts/delete_old_forecast_data.log 2> /data/logs/errors/delete_old_forecast_data.log
 31   5,17          * * *   python /progs/operational/w2w_ensembleplots/cronscripts/download_icon-eu-eps.py > /data/logs/scripts/download_icon-eu-eps.log 2> /data/logs/errors/download_icon-eu-eps.log
 50   10,22         * * *   python /progs/operational/w2w_ensembleplots/cronscripts/download_icon-eu-eps.py > /data/logs/scripts/download_icon-eu-eps.log 2> /data/logs/errors/download_icon-eu-eps.log
 26   5,17          * * *   python /progs/operational/w2w_ensembleplots/cronscripts/download_icon-global-eps.py > /data/logs/scripts/download_icon-global-eps.log 2> /data/logs/errors/download_icon-global-eps.log
