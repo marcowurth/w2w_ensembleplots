@@ -1,88 +1,358 @@
-#########################################
-###  container for various functions  ###
-#########################################
+##############################################
+###  module for making meteogram boxplots  ###
+##############################################
 
-import numpy as np
 import os
 import datetime
+import numpy as np
 import Magics.macro as magics
-from astropy.io import ascii
 
 import sys
 current_path = sys.path[0]
-ex_op_str = current_path[current_path.index('scripts')+8 : current_path.index('w2w_ensembleplots')-1]
-sys.path.append('/lsdfos/kit/imk-tro/projects/MOD/Gruppe_Knippertz/nw5893/scripts/{}'.format(ex_op_str))
-from w2w_ensembleplots.core.download_forecast import calc_latest_run_time
-from w2w_ensembleplots.core.download_forecast import get_timeshift
-from w2w_ensembleplots.core.extract_point_from_grib import read_data
+ex_op_str = current_path[current_path.index('progs')+6: current_path.index('w2w_ensembleplots')-1]
+sys.path.append('/progs/{}'.format(ex_op_str))
+from w2w_ensembleplots.core.download_forecast import calc_latest_run_time, get_timeshift
+from w2w_ensembleplots.core.read_data import read_forecast_data, get_fcst_hours_list, get_all_available_vars
 
 
 ########################################################################
 ########################################################################
 ########################################################################
 
-def plot_in_magics_boxplot(path, date, pointname, var, meta, y_axis_range, filename,
-                            fcst_hours_list_eu, fcst_hours_list_global,
-                            data_percentiles_eu, data_percentiles_global,
-                            include_global, with_long_time_axis, lead_time):
+def boxplot_forecast(models, date, var, point, verbose):
+
+    # determine date and lead_times list #
+
+    making_comparison_plots = False
+    if date == 'latest':
+        if models == 'both-eps':
+            date = calc_latest_run_time('icon-eu-eps')
+        elif models == 'icon-global-eps':
+            date = calc_latest_run_time('icon-global-eps')
+    if date == 'comparison':
+        making_comparison_plots = True
+        date = calc_latest_run_time('icon-global-eps')
+
+    if verbose:
+        if 'lat' in point:
+            print('----- next point is {}, {:.2f}°N, {:.2f}°E -----'.format(point['name'], point['lat'], point['lon']))
+        else:
+            print('----- next point is {} -----'.format(point['name']))
+        print('-- Initial time of run: {}{:02}{:02}-{:02}UTC --'.format(\
+              date['year'], date['month'], date['day'], date['hour']))
+
+    if making_comparison_plots:
+        lead_times = [0,12,24,36,48,72,96,120,144,168]
+    else:
+        lead_times = [0]
+
+
+    # determine var_list #
+
+    if var == 'all_available':
+        var_list = get_all_available_vars(models, date)
+        if making_comparison_plots:
+            var_list = ['t_2m','prec_rate','prec_sum','wind_10m','mslp','clct','direct_rad','diffuse_rad']
+    else:
+        var_list = [var]
+
+
+    # main loop 1 in this function, every iteration makes several plots, one for every lead time #
+
+    for var in var_list:
+        if verbose:
+            print('----- next variable is {} -----'.format(var))
+
+        if models == 'both-eps':
+            if (date['hour'] == 0 or date['hour'] == 12)\
+             and (var == 't_2m' or var == 'prec_rate' or var == 'prec_sum' or var == 'clct'): 
+                extend_with_global = True
+            else:
+                extend_with_global = False
+        elif models == 'icon-global-eps':
+            extend_with_global = False
+
+
+        if models == 'both-eps':
+            if var == 'prec_rate' or var == 'direct_rad' or var == 'diffuse_rad':
+                point_values_eu_eps = np.empty((len(lead_times), 64, 40), dtype='float32')
+            elif var == 'vmax_10m':
+                point_values_eu_eps = np.empty((len(lead_times), 65, 40), dtype='float32')
+                point_values_eu_eps[:, 0 , :] = np.nan
+            elif var == 'wind_10m':
+                point_values_eu_eps = np.empty((len(lead_times), 65, 40, 2), dtype='float32')
+                point_values_eu_eps[:, 0 , :, 1] = np.nan
+            else:
+                point_values_eu_eps = np.empty((len(lead_times), 65, 40), dtype='float32')
+        if extend_with_global:
+            if var == 'prec_rate':
+                point_values_global_eps = np.empty((len(lead_times), 5, 40), dtype='float32')
+            else:
+                point_values_global_eps = np.empty((len(lead_times), 5, 40), dtype='float32')
+        if models == 'icon-global-eps':
+            if var == 'prec_rate':
+                point_values_global_eps = np.empty((len(lead_times), 69, 40), dtype='float32')
+            else:
+                point_values_global_eps = np.empty((len(lead_times), 70, 40), dtype='float32')
+
+        y_axis_range = dict()
+        for i, lead_time in enumerate(lead_times):
+            if making_comparison_plots:
+                print('----- read lead time -{}h -----'.format(lead_time))
+
+            time = datetime.datetime(date['year'], date['month'], date['day'], date['hour'])
+            time -= datetime.timedelta(0, 3600 * lead_time)
+            old_run_date = dict(year = time.year, month = time.month, day = time.day, hour = time.hour)
+
+
+            # get forecast data from icon-eu-eps #
+
+            first_run_not_found = False
+            if models == 'both-eps':
+                try:
+                    if var == 'wind_10m':
+                        point_values_eu_eps[i, :, :, 0] = read_forecast_data('icon-eu-eps', old_run_date,
+                                                                             'wind_mean_10m', point=point)
+                        point_values_eu_eps[i, 1:, :, 1] = read_forecast_data('icon-eu-eps', old_run_date,
+                                                                             'vmax_10m', point=point)
+                    elif var == 'vmax_10m':
+                        point_values_eu_eps[i, 1:, :] = read_forecast_data('icon-eu-eps', old_run_date,
+                                                                          var, point=point)
+                    else:
+                        point_values_eu_eps[i, :, :] = read_forecast_data('icon-eu-eps', old_run_date, var, point=point)
+                except FileNotFoundError:
+                    point_values_eu_eps[i, :, :] = -100
+                    print('-- icon-eu-eps forecast not found --')
+
+
+            # get forecast data from icon-global-eps #
+
+            if extend_with_global:
+                try:
+                    point_values_global_eps[i, :, :] = read_forecast_data('icon-global-eps', old_run_date, var,
+                                                                          point=point)[-5:, :]
+                except FileNotFoundError:
+                    point_values_global_eps[i, :, :] = -100
+                    print('-- icon-global-eps forecast not found --')
+
+            if models == 'icon-global-eps':
+                try:
+                    point_values_global_eps[i, :, :] = read_forecast_data('icon-global-eps', old_run_date, var,
+                                                                          point=point)
+                except FileNotFoundError:
+                    point_values_global_eps[i, :, :] = -100
+                    print('-- icon-global-eps forecast not found --')
+
+
+        # calculate y axis limits #
+
+        if models == 'both-eps':
+            y_axis_range['min'] = np.nanmin(point_values_eu_eps)
+            y_axis_range['max'] = np.nanmax(point_values_eu_eps)
+        if extend_with_global:
+            if np.nanmin(point_values_global_eps) < y_axis_range['min']:
+                y_axis_range['min'] = np.nanmin(point_values_global_eps)
+            if np.nanmax(point_values_global_eps) > y_axis_range['max']:
+                y_axis_range['max'] = np.nanmax(point_values_global_eps)
+        if models == 'icon-global-eps':
+            y_axis_range['min'] = np.nanmin(point_values_global_eps)
+            y_axis_range['max'] = np.nanmax(point_values_global_eps)
+
+        y_axis_range = fit_y_axis_to_data(var, y_axis_range, point['name'])
+
+
+        # main loop 2 in this function, every iteration makes one plot #
+
+        path = dict(base = '/')
+        for i, lead_time in enumerate(lead_times):
+            if models == 'both-eps':
+                fcst_hours_list_eu = get_fcst_hours_list('icon-eu-eps')
+                #if var == 'vmax_10m':
+                #    fcst_hours_list_eu = fcst_hours_list_eu[1:]
+            elif models == 'icon-global-eps':
+                fcst_hours_list_eu = None
+                fcst_hours_list_global = get_fcst_hours_list('icon-global-eps')
+            if extend_with_global:
+                fcst_hours_list_global = get_fcst_hours_list('icon-global-eps_eu-extension')
+            else:
+                fcst_hours_list_global = None
+
+            time = datetime.datetime(date['year'], date['month'], date['day'], date['hour'])
+            time -= datetime.timedelta(0, 3600 * lead_time)
+            date_run = dict(year = time.year, month = time.month, day = time.day, hour = time.hour)
+
+
+            # make plot path #
+
+            if making_comparison_plots:
+                temp_subdir = 'data/plots/experimental/meteogram_boxplot/forecast/comparison/{:03}h_ago/'.format(
+                               lead_time)
+            else:
+                temp_subdir = 'data/plots/experimental/meteogram_boxplot/forecast/latest/'
+
+            temp_subdir = temp_subdir + point['name']
+            if not os.path.isdir(path['base'] + temp_subdir):
+                os.mkdir(path['base'] + temp_subdir)
+            path['plots'] = temp_subdir + '/'
+
+            if making_comparison_plots:
+                filename = 'meteogram_boxplot_{:03}h_ago_{}_{}'.format(lead_time, var, point['name'])
+            else:
+                filename = 'meteogram_boxplot_latest_{}_{}'.format(var, point['name'])
+
+
+            # calculate percentiles #
+
+            # data_percentiles_eu: 65 timesteps x 7 percentiles
+            # data_percentiles_global: 70/5 timesteps x 7 percentiles
+            if models == 'both-eps':
+                data_percentiles_eu_eps = np.percentile(point_values_eu_eps[i, :, :],
+                                                        [0,10,25,50,75,90,100], axis = 1).T
+                if var == 'prec_rate' or var == 'direct_rad' or var == 'diffuse_rad':
+                    fcst_hours_list_eu, data_percentiles_eu_eps = \
+                        expand_time_avg_data('icon-eu-eps', fcst_hours_list_eu, data_percentiles_eu_eps)
+                elif var == 'wind_10m':
+                    data_percentiles_eu_eps = np.moveaxis(data_percentiles_eu_eps, 0, 2)
+            else:
+                data_percentiles_eu_eps = None
+            if extend_with_global:
+                data_percentiles_global_eps = np.percentile(point_values_global_eps[i, :, :], 
+                                                            [0,10,25,50,75,90,100], axis = 1).T
+                if var == 'prec_rate':
+                    fcst_hours_list_global, data_percentiles_global_eps = \
+                        expand_time_avg_data('icon-global-eps_eu-extension', fcst_hours_list_global,
+                                             data_percentiles_global_eps)
+            elif models == 'icon-global-eps':
+                data_percentiles_global_eps = np.percentile(point_values_global_eps[i, :, :], 
+                                                            [0,10,25,50,75,90,100], axis = 1).T
+                if var == 'prec_rate':
+                    fcst_hours_list_global, data_percentiles_global_eps = \
+                        expand_time_avg_data('icon-global-eps', fcst_hours_list_global, data_percentiles_global_eps)
+            else:
+                data_percentiles_global_eps = None
+
+
+            meta = get_variable_title_unit(var)
+
+
+            # plotting #
+
+            plot_in_magics_boxplot(path, date_run, point, var, meta, y_axis_range, filename,
+                                   fcst_hours_list_eu, fcst_hours_list_global,
+                                   data_percentiles_eu_eps, data_percentiles_global_eps,
+                                   models, extend_with_global, making_comparison_plots, lead_time)
+        del y_axis_range
+
+    return
+
+########################################################################################################################
+########################################################################################################################
+########################################################################################################################
+
+def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
+                           fcst_hours_list_eu, fcst_hours_list_global,
+                           data_percentiles_eu, data_percentiles_global,
+                           models, extend_with_global, making_comparison_plots, lead_time):
 
     run_time = datetime.datetime(date['year'], date['month'], date['day'], date['hour'])
-    timeshift = get_timeshift()
+    if models == 'both-eps':
+        timeshift = get_timeshift()
+    elif models == 'icon-global-eps':
+        timeshift = 0
 
-    time_start = run_time + datetime.timedelta(0, 3600 * int(fcst_hours_list_eu[0] - 1 + timeshift))
-    if with_long_time_axis:
-        time_end   = run_time + datetime.timedelta(0, 3600 * int(fcst_hours_list_global[-1] + 3 + timeshift))
-    else:
-        time_end   = run_time + datetime.timedelta(0, 3600 * int(fcst_hours_list_eu[-1] + 3 + timeshift))
+    time_start = run_time + datetime.timedelta(0, 3600 * int(-1 + timeshift))
+    time_end   = run_time + datetime.timedelta(0, 3600 * (183 + timeshift))
 
-    if not include_global and with_long_time_axis:
-        shading_area_time = [str(run_time + datetime.timedelta(0,3600 * int(fcst_hours_list_global[-1] + 3 - 24*1.25\
-                                                                            + timeshift)))]
-
-    if var == 'vmax_10m':
-        fcst_hours_list_eu = fcst_hours_list_eu[1:]
+    if not extend_with_global:
+        shading_area_time = [str(run_time + datetime.timedelta(0,3600 * int(183 - 24*1.25 + timeshift)))]
 
     if var == 't_2m':
-        fcst_hours_list_eu_6h = [x for x in fcst_hours_list_eu if x % 6 == 0]
-        fcst_hours_list_eu_1h = [x for x in fcst_hours_list_eu if x not in fcst_hours_list_eu_6h]
+        if timeshift == 0:
+            t2m_6h_times_str = '0,6,12,18 UTC'
+        if timeshift == 1:
+            t2m_6h_times_str = '1,7,13,19 CET'
+        if timeshift == 2:
+            t2m_6h_times_str = '2,8,14,20 CEST'
 
-        dates_eu_6h = []
-        for time_step in fcst_hours_list_eu_6h:
-            dates_eu_6h.append(str(run_time + datetime.timedelta(0, 3600 * int(time_step + timeshift))))
-        dates_eu_1h = []
-        for time_step in fcst_hours_list_eu_1h:
-            dates_eu_1h.append(str(run_time + datetime.timedelta(0, 3600 * int(time_step + timeshift))))            
+    if models == 'both-eps':
+        if var == 't_2m':
+            fcst_hours_list_eu_6h = [x for x in fcst_hours_list_eu if x % 6 == 0]
+            fcst_hours_list_eu_1h = [x for x in fcst_hours_list_eu if x not in fcst_hours_list_eu_6h]
 
-        data_percentiles_eu_6h = data_percentiles_eu[[list(fcst_hours_list_eu).index(x) for x in fcst_hours_list_eu_6h]]
-        data_percentiles_eu_1h = data_percentiles_eu[[list(fcst_hours_list_eu).index(x) for x in fcst_hours_list_eu_1h]]
+            dates_eu_6h = []
+            for time_step in fcst_hours_list_eu_6h:
+                dates_eu_6h.append(str(run_time + datetime.timedelta(0, 3600 * (time_step + timeshift))))
+            dates_eu_1h = []
+            for time_step in fcst_hours_list_eu_1h:
+                dates_eu_1h.append(str(run_time + datetime.timedelta(0, 3600 * (time_step + timeshift))))            
 
-    elif var == 'wind_10m' or var == 'mslp' or var == 'clct' or var == 'prec_sum' or var == 'vmax_10m' or var == 'tqv'\
-     or var == 't_850hPa' or var == 'gph_500hPa' or var == 'wind_850hPa' or var == 'shear_0-6km'\
-     or var == 'lapse_rate_850hPa-500hPa':
-        if var == 'vmax_10m':
-            timerangeshift = 0.5
+            data_percentiles_eu_6h = data_percentiles_eu[[list(fcst_hours_list_eu).index(x)\
+                                                          for x in fcst_hours_list_eu_6h]]
+            data_percentiles_eu_1h = data_percentiles_eu[[list(fcst_hours_list_eu).index(x)\
+                                                          for x in fcst_hours_list_eu_1h]]
+
+        elif var == 'prec_rate' or var == 'direct_rad' or var == 'diffuse_rad':
+            dates_eu_1h = []
+            for time_step in range(1,120+1,1):
+                dates_eu_1h.append(str(run_time + datetime.timedelta(0, 3600 * (time_step + timeshift - 0.5))))
+
+        elif var == 'wind_10m':
+            data_percentiles_eu[0,:,1] = -100
+            dates_eu_mean = []
+            dates_eu_gust = []
+            for time_step in fcst_hours_list_eu:
+                dates_eu_mean.append(str(run_time + datetime.timedelta(0, 3600 * (time_step + timeshift))))
+                dates_eu_gust.append(str(run_time + datetime.timedelta(0, 3600 * (time_step + timeshift - 0.5))))
+
         else:
-            timerangeshift = 0.0
-        dates_eu_all = []
-        for time_step in fcst_hours_list_eu:
-            dates_eu_all.append(str(run_time + datetime.timedelta(0, int(3600 * (time_step + timeshift\
-                                                                                 + timerangeshift)))))
+            if var == 'vmax_10m':
+                timerangeshift = -0.5
+                data_percentiles_eu[0,:] = -100
+            else:
+                # a lot of icon-eu-eps variables fall into this category #
+                timerangeshift = 0.0
+            dates_eu_all = []
+            for time_step in fcst_hours_list_eu:
+                dates_eu_all.append(str(run_time + datetime.timedelta(0, 3600 * (time_step + timeshift\
+                                                                                     + timerangeshift))))
 
-    elif var == 'prec_rate' or var == 'direct_rad' or var == 'diffuse_rad':
-        dates_eu_all = []
-        for i in range(len(fcst_hours_list_eu)-1):
-            dates_eu_all.append(str(run_time + datetime.timedelta(0,\
-                int(3600 * ((fcst_hours_list_eu[i] + fcst_hours_list_eu[i+1]) / 2 + timeshift) ))))
-
-    if include_global and (var == 't_2m' or var == 'prec_rate' or var == 'prec_sum' or var == 'wind_10m'\
-     or var == 'clct'):
+    if extend_with_global:
         dates_global = []
-        if var == 't_2m' or var == 'wind_10m' or var == 'clct' or var == 'prec_sum':
+        if var == 'prec_rate':
+            for time_step in range(121,180+1,1):
+                dates_global.append(str(run_time + datetime.timedelta(0, 3600 * (time_step + timeshift - 0.5))))
+        else:
+            # t_2m, prec_sum, clct #
             for time_step in fcst_hours_list_global:
-                dates_global.append(str(run_time + datetime.timedelta(0, 3600 * int(time_step + timeshift))))
+                dates_global.append(str(run_time + datetime.timedelta(0, 3600 * (time_step + timeshift))))
+
+    if models == 'icon-global-eps':
+        if var == 't_2m':
+            fcst_hours_list_global_6h = [x for x in fcst_hours_list_global if x % 6 == 0]
+            fcst_hours_list_global_1h = [x for x in fcst_hours_list_global if x not in fcst_hours_list_global_6h]
+
+            dates_global_6h = []
+            for time_step in fcst_hours_list_global_6h:
+                dates_global_6h.append(str(run_time + datetime.timedelta(0, 3600 * (time_step + timeshift))))
+            dates_global_1h = []
+            for time_step in fcst_hours_list_global_1h:
+                dates_global_1h.append(str(run_time + datetime.timedelta(0, 3600 * (time_step + timeshift))))            
+
+            data_percentiles_global_6h = data_percentiles_global[[list(fcst_hours_list_global).index(x)\
+                                                                  for x in fcst_hours_list_global_6h]]
+            data_percentiles_global_1h = data_percentiles_global[[list(fcst_hours_list_global).index(x)\
+                                                                  for x in fcst_hours_list_global_1h]]
+
         elif var == 'prec_rate':
+            dates_global = []
+            for time_step in range(1,180+1,1):
+                dates_global.append(str(run_time + datetime.timedelta(0, 3600 * (time_step + timeshift - 0.5))))
+
+        else:
+            # prec_sum, wind_10m, clct #
+            dates_global = []
             for time_step in fcst_hours_list_global:
-                dates_global.append(str(run_time + datetime.timedelta(0, 3600 * int(time_step - 6 + timeshift))))
+                dates_global.append(str(run_time + datetime.timedelta(0, 3600 * (time_step + timeshift))))
 
 
     output_layout = magics.output(
@@ -122,7 +392,6 @@ def plot_in_magics_boxplot(path, date, pointname, var, meta, y_axis_range, filen
             axis_grid = 'on',
             axis_type = 'regular',
             axis_tick_label_height = 0.7,
-            axis_tick_label_colour = 'charcoal',
             axis_grid_colour = 'charcoal',
             axis_grid_thickness = 1,
             axis_grid_line_style='dash',
@@ -146,417 +415,637 @@ def plot_in_magics_boxplot(path, date, pointname, var, meta, y_axis_range, filen
     ########################################################################
 
     width_1h = 0.8
+    if models == 'both-eps':
 
-    if var == 't_2m':
-        bar_minmax_eu_6h = magics.mgraph(
-                graph_type = 'bar',
-                graph_bar_colour = 'black',
-                graph_bar_width = 3600 * 0.05,
-            )
-        data_minmax_eu_6h = magics.minput(
-                input_x_type = 'date',
-                input_date_x_values = dates_eu_6h,
-                input_y_values = data_percentiles_eu_6h[:,0],
-                input_y2_values = data_percentiles_eu_6h[:,6],
-            )
+        if var == 't_2m':
+            bar_minmax_eu_6h = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'black',
+                    graph_bar_width = 3600 * 0.05,
+                )
+            data_minmax_eu_6h = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_eu_6h,
+                    input_y_values = data_percentiles_eu_6h[:,0],
+                    input_y2_values = data_percentiles_eu_6h[:,6],
+                )
 
-        bar_p1090_eu_6h = magics.mgraph(
-                graph_type = 'bar',
-                graph_bar_colour = 'rgb(0, 242, 209)', # bright turquoise
-                graph_bar_width = 3600 * 0.5,
-            )
-        data_p1090_eu_6h = magics.minput(
-                input_x_type = 'date',
-                input_date_x_values = dates_eu_6h,
-                input_y_values = data_percentiles_eu_6h[:,1],
-                input_y2_values = data_percentiles_eu_6h[:,5],
-            )
+            bar_p1090_eu_6h = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'rgb(0, 242, 209)', # bright turquoise
+                    graph_bar_width = 3600 * 0.5,
+                )
+            data_p1090_eu_6h = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_eu_6h,
+                    input_y_values = data_percentiles_eu_6h[:,1],
+                    input_y2_values = data_percentiles_eu_6h[:,5],
+                )
 
-        bar_p2575_eu_6h = magics.mgraph(
-                graph_type = 'bar',
-                graph_bar_colour = 'rgb(0, 242, 209)', # bright turquoise
-                graph_bar_width = 3600 * width_1h,
-                legend = 'on',
-                legend_user_text = '<font colour="black"> ICON-EU-EPS (20km): 2,8,14,20 CEST</font>'
-            )
-        data_p2575_eu_6h = magics.minput(
-                input_x_type = 'date',
-                input_date_x_values = dates_eu_6h,
-                input_y_values = data_percentiles_eu_6h[:,2],
-                input_y2_values = data_percentiles_eu_6h[:,4],
-            )
+            bar_p2575_eu_6h = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'rgb(0, 242, 209)', # bright turquoise
+                    graph_bar_width = 3600 * width_1h,
+                    legend = 'on',
+                    legend_user_text = '<font colour="black"> ICON-EU-EPS (20km): {}</font>'.format(t2m_6h_times_str)
+                )
+            data_p2575_eu_6h = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_eu_6h,
+                    input_y_values = data_percentiles_eu_6h[:,2],
+                    input_y2_values = data_percentiles_eu_6h[:,4],
+                )
 
-        bar_median_eu_6h = magics.mgraph(
-                graph_type = 'bar',
-                graph_bar_colour = 'black',
-                graph_bar_width = 3600 * width_1h,
-            )
-        data_median_eu_6h = magics.minput(
-                input_x_type = 'date',
-                input_date_x_values = dates_eu_6h,
-                input_y_values  = data_percentiles_eu_6h[:,3] - (y_axis_range['max'] - y_axis_range['min']) / 400.,
-                input_y2_values = data_percentiles_eu_6h[:,3] + (y_axis_range['max'] - y_axis_range['min']) / 400.,
-            )
-
-    ########################################################################
-
-        bar_minmax_eu_1h = magics.mgraph(
-                graph_type = 'bar',
-                graph_bar_colour = 'black',
-                graph_bar_width = 3600 * 0.05,
-            )
-        data_minmax_eu_1h = magics.minput(
-                input_x_type = 'date',
-                input_date_x_values = dates_eu_1h,
-                input_y_values = data_percentiles_eu_1h[:,0],
-                input_y2_values = data_percentiles_eu_1h[:,6],
-            )
-
-        bar_p1090_eu_1h = magics.mgraph(
-                graph_type = 'bar',
-                graph_bar_colour = 'rgb(0, 150, 130)', # KIT turquoise
-                graph_bar_width = 3600 * 0.5,
-            )
-        data_p1090_eu_1h = magics.minput(
-                input_x_type = 'date',
-                input_date_x_values = dates_eu_1h,
-                input_y_values = data_percentiles_eu_1h[:,1],
-                input_y2_values = data_percentiles_eu_1h[:,5],
-            )
-
-        bar_p2575_eu_1h = magics.mgraph(
-                graph_type = 'bar',
-                graph_bar_colour = 'rgb(0, 150, 130)', # KIT turquoise
-                graph_bar_width = 3600 * width_1h,
-                legend = 'on',
-                legend_user_text = '<font colour="black"> ICON-EU-EPS (20km): Other times</font>'
-            )
-        data_p2575_eu_1h = magics.minput(
-                input_x_type = 'date',
-                input_date_x_values = dates_eu_1h,
-                input_y_values = data_percentiles_eu_1h[:,2],
-                input_y2_values = data_percentiles_eu_1h[:,4],
-            )
-
-        bar_median_eu_1h = magics.mgraph(
-                graph_type = 'bar',
-                graph_bar_colour = 'black',
-                graph_bar_width = 3600 * width_1h,
-            )
-        data_median_eu_1h = magics.minput(
-                input_x_type = 'date',
-                input_date_x_values = dates_eu_1h,
-                input_y_values = data_percentiles_eu_1h[:,3] - (y_axis_range['max'] - y_axis_range['min']) / 400.,
-                input_y2_values = data_percentiles_eu_1h[:,3] + (y_axis_range['max'] - y_axis_range['min']) / 400.,
-            )
+            bar_median_eu_6h = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'black',
+                    graph_bar_width = 3600 * width_1h,
+                )
+            data_median_eu_6h = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_eu_6h,
+                    input_y_values  = data_percentiles_eu_6h[:,3] - (y_axis_range['max'] - y_axis_range['min']) / 400.,
+                    input_y2_values = data_percentiles_eu_6h[:,3] + (y_axis_range['max'] - y_axis_range['min']) / 400.,
+                )
 
     ########################################################################
 
-    if var == 'wind_10m' or var == 'mslp' or var == 'clct' or var == 'prec_sum' or var == 'vmax_10m' or var == 'tqv'\
-     or var == 't_850hPa' or var == 'gph_500hPa' or var == 'wind_850hPa' or var == 'shear_0-6km'\
-     or var == 'lapse_rate_850hPa-500hPa':
-        bar_minmax_eu_all = magics.mgraph(
-                graph_type = 'bar',
-                graph_bar_colour = 'black',
-                graph_bar_width = 3600 * 0.05,
-            )
-        data_minmax_eu_all = magics.minput(
-                input_x_type = 'date',
-                input_date_x_values = dates_eu_all,
-                input_y_values = data_percentiles_eu[:,0],
-                input_y2_values = data_percentiles_eu[:,6],
-            )
+            bar_minmax_eu_1h = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'black',
+                    graph_bar_width = 3600 * 0.05,
+                )
+            data_minmax_eu_1h = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_eu_1h,
+                    input_y_values = data_percentiles_eu_1h[:,0],
+                    input_y2_values = data_percentiles_eu_1h[:,6],
+                )
 
-        bar_p1090_eu_all = magics.mgraph(
-                graph_type = 'bar',
-                graph_bar_colour = 'rgb(0, 150, 130)', # KIT turquoise
-                graph_bar_width = 3600 * 0.5,
-            )
-        data_p1090_eu_all = magics.minput(
-                input_x_type = 'date',
-                input_date_x_values = dates_eu_all,
-                input_y_values = data_percentiles_eu[:,1],
-                input_y2_values = data_percentiles_eu[:,5],
-            )
+            bar_p1090_eu_1h = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'rgb(0, 150, 130)', # KIT turquoise
+                    graph_bar_width = 3600 * 0.5,
+                )
+            data_p1090_eu_1h = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_eu_1h,
+                    input_y_values = data_percentiles_eu_1h[:,1],
+                    input_y2_values = data_percentiles_eu_1h[:,5],
+                )
 
-        bar_p2575_eu_all = magics.mgraph(
-                graph_type = 'bar',
-                graph_bar_colour = 'rgb(0, 150, 130)', # KIT turquoise
-                graph_bar_width = 3600 * width_1h,
-                legend = 'on',
-                legend_user_text = '<font colour="black"> ICON-EU-EPS (20km)</font>'
-            )
-        data_p2575_eu_all = magics.minput(
-                input_x_type = 'date',
-                input_date_x_values = dates_eu_all,
-                input_y_values = data_percentiles_eu[:,2],
-                input_y2_values = data_percentiles_eu[:,4],
-            )
+            bar_p2575_eu_1h = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'rgb(0, 150, 130)', # KIT turquoise
+                    graph_bar_width = 3600 * width_1h,
+                    legend = 'on',
+                    legend_user_text = '<font colour="black"> ICON-EU-EPS (20km): Other times</font>'
+                )
+            data_p2575_eu_1h = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_eu_1h,
+                    input_y_values = data_percentiles_eu_1h[:,2],
+                    input_y2_values = data_percentiles_eu_1h[:,4],
+                )
 
-        bar_median_eu_all = magics.mgraph(
-                graph_type = 'bar',
-                graph_bar_colour = 'black',
-                graph_bar_width = 3600 * width_1h,
-            )
-        data_median_eu_all = magics.minput(
-                input_x_type = 'date',
-                input_date_x_values = dates_eu_all,
-                input_y_values = data_percentiles_eu[:,3] - (y_axis_range['max'] - y_axis_range['min']) / 400.,
-                input_y2_values = data_percentiles_eu[:,3] + (y_axis_range['max'] - y_axis_range['min']) / 400.,
-            )
+            bar_median_eu_1h = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'black',
+                    graph_bar_width = 3600 * width_1h,
+                )
+            data_median_eu_1h = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_eu_1h,
+                    input_y_values = data_percentiles_eu_1h[:,3] - (y_axis_range['max'] - y_axis_range['min']) / 400.,
+                    input_y2_values = data_percentiles_eu_1h[:,3] + (y_axis_range['max'] - y_axis_range['min']) / 400.,
+                )
 
     ########################################################################
 
-    if include_global \
-     and (var == 't_2m' or var == 'prec_rate' or var == 'prec_sum' or var == 'wind_10m' or var == 'clct'):
-        bar_minmax_global = magics.mgraph(
-                graph_type = 'bar',
-                graph_bar_colour = 'black',
-                graph_bar_width = 3600 * 0.05,
-            )
-        data_minmax_global = magics.minput(
-                input_x_type = 'date',
-                input_date_x_values = dates_global,
-                input_y_values = data_percentiles_global[:,0],
-                input_y2_values = data_percentiles_global[:,6],
-            )
+        elif var == 'prec_rate' or var == 'direct_rad' or var == 'diffuse_rad':
+            bar_minmax_eu_1h = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'black',
+                    graph_bar_width = 3600 * 0.05,
+                )
+            data_minmax_eu_1h = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_eu_1h,
+                    input_y_values = data_percentiles_eu[:,0],
+                    input_y2_values = data_percentiles_eu[:,6],
+                )
 
-        bar_p1090_global = magics.mgraph(
-                graph_type = 'bar',
-                graph_bar_colour = 'rgb(88, 217, 34)', # green
-                graph_bar_width = 3600 * 0.6,
-            )
-        data_p1090_global = magics.minput(
-                input_x_type = 'date',
-                input_date_x_values = dates_global,
-                input_y_values = data_percentiles_global[:,1],
-                input_y2_values = data_percentiles_global[:,5],
-            )
+            bar_p1090_eu_1h = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'rgb(0, 150, 130)', # KIT turquoise
+                    graph_bar_width = 3600 * 0.5,
+                )
+            data_p1090_eu_1h = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_eu_1h,
+                    input_y_values = data_percentiles_eu[:,1],
+                    input_y2_values = data_percentiles_eu[:,5],
+                )
 
-        bar_p2575_global = magics.mgraph(
-                graph_type = 'bar',
-                graph_bar_colour = 'rgb(88, 217, 34)', # green
-                graph_bar_width = 3600 * 1.0,
-                legend = 'on',
-                legend_user_text = '<font colour="black"> ICON-Global-EPS (40km)</font>'
-            )
-        data_p2575_global = magics.minput(
-                input_x_type = 'date',
-                input_date_x_values = dates_global,
-                input_y_values = data_percentiles_global[:,2],
-                input_y2_values = data_percentiles_global[:,4],
-            )
+            bar_p2575_eu_1h = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'rgb(0, 150, 130)', # KIT turquoise
+                    graph_bar_width = 3600 * width_1h,
+                    legend = 'on',
+                    legend_user_text = '<font colour="black"> ICON-EU-EPS (20km)</font>'
+                )
+            data_p2575_eu_1h = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_eu_1h,
+                    input_y_values = data_percentiles_eu[:,2],
+                    input_y2_values = data_percentiles_eu[:,4],
+                )
 
-        bar_median_global = magics.mgraph(
-                graph_type = 'bar',
-                graph_bar_colour = 'black',
-                graph_bar_width = 3600 * 1.0,
-            )
-        data_median_global = magics.minput(
-                input_x_type = 'date',
-                input_date_x_values = dates_global,
-                input_y_values  = data_percentiles_global[:,3] - (y_axis_range['max'] - y_axis_range['min']) / 400.,
-                input_y2_values = data_percentiles_global[:,3] + (y_axis_range['max'] - y_axis_range['min']) / 400.,
-            )
-
-    ########################################################################
-    ########################################################################
-
-    if var == 'prec_rate' or var == 'direct_rad' or var == 'diffuse_rad':
-        bar_minmax_eu_1h = magics.mgraph(
-                graph_type = 'bar',
-                graph_bar_colour = 'black',
-                graph_bar_width = 3600 * 0.15,
-            )
-        data_minmax_eu_1h = magics.minput(
-                input_x_type = 'date',
-                input_date_x_values = dates_eu_all[:48],
-                input_y_values  = data_percentiles_eu[:48,0],
-                input_y2_values = data_percentiles_eu[:48,6],
-            )
-        bar_p1090_eu_1h = magics.mgraph(
-                graph_type = 'bar',
-                graph_bar_colour = 'rgb(0, 150, 130)', # KIT turquoise
-                graph_bar_width = 3600 * 0.5,
-            )
-        data_p1090_eu_1h = magics.minput(
-                input_x_type = 'date',
-                input_date_x_values = dates_eu_all[:48],
-                input_y_values = data_percentiles_eu[:48,1],
-                input_y2_values = data_percentiles_eu[:48,5],
-            )
-        bar_p2575_eu_1h = magics.mgraph(
-                graph_type = 'bar',
-                graph_bar_colour = 'rgb(0, 150, 130)', # KIT turquoise
-                graph_bar_width = 3600 * 1.0,
-            )
-        data_p2575_eu_1h = magics.minput(
-                input_x_type = 'date',
-                input_date_x_values = dates_eu_all[:48],
-                input_y_values = data_percentiles_eu[:48,2],
-                input_y2_values = data_percentiles_eu[:48,4],
-            )
-        bar_median_eu_1h = magics.mgraph(
-                graph_type = 'bar',
-                graph_bar_colour = 'black',
-                graph_bar_width = 3600 * 1.0,
-            )
-        data_median_eu_1h = magics.minput(
-                input_x_type = 'date',
-                input_date_x_values = dates_eu_all[:48],
-                input_y_values  = data_percentiles_eu[:48,3] - (y_axis_range['max'] - y_axis_range['min']) / 400.,
-                input_y2_values = data_percentiles_eu[:48,3] + (y_axis_range['max'] - y_axis_range['min']) / 400.,
-            )
+            bar_median_eu_1h = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'black',
+                    graph_bar_width = 3600 * width_1h,
+                )
+            data_median_eu_1h = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_eu_1h,
+                    input_y_values = data_percentiles_eu[:,3] - (y_axis_range['max'] - y_axis_range['min']) / 400.,
+                    input_y2_values = data_percentiles_eu[:,3] + (y_axis_range['max'] - y_axis_range['min']) / 400.,
+                )
 
     ########################################################################
 
-        bar_minmax_eu_3h = magics.mgraph(
-                graph_type = 'bar',
-                graph_bar_colour = 'black',
-                graph_bar_width = 3600 * 0.15,
-            )
-        data_minmax_eu_3h = magics.minput(
-                input_x_type = 'date',
-                input_date_x_values = dates_eu_all[48:56],
-                input_y_values  = data_percentiles_eu[48:56,0],
-                input_y2_values = data_percentiles_eu[48:56,6],
-            )
-        bar_p1090_eu_3h = magics.mgraph(
-                graph_type = 'bar',
-                graph_bar_colour = 'rgb(0, 150, 130)', # KIT turquoise
-                graph_bar_width = 3600 * 1.5,
-            )
-        data_p1090_eu_3h = magics.minput(
-                input_x_type = 'date',
-                input_date_x_values = dates_eu_all[48:56],
-                input_y_values = data_percentiles_eu[48:56,1],
-                input_y2_values = data_percentiles_eu[48:56,5],
-            )
-        bar_p2575_eu_3h = magics.mgraph(
-                graph_type = 'bar',
-                graph_bar_colour = 'rgb(0, 150, 130)', # KIT turquoise
-                graph_bar_width = 3600 * 3.0,
-            )
-        data_p2575_eu_3h = magics.minput(
-                input_x_type = 'date',
-                input_date_x_values = dates_eu_all[48:56],
-                input_y_values = data_percentiles_eu[48:56,2],
-                input_y2_values = data_percentiles_eu[48:56,4],
-            )
-        bar_median_eu_3h = magics.mgraph(
-                graph_type = 'bar',
-                graph_bar_colour = 'black',
-                graph_bar_width = 3600 * 3.0,
-            )
-        data_median_eu_3h = magics.minput(
-                input_x_type = 'date',
-                input_date_x_values = dates_eu_all[48:56],
-                input_y_values  = data_percentiles_eu[48:56,3] - (y_axis_range['max'] - y_axis_range['min']) / 400.,
-                input_y2_values = data_percentiles_eu[48:56,3] + (y_axis_range['max'] - y_axis_range['min']) / 400.,
-            )
+        elif var == 'wind_10m':
+            bar_minmax_eu_mean = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'black',
+                    graph_bar_width = 3600 * 0.05,
+                )
+            data_minmax_eu_mean = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_eu_mean,
+                    input_y_values = data_percentiles_eu[:,0,0],
+                    input_y2_values = data_percentiles_eu[:,6,0],
+                )
+
+            bar_p1090_eu_mean = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'rgb(0, 242, 209)', # bright turquoise
+                    graph_bar_width = 3600 * 0.5,
+                )
+            data_p1090_eu_mean = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_eu_mean,
+                    input_y_values = data_percentiles_eu[:,1,0],
+                    input_y2_values = data_percentiles_eu[:,5,0],
+                )
+
+            bar_p2575_eu_mean = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'rgb(0, 242, 209)', # bright turquoise
+                    graph_bar_width = 3600 * width_1h,
+                    legend = 'on',
+                    legend_user_text = '<font colour="black"> ICON-EU-EPS (20km): mean wind</font>'
+                )
+            data_p2575_eu_mean = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_eu_mean,
+                    input_y_values = data_percentiles_eu[:,2,0],
+                    input_y2_values = data_percentiles_eu[:,4,0],
+                )
+
+            bar_median_eu_mean = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'black',
+                    graph_bar_width = 3600 * width_1h,
+                )
+            data_median_eu_mean = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_eu_mean,
+                    input_y_values = data_percentiles_eu[:,3,0] - (y_axis_range['max'] - y_axis_range['min']) / 400.,
+                    input_y2_values = data_percentiles_eu[:,3,0] + (y_axis_range['max'] - y_axis_range['min']) / 400.,
+                )
 
     ########################################################################
 
-        bar_minmax_eu_6h = magics.mgraph(
-                graph_type = 'bar',
-                graph_bar_colour = 'black',
-                graph_bar_width = 3600 * 0.15,
-            )
-        data_minmax_eu_6h = magics.minput(
-                input_x_type = 'date',
-                input_date_x_values = dates_eu_all[56:],
-                input_y_values  = data_percentiles_eu[56:,0],
-                input_y2_values = data_percentiles_eu[56:,6],
-            )
-        bar_p1090_eu_6h = magics.mgraph(
-                graph_type = 'bar',
-                graph_bar_colour = 'rgb(0, 150, 130)', # KIT turquoise
-                graph_bar_width = 3600 * 3.0,
-            )
-        data_p1090_eu_6h = magics.minput(
-                input_x_type = 'date',
-                input_date_x_values = dates_eu_all[56:],
-                input_y_values = data_percentiles_eu[56:,1],
-                input_y2_values = data_percentiles_eu[56:,5],
-            )
-        bar_p2575_eu_6h = magics.mgraph(
-                graph_type = 'bar',
-                graph_bar_colour = 'rgb(0, 150, 130)', # KIT turquoise
-                graph_bar_width = 3600 * 6.0,
-                legend = 'on',
-                legend_user_text = '<font colour="black"> ICON-EU-EPS (20km)</font>'
-            )
-        data_p2575_eu_6h = magics.minput(
-                input_x_type = 'date',
-                input_date_x_values = dates_eu_all[56:],
-                input_y_values = data_percentiles_eu[56:,2],
-                input_y2_values = data_percentiles_eu[56:,4],
-            )
-        bar_median_eu_6h = magics.mgraph(
-                graph_type = 'bar',
-                graph_bar_colour = 'black',
-                graph_bar_width = 3600 * 6.0,
-            )
-        data_median_eu_6h = magics.minput(
-                input_x_type = 'date',
-                input_date_x_values = dates_eu_all[56:],
-                input_y_values  = data_percentiles_eu[56:,3] - (y_axis_range['max'] - y_axis_range['min']) / 400.,
-                input_y2_values = data_percentiles_eu[56:,3] + (y_axis_range['max'] - y_axis_range['min']) / 400.,
-            )
+            bar_minmax_eu_gust = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'black',
+                    graph_bar_width = 3600 * 0.05,
+                )
+            data_minmax_eu_gust = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_eu_gust,
+                    input_y_values = data_percentiles_eu[:,0,1],
+                    input_y2_values = data_percentiles_eu[:,6,1],
+                )
+
+            bar_p1090_eu_gust = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'rgb(0, 150, 130)', # KIT turquoise
+                    graph_bar_width = 3600 * 0.5,
+                )
+            data_p1090_eu_gust = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_eu_gust,
+                    input_y_values = data_percentiles_eu[:,1,1],
+                    input_y2_values = data_percentiles_eu[:,5,1],
+                )
+
+            bar_p2575_eu_gust = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'rgb(0, 150, 130)', # KIT turquoise
+                    graph_bar_width = 3600 * width_1h,
+                    legend = 'on',
+                    legend_user_text = '<font colour="black"> ICON-EU-EPS (20km): gust</font>'
+                )
+            data_p2575_eu_gust = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_eu_gust,
+                    input_y_values = data_percentiles_eu[:,2,1],
+                    input_y2_values = data_percentiles_eu[:,4,1],
+                )
+
+            bar_median_eu_gust = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'black',
+                    graph_bar_width = 3600 * width_1h,
+                )
+            data_median_eu_gust = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_eu_gust,
+                    input_y_values = data_percentiles_eu[:,3,1] - (y_axis_range['max'] - y_axis_range['min']) / 400.,
+                    input_y2_values = data_percentiles_eu[:,3,1] + (y_axis_range['max'] - y_axis_range['min']) / 400.,
+                )
 
     ########################################################################
 
-    if include_global and var == 'prec_rate':
-        bar_minmax_global = magics.mgraph(
-                graph_type = 'bar',
-                graph_bar_colour = 'black',
-                graph_bar_width = 3600 * 0.15,
-            )
-        data_minmax_global = magics.minput(
-                input_x_type = 'date',
-                input_date_x_values = dates_global,
-                input_y_values  = data_percentiles_global[:,0],
-                input_y2_values = data_percentiles_global[:,6],
-            )
-        bar_p1090_global = magics.mgraph(
-                graph_type = 'bar',
-                graph_bar_colour = 'rgb(88, 217, 34)', # green
-                graph_bar_width = 3600 * 6.0,
-            )
-        data_p1090_global = magics.minput(
-                input_x_type = 'date',
-                input_date_x_values = dates_global,
-                input_y_values  = data_percentiles_global[:,1],
-                input_y2_values = data_percentiles_global[:,5],
-            )
-        bar_p2575_global = magics.mgraph(
-                graph_type = 'bar',
-                graph_bar_colour = 'rgb(88, 217, 34)', # green
-                graph_bar_width = 3600 * 12.0,
-                legend = 'on',
-                legend_user_text = '<font colour="black"> ICON-Global-EPS (40km)</font>'
-            )
-        data_p2575_global = magics.minput(
-                input_x_type = 'date',
-                input_date_x_values = dates_global,
-                input_y_values  = data_percentiles_global[:,2],
-                input_y2_values = data_percentiles_global[:,4],
-            )
-        bar_median_global = magics.mgraph(
-                graph_type = 'bar',
-                graph_bar_colour = 'black',
-                graph_bar_width = 3600 * 12.0,
-            )
-        data_median_global = magics.minput(
-                input_x_type = 'date',
-                input_date_x_values = dates_global,
-                input_y_values  = data_percentiles_global[:,3] - (y_axis_range['max'] - y_axis_range['min']) / 400.,
-                input_y2_values = data_percentiles_global[:,3] + (y_axis_range['max'] - y_axis_range['min']) / 400.,
-            )
+        else:
+            bar_minmax_eu_all = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'black',
+                    graph_bar_width = 3600 * 0.05,
+                )
+            data_minmax_eu_all = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_eu_all,
+                    input_y_values = data_percentiles_eu[:,0],
+                    input_y2_values = data_percentiles_eu[:,6],
+                )
+
+            bar_p1090_eu_all = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'rgb(0, 150, 130)', # KIT turquoise
+                    graph_bar_width = 3600 * 0.5,
+                )
+            data_p1090_eu_all = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_eu_all,
+                    input_y_values = data_percentiles_eu[:,1],
+                    input_y2_values = data_percentiles_eu[:,5],
+                )
+
+            bar_p2575_eu_all = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'rgb(0, 150, 130)', # KIT turquoise
+                    graph_bar_width = 3600 * width_1h,
+                    legend = 'on',
+                    legend_user_text = '<font colour="black"> ICON-EU-EPS (20km)</font>'
+                )
+            data_p2575_eu_all = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_eu_all,
+                    input_y_values = data_percentiles_eu[:,2],
+                    input_y2_values = data_percentiles_eu[:,4],
+                )
+
+            bar_median_eu_all = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'black',
+                    graph_bar_width = 3600 * width_1h,
+                )
+            data_median_eu_all = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_eu_all,
+                    input_y_values = data_percentiles_eu[:,3] - (y_axis_range['max'] - y_axis_range['min']) / 400.,
+                    input_y2_values = data_percentiles_eu[:,3] + (y_axis_range['max'] - y_axis_range['min']) / 400.,
+                )
 
     ########################################################################
 
-    if not include_global and with_long_time_axis:
+    if extend_with_global:
+        if var == 'prec_rate':
+            bar_minmax_global = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'black',
+                    graph_bar_width = 3600 * 0.05,
+                )
+            data_minmax_global = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_global,
+                    input_y_values = data_percentiles_global[:,0],
+                    input_y2_values = data_percentiles_global[:,6],
+                )
+
+            bar_p1090_global = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'rgb(88, 217, 34)', # green
+                    graph_bar_width = 3600 * 0.5,
+                )
+            data_p1090_global = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_global,
+                    input_y_values = data_percentiles_global[:,1],
+                    input_y2_values = data_percentiles_global[:,5],
+                )
+
+            bar_p2575_global = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'rgb(88, 217, 34)', # green
+                    graph_bar_width = 3600 * width_1h,
+                    legend = 'on',
+                    legend_user_text = '<font colour="black"> ICON-Global-EPS (40km)</font>'
+                )
+            data_p2575_global = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_global,
+                    input_y_values = data_percentiles_global[:,2],
+                    input_y2_values = data_percentiles_global[:,4],
+                )
+
+            bar_median_global = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'black',
+                    graph_bar_width = 3600 * width_1h,
+                )
+            data_median_global = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_global,
+                    input_y_values  = data_percentiles_global[:,3] - (y_axis_range['max'] - y_axis_range['min']) / 400.,
+                    input_y2_values = data_percentiles_global[:,3] + (y_axis_range['max'] - y_axis_range['min']) / 400.,
+                )
+
+    ########################################################################
+
+        else:
+            bar_minmax_global = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'black',
+                    graph_bar_width = 3600 * 0.05,
+                )
+            data_minmax_global = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_global,
+                    input_y_values = data_percentiles_global[:,0],
+                    input_y2_values = data_percentiles_global[:,6],
+                )
+
+            bar_p1090_global = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'rgb(88, 217, 34)', # green
+                    graph_bar_width = 3600 * 0.5,
+                )
+            data_p1090_global = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_global,
+                    input_y_values = data_percentiles_global[:,1],
+                    input_y2_values = data_percentiles_global[:,5],
+                )
+
+            bar_p2575_global = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'rgb(88, 217, 34)', # green
+                    graph_bar_width = 3600 * width_1h,
+                    legend = 'on',
+                    legend_user_text = '<font colour="black"> ICON-Global-EPS (40km)</font>'
+                )
+            data_p2575_global = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_global,
+                    input_y_values = data_percentiles_global[:,2],
+                    input_y2_values = data_percentiles_global[:,4],
+                )
+
+            bar_median_global = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'black',
+                    graph_bar_width = 3600 * width_1h,
+                )
+            data_median_global = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_global,
+                    input_y_values  = data_percentiles_global[:,3] - (y_axis_range['max'] - y_axis_range['min']) / 400.,
+                    input_y2_values = data_percentiles_global[:,3] + (y_axis_range['max'] - y_axis_range['min']) / 400.,
+                )
+
+    ########################################################################
+
+    if models == 'icon-global-eps':
+        if var == 't_2m':
+            bar_minmax_global_1h = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'black',
+                    graph_bar_width = 3600 * 0.05,
+                )
+            data_minmax_global_1h = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_global_1h,
+                    input_y_values  = data_percentiles_global_1h[:,0],
+                    input_y2_values = data_percentiles_global_1h[:,6],
+                )
+            bar_p1090_global_1h = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'rgb(0, 150, 130)', # KIT turquoise
+                    graph_bar_width = 3600 * 0.5,
+                )
+            data_p1090_global_1h = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_global_1h,
+                    input_y_values  = data_percentiles_global_1h[:,1],
+                    input_y2_values = data_percentiles_global_1h[:,5],
+                )
+            bar_p2575_global_1h = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'rgb(0, 150, 130)', # KIT turquoise
+                    graph_bar_width = 3600 * width_1h,
+                    legend = 'on',
+                    legend_user_text = '<font colour="black"> ICON-Global-EPS (40km)</font>'
+                )
+            data_p2575_global_1h = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_global_1h,
+                    input_y_values  = data_percentiles_global_1h[:,2],
+                    input_y2_values = data_percentiles_global_1h[:,4],
+                )
+            bar_median_global_1h = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'black',
+                    graph_bar_width = 3600 * width_1h,
+                )
+            data_median_global_1h = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_global_1h,
+                    input_y_values  = data_percentiles_global_1h[:,3]\
+                                      - (y_axis_range['max'] - y_axis_range['min']) / 400.,
+                    input_y2_values = data_percentiles_global_1h[:,3]\
+                                      + (y_axis_range['max'] - y_axis_range['min']) / 400.,
+                )
+
+    ########################################################################
+
+            bar_minmax_global_6h = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'black',
+                    graph_bar_width = 3600 * 0.05,
+                )
+            data_minmax_global_6h = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_global_6h,
+                    input_y_values  = data_percentiles_global_6h[:,0],
+                    input_y2_values = data_percentiles_global_6h[:,6],
+                )
+            bar_p1090_global_6h = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'rgb(0, 242, 209)', # bright turquoise
+                    graph_bar_width = 3600 * 0.5,
+                )
+            data_p1090_global_6h = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_global_6h,
+                    input_y_values  = data_percentiles_global_6h[:,1],
+                    input_y2_values = data_percentiles_global_6h[:,5],
+                )
+            bar_p2575_global_6h = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'rgb(0, 242, 209)', # bright turquoise
+                    graph_bar_width = 3600 * width_1h,
+                    legend = 'on',
+                    legend_user_text = '<font colour="black"> ICON-Global-EPS (40km): {}</font>'.format(
+                                        t2m_6h_times_str)
+                )
+            data_p2575_global_6h = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_global_6h,
+                    input_y_values  = data_percentiles_global_6h[:,2],
+                    input_y2_values = data_percentiles_global_6h[:,4],
+                )
+            bar_median_global_6h = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'black',
+                    graph_bar_width = 3600 * width_1h,
+                )
+            data_median_global_6h = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_global_6h,
+                    input_y_values  = data_percentiles_global_6h[:,3]\
+                                      - (y_axis_range['max'] - y_axis_range['min']) / 400.,
+                    input_y2_values = data_percentiles_global_6h[:,3]\
+                                      + (y_axis_range['max'] - y_axis_range['min']) / 400.,
+                )
+
+    ########################################################################
+
+        elif var == 'prec_rate':
+            bar_minmax_global = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'black',
+                    graph_bar_width = 3600 * 0.05,
+                )
+            data_minmax_global = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_global,
+                    input_y_values  = data_percentiles_global[:,0],
+                    input_y2_values = data_percentiles_global[:,6],
+                )
+            bar_p1090_global = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'rgb(0, 150, 130)', # KIT turquoise
+                    graph_bar_width = 3600 * 0.5,
+                )
+            data_p1090_global = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_global,
+                    input_y_values  = data_percentiles_global[:,1],
+                    input_y2_values = data_percentiles_global[:,5],
+                )
+            bar_p2575_global = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'rgb(0, 150, 130)', # KIT turquoise
+                    graph_bar_width = 3600 * width_1h,
+                    legend = 'on',
+                    legend_user_text = '<font colour="black"> ICON-Global-EPS (40km)</font>'
+                )
+            data_p2575_global = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_global,
+                    input_y_values  = data_percentiles_global[:,2],
+                    input_y2_values = data_percentiles_global[:,4],
+                )
+            bar_median_global = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'black',
+                    graph_bar_width = 3600 * width_1h,
+                )
+            data_median_global = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_global,
+                    input_y_values  = data_percentiles_global[:,3] - (y_axis_range['max'] - y_axis_range['min']) / 400.,
+                    input_y2_values = data_percentiles_global[:,3] + (y_axis_range['max'] - y_axis_range['min']) / 400.,
+                )
+
+    ########################################################################
+
+        else:
+            bar_minmax_global = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'black',
+                    graph_bar_width = 3600 * 0.05,
+                )
+            data_minmax_global = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_global,
+                    input_y_values  = data_percentiles_global[:,0],
+                    input_y2_values = data_percentiles_global[:,6],
+                )
+            bar_p1090_global = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'rgb(0, 150, 130)', # KIT turquoise
+                    graph_bar_width = 3600 * 0.5,
+                )
+            data_p1090_global = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_global,
+                    input_y_values  = data_percentiles_global[:,1],
+                    input_y2_values = data_percentiles_global[:,5],
+                )
+            bar_p2575_global = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'rgb(0, 150, 130)', # KIT turquoise
+                    graph_bar_width = 3600 * width_1h,
+                    legend = 'on',
+                    legend_user_text = '<font colour="black"> ICON-Global-EPS (40km)</font>'
+                )
+            data_p2575_global = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_global,
+                    input_y_values  = data_percentiles_global[:,2],
+                    input_y2_values = data_percentiles_global[:,4],
+                )
+            bar_median_global = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'black',
+                    graph_bar_width = 3600 * width_1h,
+                )
+            data_median_global = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_global,
+                    input_y_values  = data_percentiles_global[:,3] - (y_axis_range['max'] - y_axis_range['min']) / 400.,
+                    input_y2_values = data_percentiles_global[:,3] + (y_axis_range['max'] - y_axis_range['min']) / 400.,
+                )
+
+    ########################################################################
+
+    if models == 'both-eps' and not extend_with_global:
         bar_shading_area = magics.mgraph(
                 graph_type = 'bar',
                 graph_shade = 'on',
@@ -574,7 +1063,7 @@ def plot_in_magics_boxplot(path, date, pointname, var, meta, y_axis_range, filen
 
     ########################################################################
 
-    if var == 't_2m' or var == 'mslp' or var == 't_850hPa' or var == 'lapse_rate_850hPa-500hPa':
+    if var == 't_2m' or var == 't_850hPa' or var == 'lapse_rate_850hPa-500hPa':
         ref_th = 5
     else:
         ref_th = 0
@@ -595,6 +1084,7 @@ def plot_in_magics_boxplot(path, date, pointname, var, meta, y_axis_range, filen
     else:
         init_timeline_th = 0
 
+    #if making_comparison_plots:
     time_init = time_start + datetime.timedelta(0, 3600 * int(lead_time + 1))
 
     init_timeline_line = magics.mgraph(
@@ -609,7 +1099,7 @@ def plot_in_magics_boxplot(path, date, pointname, var, meta, y_axis_range, filen
 
     ########################################################################
 
-    title_str = '{} in {}'.format(meta['var'], pointname)
+    title_str = '{} in {}'.format(meta['var'], point['name'])
     title = magics.mtext(
             text_line_1 = title_str,
             text_font_size = 1.0,
@@ -625,6 +1115,8 @@ def plot_in_magics_boxplot(path, date, pointname, var, meta, y_axis_range, filen
     ########################################################################
 
     initial_time = run_time.hour + timeshift
+    if timeshift == 0:
+        time_code = 'UTC'                           # UTC+1
     if timeshift == 1:
         time_code = 'CET'                           # UTC+1
     elif timeshift == 2:
@@ -701,7 +1193,7 @@ def plot_in_magics_boxplot(path, date, pointname, var, meta, y_axis_range, filen
     ########################################################################
 
     logo = magics.mimport(
-                    import_file_name = path['base'] + 'plots/logo/' + 'w2w_icon.png',
+                    import_file_name = path['base'] + 'data/plots/additional/' + 'w2w_icon.png',
                     import_x_position = 13.74,
                     import_y_position = 5.52,
                     import_height = 0.474,
@@ -710,19 +1202,29 @@ def plot_in_magics_boxplot(path, date, pointname, var, meta, y_axis_range, filen
 
     ########################################################################
 
-    if include_global \
-     and (var == 't_2m' or var == 'prec_rate' or var == 'prec_sum' or var == 'wind_10m' or var == 'clct'):
+    if models == 'both-eps':
         if var == 't_2m':
-            legend = magics.mlegend(
-                    legend_text_font_size = 0.7,
-                    legend_box_mode = 'positional',
-                    legend_box_x_position = 4.2,
-                    legend_box_y_position = 5.07,
-                    legend_box_x_length = 12.0,
-                    legend_box_y_length = 0.5,
-                    legend_entry_text_width = 90,
-                )
-        elif var == 'wind_10m' or var == 'clct' or var == 'prec_sum' or var == 'prec_rate':
+            if extend_with_global:
+                legend = magics.mlegend(
+                        legend_text_font_size = 0.7,
+                        legend_box_mode = 'positional',
+                        legend_box_x_position = 4.2,
+                        legend_box_y_position = 5.07,
+                        legend_box_x_length = 12.0,
+                        legend_box_y_length = 0.5,
+                        legend_entry_text_width = 90,
+                    )
+            else:
+                legend = magics.mlegend(
+                        legend_text_font_size = 0.7,
+                        legend_box_mode = 'positional',
+                        legend_box_x_position = 4.2,
+                        legend_box_y_position = 5.07,
+                        legend_box_x_length = 12.0,
+                        legend_box_y_length = 0.5,
+                        legend_entry_text_width = 90,
+                    )
+        elif extend_with_global:
             legend = magics.mlegend(
                     legend_text_font_size = 0.7,
                     legend_box_mode = 'positional',
@@ -732,7 +1234,18 @@ def plot_in_magics_boxplot(path, date, pointname, var, meta, y_axis_range, filen
                     legend_box_y_length = 0.5,
                     legend_entry_text_width = 90,
                 )
-    else:
+        else:
+            legend = magics.mlegend(
+                    legend_text_font_size = 0.7,
+                    legend_box_mode = 'positional',
+                    legend_box_x_position = 4.2,
+                    legend_box_y_position = 5.07,
+                    legend_box_x_length = 12.0,
+                    legend_box_y_length = 0.5,
+                    legend_entry_text_width = 90,
+                )
+
+    elif models == 'icon-global-eps':
         if var == 't_2m':
             legend = magics.mlegend(
                     legend_text_font_size = 0.7,
@@ -743,10 +1256,7 @@ def plot_in_magics_boxplot(path, date, pointname, var, meta, y_axis_range, filen
                     legend_box_y_length = 0.5,
                     legend_entry_text_width = 90,
                 )
-        elif var == 'wind_10m' or var == 'clct' or var == 'prec_sum' or var == 'mslp'\
-         or var == 'direct_rad' or var == 'diffuse_rad' or var == 'prec_rate' or var == 'vmax_10m'\
-         or var == 'tqv' or var == 't_850hPa' or var == 'gph_500hPa' or var == 'wind_850hPa'\
-         or var == 'shear_0-6km' or var == 'lapse_rate_850hPa-500hPa':
+        else:
             legend = magics.mlegend(
                     legend_text_font_size = 0.7,
                     legend_box_mode = 'positional',
@@ -759,267 +1269,131 @@ def plot_in_magics_boxplot(path, date, pointname, var, meta, y_axis_range, filen
 
     ########################################################################
 
-    if with_long_time_axis:
-        date1 = time_start - datetime.timedelta(0,3600 * time_start.hour)
-        if time_start.hour - timeshift + 1 <= 6:
-            date1 += datetime.timedelta(0,3600 * 12)
-        else:
-            date1 += datetime.timedelta(1,3600 * 12)
-
-        correction_start = 0
-        correction_end = 0
-        if time_start.hour - timeshift + 1 == 0:
-            factor = 2
-        elif time_start.hour - timeshift + 1 == 6:
-            factor = 1
-            correction_start = 0.2
-        elif time_start.hour - timeshift + 1 == 12:
-            factor = 4
-            correction_end = -0.4
-        elif time_start.hour - timeshift + 1 == 18:
-            factor = 3
-        else:
-            print(time_start.hour, timeshift)
-
-        spacing = 1.78
-        left_pos = 0.40 - timeshift * 0.11 + factor * spacing / 4
-        date1_label = magics.mtext(
-                text_line_1 = date1.strftime('%a., %d %b.'),
-                text_font_size = 0.8,
-                text_colour = 'black',
-                text_justification = 'centre',
-                text_mode = 'positional',
-                text_box_x_position = left_pos + 0 * spacing + correction_start,
-                text_box_y_position = 0.0,
-                text_box_x_length = 1.5,
-                text_box_y_length = 0.3,
-                text_border = 'off',
-            )
-
-        date2 = date1 + datetime.timedelta(1)
-        date2_label = magics.mtext(
-                text_line_1 = date2.strftime('%a., %d %b.'),
-                text_font_size = 0.8,
-                text_colour = 'black',
-                text_justification = 'centre',
-                text_mode = 'positional',
-                text_box_x_position = left_pos + 1 * spacing,
-                text_box_y_position = 0.0,
-                text_box_x_length = 1.5,
-                text_box_y_length = 0.3,
-                text_border = 'off',
-            )
-
-        date3 = date1 + datetime.timedelta(2)
-        date3_label = magics.mtext(
-                text_line_1 = date3.strftime('%a., %d %b.'),
-                text_font_size = 0.8,
-                text_colour = 'black',
-                text_justification = 'centre',
-                text_mode = 'positional',
-                text_box_x_position = left_pos + 2 * spacing,
-                text_box_y_position = 0.0,
-                text_box_x_length = 1.5,
-                text_box_y_length = 0.3,
-                text_border = 'off',
-            )
-
-        date4 = date1 + datetime.timedelta(3)
-        date4_label = magics.mtext(
-                text_line_1 = date4.strftime('%a., %d %b.'),
-                text_font_size = 0.8,
-                text_colour = 'black',
-                text_justification = 'centre',
-                text_mode = 'positional',
-                text_box_x_position = left_pos + 3 * spacing,
-                text_box_y_position = 0.0,
-                text_box_x_length = 1.5,
-                text_box_y_length = 0.3,
-                text_border = 'off',
-            )
-
-        date5 = date1 + datetime.timedelta(4)
-        date5_label = magics.mtext(
-                text_line_1 = date5.strftime('%a., %d %b.'),
-                text_font_size = 0.8,
-                text_colour = 'black',
-                text_justification = 'centre',
-                text_mode = 'positional',
-                text_box_x_position = left_pos + 4 * spacing,
-                text_box_y_position = 0.0,
-                text_box_x_length = 1.5,
-                text_box_y_length = 0.3,
-                text_border = 'off',
-            )
-
-        date6 = date1 + datetime.timedelta(5)
-        date6_label = magics.mtext(
-                text_line_1 = date6.strftime('%a., %d %b.'),
-                text_font_size = 0.8,
-                text_colour = 'black',
-                text_justification = 'centre',
-                text_mode = 'positional',
-                text_box_x_position = left_pos + 5 * spacing,
-                text_box_y_position = 0.0,
-                text_box_x_length = 1.5,
-                text_box_y_length = 0.3,
-                text_border = 'off',
-            )
-
-        date7 = date1 + datetime.timedelta(6)
-        date7_label = magics.mtext(
-                text_line_1 = date7.strftime('%a., %d %b.'),
-                text_font_size = 0.8,
-                text_colour = 'black',
-                text_justification = 'centre',
-                text_mode = 'positional',
-                text_box_x_position = left_pos + 6 * spacing + correction_end,
-                text_box_y_position = 0.0,
-                text_box_x_length = 1.5,
-                text_box_y_length = 0.3,
-                text_border = 'off',
-            )
+    date1 = time_start - datetime.timedelta(0,3600 * time_start.hour)
+    if time_start.hour - timeshift + 1 <= 6:
+        date1 += datetime.timedelta(0,3600 * 12)
     else:
-        date1 = time_start - datetime.timedelta(0,3600 * time_start.hour)
-        if time_start.hour - timeshift + 1 <= 6:
-            date1 += datetime.timedelta(0,3600 * 12)
-        else:
-            date1 += datetime.timedelta(1,3600 * 12)
+        date1 += datetime.timedelta(1,3600 * 12)
 
-        correction_end = 0
-        if time_start.hour - timeshift + 1 == 0:
-            factor = 2
-        elif time_start.hour - timeshift + 1 == 6:
-            factor = 1
-        elif time_start.hour - timeshift + 1 == 12:
-            factor = 4
-            correction_end = -0.4
-        elif time_start.hour - timeshift + 1 == 18:
-            factor = 3
+    correction_start = 0
+    correction_end = 0
+    if date['hour'] == 0:
+        factor = 2
+    elif date['hour'] == 6:
+        factor = 1
+        correction_start = 0.2
+    elif date['hour'] == 12:
+        factor = 4
+        correction_end = 0.0
+    elif date['hour'] == 18:
+        factor = 3
+    else:
+        print(time_start.hour, timeshift)
 
-        spacing = 2.65
-        left_pos = 0.40 - timeshift * 0.11 + factor * spacing / 4
-        date1_label = magics.mtext(
-                text_line_1 = date1.strftime('%a., %d %b.'),
-                text_font_size = 0.8,
-                text_colour = 'black',
-                text_justification = 'centre',
-                text_mode = 'positional',
-                text_box_x_position = left_pos + 0 * spacing,
-                text_box_y_position = 0.0,
-                text_box_x_length = 1.5,
-                text_box_y_length = 0.3,
-                text_border = 'off',
-            )
+    spacing = 1.78
+    left_pos = 0.40 - timeshift * 0.11 + factor * spacing / 4
+    date1_label = magics.mtext(
+            text_line_1 = date1.strftime('%a., %d %b.'),
+            text_font_size = 0.8,
+            text_colour = 'black',
+            text_justification = 'centre',
+            text_mode = 'positional',
+            text_box_x_position = left_pos + 0 * spacing + correction_start,
+            text_box_y_position = 0.0,
+            text_box_x_length = 1.5,
+            text_box_y_length = 0.3,
+            text_border = 'off',
+        )
 
-        date2 = date1 + datetime.timedelta(1)
-        date2_label = magics.mtext(
-                text_line_1 = date2.strftime('%a., %d %b.'),
-                text_font_size = 0.8,
-                text_colour = 'black',
-                text_justification = 'centre',
-                text_mode = 'positional',
-                text_box_x_position = left_pos + 1 * spacing,
-                text_box_y_position = 0.0,
-                text_box_x_length = 1.5,
-                text_box_y_length = 0.3,
-                text_border = 'off',
-            )
+    date2 = date1 + datetime.timedelta(1)
+    date2_label = magics.mtext(
+            text_line_1 = date2.strftime('%a., %d %b.'),
+            text_font_size = 0.8,
+            text_colour = 'black',
+            text_justification = 'centre',
+            text_mode = 'positional',
+            text_box_x_position = left_pos + 1 * spacing,
+            text_box_y_position = 0.0,
+            text_box_x_length = 1.5,
+            text_box_y_length = 0.3,
+            text_border = 'off',
+        )
 
-        date3 = date1 + datetime.timedelta(2)
-        date3_label = magics.mtext(
-                text_line_1 = date3.strftime('%a., %d %b.'),
-                text_font_size = 0.8,
-                text_colour = 'black',
-                text_justification = 'centre',
-                text_mode = 'positional',
-                text_box_x_position = left_pos + 2 * spacing,
-                text_box_y_position = 0.0,
-                text_box_x_length = 1.5,
-                text_box_y_length = 0.3,
-                text_border = 'off',
-            )
+    date3 = date1 + datetime.timedelta(2)
+    date3_label = magics.mtext(
+            text_line_1 = date3.strftime('%a., %d %b.'),
+            text_font_size = 0.8,
+            text_colour = 'black',
+            text_justification = 'centre',
+            text_mode = 'positional',
+            text_box_x_position = left_pos + 2 * spacing,
+            text_box_y_position = 0.0,
+            text_box_x_length = 1.5,
+            text_box_y_length = 0.3,
+            text_border = 'off',
+        )
 
-        date4 = date1 + datetime.timedelta(3)
-        date4_label = magics.mtext(
-                text_line_1 = date4.strftime('%a., %d %b.'),
-                text_font_size = 0.8,
-                text_colour = 'black',
-                text_justification = 'centre',
-                text_mode = 'positional',
-                text_box_x_position = left_pos + 3 * spacing,
-                text_box_y_position = 0.0,
-                text_box_x_length = 1.5,
-                text_box_y_length = 0.3,
-                text_border = 'off',
-            )
+    date4 = date1 + datetime.timedelta(3)
+    date4_label = magics.mtext(
+            text_line_1 = date4.strftime('%a., %d %b.'),
+            text_font_size = 0.8,
+            text_colour = 'black',
+            text_justification = 'centre',
+            text_mode = 'positional',
+            text_box_x_position = left_pos + 3 * spacing,
+            text_box_y_position = 0.0,
+            text_box_x_length = 1.5,
+            text_box_y_length = 0.3,
+            text_border = 'off',
+        )
 
-        date5 = date1 + datetime.timedelta(4)
-        date5_label = magics.mtext(
-                text_line_1 = date5.strftime('%a., %d %b.'),
-                text_font_size = 0.8,
-                text_colour = 'black',
-                text_justification = 'centre',
-                text_mode = 'positional',
-                text_box_x_position = left_pos + 4 * spacing + correction_end,
-                text_box_y_position = 0.0,
-                text_box_x_length = 1.5,
-                text_box_y_length = 0.3,
-                text_border = 'off',
-            )
+    date5 = date1 + datetime.timedelta(4)
+    date5_label = magics.mtext(
+            text_line_1 = date5.strftime('%a., %d %b.'),
+            text_font_size = 0.8,
+            text_colour = 'black',
+            text_justification = 'centre',
+            text_mode = 'positional',
+            text_box_x_position = left_pos + 4 * spacing,
+            text_box_y_position = 0.0,
+            text_box_x_length = 1.5,
+            text_box_y_length = 0.3,
+            text_border = 'off',
+        )
+
+    date6 = date1 + datetime.timedelta(5)
+    date6_label = magics.mtext(
+            text_line_1 = date6.strftime('%a., %d %b.'),
+            text_font_size = 0.8,
+            text_colour = 'black',
+            text_justification = 'centre',
+            text_mode = 'positional',
+            text_box_x_position = left_pos + 5 * spacing,
+            text_box_y_position = 0.0,
+            text_box_x_length = 1.5,
+            text_box_y_length = 0.3,
+            text_border = 'off',
+        )
+
+    date7 = date1 + datetime.timedelta(6)
+    date7_label = magics.mtext(
+            text_line_1 = date7.strftime('%a., %d %b.'),
+            text_font_size = 0.8,
+            text_colour = 'black',
+            text_justification = 'centre',
+            text_mode = 'positional',
+            text_box_x_position = left_pos + 6 * spacing + correction_end,
+            text_box_y_position = 0.0,
+            text_box_x_length = 1.5,
+            text_box_y_length = 0.3,
+            text_border = 'off',
+        )
 
     magics.context.silent = True
-    if var == 't_2m':
-        if include_global:
-            magics.plot(
-                        output_layout,
-                        page_layout,
-                        coord_system,
-                        vertical_axis,
-                        horizontal_axis,
-                        init_timeline_value,
-                        init_timeline_line,
-                        ref_level_value,
-                        ref_level_line,
-                        data_minmax_eu_6h,
-                        bar_minmax_eu_6h,
-                        data_p1090_eu_6h,
-                        bar_p1090_eu_6h,
-                        data_p2575_eu_6h,
-                        bar_p2575_eu_6h,
-                        data_median_eu_6h,
-                        bar_median_eu_6h,
-                        data_minmax_eu_1h,
-                        bar_minmax_eu_1h,
-                        data_p1090_eu_1h,
-                        bar_p1090_eu_1h,
-                        data_p2575_eu_1h,
-                        bar_p2575_eu_1h,
-                        data_median_eu_1h,
-                        bar_median_eu_1h,
-                        data_minmax_global,
-                        bar_minmax_global,
-                        data_p1090_global,
-                        bar_p1090_global,
-                        data_p2575_global,
-                        bar_p2575_global,
-                        data_median_global,
-                        bar_median_global,
-                        title,
-                        init_time,
-                        unit,
-                        unit_special,
-                        logo,
-                        legend,
-                        date1_label,
-                        date2_label,
-                        date3_label,
-                        date4_label,
-                        date5_label,
-                        date6_label,
-                        date7_label,
-                        )
-        elif not include_global and with_long_time_axis:
+
+    if models == 'both-eps':
+        if not extend_with_global:
+            if var == 't_2m':
                 magics.plot(
                         output_layout,
                         page_layout,
@@ -1046,10 +1420,10 @@ def plot_in_magics_boxplot(path, date, pointname, var, meta, y_axis_range, filen
                         bar_p2575_eu_1h,
                         data_median_eu_1h,
                         bar_median_eu_1h,
-                        data_shading_area,
-                        bar_shading_area,
                         title,
                         init_time,
+                        data_shading_area,
+                        bar_shading_area,
                         shading_area_text1,
                         unit,
                         unit_special,
@@ -1063,8 +1437,8 @@ def plot_in_magics_boxplot(path, date, pointname, var, meta, y_axis_range, filen
                         date6_label,
                         date7_label,
                         )
-        else:
-            magics.plot(
+            elif var == 'prec_rate' or var == 'direct_rad' or var == 'diffuse_rad':
+                magics.plot(
                         output_layout,
                         page_layout,
                         coord_system,
@@ -1074,14 +1448,6 @@ def plot_in_magics_boxplot(path, date, pointname, var, meta, y_axis_range, filen
                         init_timeline_line,
                         ref_level_value,
                         ref_level_line,
-                        data_minmax_eu_6h,
-                        bar_minmax_eu_6h,
-                        data_p1090_eu_6h,
-                        bar_p1090_eu_6h,
-                        data_p2575_eu_6h,
-                        bar_p2575_eu_6h,
-                        data_median_eu_6h,
-                        bar_median_eu_6h,
                         data_minmax_eu_1h,
                         bar_minmax_eu_1h,
                         data_p1090_eu_1h,
@@ -1092,83 +1458,8 @@ def plot_in_magics_boxplot(path, date, pointname, var, meta, y_axis_range, filen
                         bar_median_eu_1h,
                         title,
                         init_time,
-                        unit,
-                        unit_special,
-                        logo,
-                        legend,
-                        date1_label,
-                        date2_label,
-                        date3_label,
-                        date4_label,
-                        date5_label,
-                        )
-    if var == 'wind_10m' or var == 'mslp' or var == 'clct' or var == 'prec_sum' or var == 'vmax_10m' or var == 'tqv'\
-     or var == 't_850hPa' or var == 'gph_500hPa' or var == 'wind_850hPa' or var == 'shear_0-6km' \
-     or var == 'lapse_rate_850hPa-500hPa':
-        if include_global and (var == 'wind_10m' or var == 'clct' or var == 'prec_sum'):
-            magics.plot(
-                        output_layout,
-                        page_layout,
-                        coord_system,
-                        vertical_axis,
-                        horizontal_axis,
-                        init_timeline_value,
-                        init_timeline_line,
-                        ref_level_value,
-                        ref_level_line,
-                        data_minmax_eu_all,
-                        bar_minmax_eu_all,
-                        data_p1090_eu_all,
-                        bar_p1090_eu_all,
-                        data_p2575_eu_all,
-                        bar_p2575_eu_all,
-                        data_median_eu_all,
-                        bar_median_eu_all,
-                        data_minmax_global,
-                        bar_minmax_global,
-                        data_p1090_global,
-                        bar_p1090_global,
-                        data_p2575_global,
-                        bar_p2575_global,
-                        data_median_global,
-                        bar_median_global,
-                        title,
-                        init_time,
-                        unit,
-                        unit_special,
-                        logo,
-                        legend,
-                        date1_label,
-                        date2_label,
-                        date3_label,
-                        date4_label,
-                        date5_label,
-                        date6_label,
-                        date7_label,
-                        )
-        elif not include_global and with_long_time_axis:
-            magics.plot(
-                        output_layout,
-                        page_layout,
-                        coord_system,
-                        vertical_axis,
-                        horizontal_axis,
-                        init_timeline_value,
-                        init_timeline_line,
-                        ref_level_value,
-                        ref_level_line,
-                        data_minmax_eu_all,
-                        bar_minmax_eu_all,
-                        data_p1090_eu_all,
-                        bar_p1090_eu_all,
-                        data_p2575_eu_all,
-                        bar_p2575_eu_all,
-                        data_median_eu_all,
-                        bar_median_eu_all,
                         data_shading_area,
                         bar_shading_area,
-                        title,
-                        init_time,
                         shading_area_text1,
                         unit,
                         unit_special,
@@ -1182,706 +1473,561 @@ def plot_in_magics_boxplot(path, date, pointname, var, meta, y_axis_range, filen
                         date6_label,
                         date7_label,
                         )
-        else:
-            magics.plot(
-                        output_layout,
-                        page_layout,
-                        coord_system,
-                        vertical_axis,
-                        horizontal_axis,
-                        init_timeline_value,
-                        init_timeline_line,
-                        ref_level_value,
-                        ref_level_line,
-                        data_minmax_eu_all,
-                        bar_minmax_eu_all,
-                        data_p1090_eu_all,
-                        bar_p1090_eu_all,
-                        data_p2575_eu_all,
-                        bar_p2575_eu_all,
-                        data_median_eu_all,
-                        bar_median_eu_all,
-                        title,
-                        init_time,
-                        unit,
-                        unit_special,
-                        logo,
-                        legend,
-                        date1_label,
-                        date2_label,
-                        date3_label,
-                        date4_label,
-                        date5_label,
-                        )
-
-    if include_global:
-        if var == 'prec_rate':
-            magics.plot(
-                        output_layout,
-                        page_layout,
-                        coord_system,
-                        vertical_axis,
-                        horizontal_axis,
-                        init_timeline_value,
-                        init_timeline_line,
-                        data_minmax_eu_1h,
-                        bar_minmax_eu_1h,
-                        data_p1090_eu_1h,
-                        bar_p1090_eu_1h,
-                        data_p2575_eu_1h,
-                        bar_p2575_eu_1h,
-                        data_median_eu_1h,
-                        bar_median_eu_1h,
-                        data_minmax_eu_3h,
-                        bar_minmax_eu_3h,
-                        data_p1090_eu_3h,
-                        bar_p1090_eu_3h,
-                        data_p2575_eu_3h,
-                        bar_p2575_eu_3h,
-                        data_median_eu_3h,
-                        bar_median_eu_3h,
-                        data_minmax_eu_6h,
-                        bar_minmax_eu_6h,
-                        data_p1090_eu_6h,
-                        bar_p1090_eu_6h,
-                        data_p2575_eu_6h,
-                        bar_p2575_eu_6h,
-                        data_median_eu_6h,
-                        bar_median_eu_6h,
-                        data_minmax_global,
-                        bar_minmax_global,
-                        data_p1090_global,
-                        bar_p1090_global,
-                        data_p2575_global,
-                        bar_p2575_global,
-                        data_median_global,
-                        bar_median_global,
-                        title,
-                        init_time,
-                        unit,
-                        unit_special,
-                        logo,
-                        legend,
-                        date1_label,
-                        date2_label,
-                        date3_label,
-                        date4_label,
-                        date5_label,
-                        date6_label,
-                        date7_label,
-                        )
-        elif var == 'direct_rad' or var == 'diffuse_rad':
-            magics.plot(
-                        output_layout,
-                        page_layout,
-                        coord_system,
-                        vertical_axis,
-                        horizontal_axis,
-                        init_timeline_value,
-                        init_timeline_line,
-                        ref_level_value,
-                        ref_level_line,
-                        data_minmax_eu_1h,
-                        bar_minmax_eu_1h,
-                        data_p1090_eu_1h,
-                        bar_p1090_eu_1h,
-                        data_p2575_eu_1h,
-                        bar_p2575_eu_1h,
-                        data_median_eu_1h,
-                        bar_median_eu_1h,
-                        data_minmax_eu_3h,
-                        bar_minmax_eu_3h,
-                        data_p1090_eu_3h,
-                        bar_p1090_eu_3h,
-                        data_p2575_eu_3h,
-                        bar_p2575_eu_3h,
-                        data_median_eu_3h,
-                        bar_median_eu_3h,
-                        data_minmax_eu_6h,
-                        bar_minmax_eu_6h,
-                        data_p1090_eu_6h,
-                        bar_p1090_eu_6h,
-                        data_p2575_eu_6h,
-                        bar_p2575_eu_6h,
-                        data_median_eu_6h,
-                        bar_median_eu_6h,
-                        title,
-                        init_time,
-                        unit,
-                        unit_special,
-                        logo,
-                        legend,
-                        date1_label,
-                        date2_label,
-                        date3_label,
-                        date4_label,
-                        date5_label,
-                        date6_label,
-                        date7_label,
-                        )
-    elif var == 'prec_rate' or var == 'direct_rad' or var == 'diffuse_rad':
-        if not include_global and with_long_time_axis:
-            magics.plot(
-                        output_layout,
-                        page_layout,
-                        coord_system,
-                        vertical_axis,
-                        horizontal_axis,
-                        init_timeline_value,
-                        init_timeline_line,
-                        ref_level_value,
-                        ref_level_line,
-                        data_minmax_eu_1h,
-                        bar_minmax_eu_1h,
-                        data_p1090_eu_1h,
-                        bar_p1090_eu_1h,
-                        data_p2575_eu_1h,
-                        bar_p2575_eu_1h,
-                        data_median_eu_1h,
-                        bar_median_eu_1h,
-                        data_minmax_eu_3h,
-                        bar_minmax_eu_3h,
-                        data_p1090_eu_3h,
-                        bar_p1090_eu_3h,
-                        data_p2575_eu_3h,
-                        bar_p2575_eu_3h,
-                        data_median_eu_3h,
-                        bar_median_eu_3h,
-                        data_minmax_eu_6h,
-                        bar_minmax_eu_6h,
-                        data_p1090_eu_6h,
-                        bar_p1090_eu_6h,
-                        data_p2575_eu_6h,
-                        bar_p2575_eu_6h,
-                        data_median_eu_6h,
-                        bar_median_eu_6h,
-                        data_shading_area,
-                        bar_shading_area,
-                        title,
-                        init_time,
-                        shading_area_text1,
-                        unit,
-                        unit_special,
-                        logo,
-                        legend,
-                        date1_label,
-                        date2_label,
-                        date3_label,
-                        date4_label,
-                        date5_label,
-                        date6_label,
-                        date7_label,
-                    )
-        else:
-            magics.plot(
-                        output_layout,
-                        page_layout,
-                        coord_system,
-                        vertical_axis,
-                        horizontal_axis,
-                        init_timeline_value,
-                        init_timeline_line,
-                        ref_level_value,
-                        ref_level_line,
-                        data_minmax_eu_1h,
-                        bar_minmax_eu_1h,
-                        data_p1090_eu_1h,
-                        bar_p1090_eu_1h,
-                        data_p2575_eu_1h,
-                        bar_p2575_eu_1h,
-                        data_median_eu_1h,
-                        bar_median_eu_1h,
-                        data_minmax_eu_3h,
-                        bar_minmax_eu_3h,
-                        data_p1090_eu_3h,
-                        bar_p1090_eu_3h,
-                        data_p2575_eu_3h,
-                        bar_p2575_eu_3h,
-                        data_median_eu_3h,
-                        bar_median_eu_3h,
-                        data_minmax_eu_6h,
-                        bar_minmax_eu_6h,
-                        data_p1090_eu_6h,
-                        bar_p1090_eu_6h,
-                        data_p2575_eu_6h,
-                        bar_p2575_eu_6h,
-                        data_median_eu_6h,
-                        bar_median_eu_6h,
-                        title,
-                        init_time,
-                        unit,
-                        unit_special,
-                        logo,
-                        legend,
-                        date1_label,
-                        date2_label,
-                        date3_label,
-                        date4_label,
-                        date5_label,
-                    )
-
-    return
-
-############################################################################
-############################################################################
-############################################################################
-
-def boxplot_forecast(pointnames, date_user, include_global, latest_fcst, verbose):
-
-    ##### make lists of forecast hours and variables #####
-
-    fcst_hours_list_eu = np.concatenate((np.arange(0,48,1),\
-                                        np.arange(48,72,3),\
-                                        np.arange(72,120+1,6)))
-    fcst_hours_list_global = np.arange(132,180+1,12)
-
-    if include_global:
-        model = 'icon-global-eps'
-    else:
-        model = 'icon-eu-eps'
-
-    date = calc_latest_run_time(model)
-    if date_user is not None:
-        date = date_user
-
-    print('-- Forecast time: {}{:02}{:02}-{:02}UTC --'.format(\
-          date['year'], date['month'], date['day'], date['hour']))
-
-    if date['hour'] == 0 or date['hour'] == 12:
-        #var_list = ['t_2m','prec_rate','prec_sum','wind_10m','mslp','clct','direct_rad','diffuse_rad','vmax_10m',\
-        #            'tqv','gph_500hPa','t_850hPa','wind_850hPa','shear_0-6km','lapse_rate_850hPa-500hPa']
-        var_list = ['t_2m','prec_rate','prec_sum','wind_10m','mslp','clct','direct_rad','diffuse_rad','t_850hPa']
-        with_long_time_axis = True
-
-    elif date['hour'] == 6 or date['hour'] == 18:
-        #var_list = ['t_2m','prec_rate','prec_sum','wind_10m','mslp','clct','direct_rad','diffuse_rad','vmax_10m']
-        var_list = ['t_2m','prec_rate','prec_sum','wind_10m','mslp','clct','direct_rad','diffuse_rad']
-        with_long_time_axis = False
-
-    with_long_time_axis = True
-
-
-    path = dict(base = '/lsdfos/kit/imk-tro/projects/MOD/Gruppe_Knippertz/nw5893/',
-                points_eu_eps = '',
-                points_global_eps = '',
-                plots = '')
-
-    ##### main loop #####
-
-    for var in var_list:
-        if var == 't_2m':
-            meta = dict(var = '2-m temperature', units = 'C')
-            var_str = var
-        elif var == 'prec_rate':
-            meta = dict(var = 'Precipitation rate', units = 'mm/h')
-            var_str = var
-        elif var == 'prec_sum':
-            meta = dict(var = 'Precipitation sum', units = 'mm')
-            var_str = var
-        elif var == 'wind_10m':
-            meta = dict(var = '10-m wind speed', units = 'km/h')
-            var_str = var
-        elif var == 'mslp':
-            meta = dict(var = 'Mean sea level pressure', units = 'hPa')
-            var_str = var
-        elif var == 'clct':
-            meta = dict(var = 'Total cloud cover', units = '%')
-            var_str = var
-        elif var == 'direct_rad':
-            meta = dict(var = 'Direct downward sw radiation', units = 'W/m')
-            var_str = 'aswdir_s'
-        elif var == 'diffuse_rad':
-            meta = dict(var = 'Diffuse downward sw radiation', units = 'W/m')
-            var_str = 'aswdifd_s'
-        elif var == 'vmax_10m':
-            meta = dict(var = '10-m wind gust', units = 'km/h')
-            var_str = var
-        elif var == 'tqv':
-            meta = dict(var = 'Integrated water vapour', units = 'mm')
-            var_str = var
-        elif var == 'gph_500hPa':
-            meta = dict(var = '500hPa geopotential height', units = 'gpdm')
-            var_str = var
-        elif var == 't_850hPa':
-            meta = dict(var = '850hPa temperature', units = 'C')
-            var_str = var
-        elif var == 'wind_850hPa':
-            meta = dict(var = '850hPa wind speed', units = 'km/h')
-            var_str = var
-        elif var == 'shear_0-6km':
-            meta = dict(var = '0-6km wind shear', units = 'm/s')
-            var_str = var
-        elif var == 'lapse_rate_850hPa-500hPa':
-            meta = dict(var = '850hPa-500hPa mean lapse rate', units = 'K/km')
-            var_str = var
-
-
-        for pointname in pointnames:
-            if verbose:
-                print('----- next point is {} -----'.format(pointname))
-                print('----- next variable is {} -----'.format(var))
-            
-            path_old = dict(base = path['base'],
-                            points_eu_eps = path['points_eu_eps'],
-                            points_global_eps = path['points_global_eps'],
-                            plots = path['plots'])
-
-            if latest_fcst:
-                lead_times = [0]
-            else:
-                lead_times = [0,12,24,36,48,72,96,120,144,168]
-
-            y_axis_range = dict()
-            i = 0
-            for lead_time in lead_times:
-                time = datetime.datetime(date['year'], date['month'], date['day'], date['hour'])
-                time -= datetime.timedelta(0, 3600 * lead_time)
-                old_run_date = dict(year = time.year, month = time.month, day = time.day, hour = time.hour)
-
-
-                ##### get data from icon-eu-eps #####
-
-                path_old['points_eu_eps'] = \
-                 'forecast_archive/icon-eu-eps/extracted_points/run_{}{:02}{:02}{:02}/{}/'.format(
-                  old_run_date['year'], old_run_date['month'], old_run_date['day'], old_run_date['hour'], var_str)
-
-                first_run_not_found = False
-                try:
-                    point_values_old_eu_eps = read_data(path_old, old_run_date, var_str, pointname, 'icon-eu-eps')
-                    if var == 'prec_sum':
-                        point_values_old_eu_eps = reduce_prec_sum(point_values_old_eu_eps, fcst_hours_list_eu)
-                    if i == 0:
-                        y_axis_range['min'] = np.amin(point_values_old_eu_eps)
-                        y_axis_range['max'] = np.amax(point_values_old_eu_eps)
-                    else:
-                        if np.amin(point_values_old_eu_eps) < y_axis_range['min']:
-                            y_axis_range['min'] = np.amin(point_values_old_eu_eps)
-                        if np.amax(point_values_old_eu_eps) > y_axis_range['max']:
-                            y_axis_range['max'] = np.amax(point_values_old_eu_eps)
-                except (FileNotFoundError, AssertionError):
-                    print('-- no icon-eu-eps data found in minmax loop --')
-                    first_run_not_found = True
-                    if var == 'mslp':
-                        y_axis_range['min'] = 980.0
-                        y_axis_range['max'] = 1035.0
-                    else:
-                        y_axis_range['min'] = 0.0
-                        y_axis_range['max'] = 1.0                        
-
-
-
-                ##### get data from icon-eps #####
-
-                if include_global \
-                 and (var == 't_2m' or var == 'prec_rate' or var == 'prec_sum' or var == 'wind_10m' or var == 'clct'):
-                    path_old['points_global_eps'] = \
-                     'forecast_archive/icon-eps/extracted_points/run_{}{:02}{:02}{:02}/{}/'.format(
-                      old_run_date['year'], old_run_date['month'], old_run_date['day'], old_run_date['hour'], var_str)
-                    try:
-                        point_values_old_global_eps = read_data(path_old, old_run_date, var_str, pointname, 
-                                                                'icon-global-eps')
-                        if i == 0 and first_run_not_found:
-                            y_axis_range['min'] = np.amin(point_values_old_global_eps)
-                            y_axis_range['max'] = np.amax(point_values_old_global_eps)
-                        else:
-                            if np.amin(point_values_old_global_eps) < y_axis_range['min']:
-                                y_axis_range['min'] = np.amin(point_values_old_global_eps)
-                            if np.amax(point_values_old_global_eps) > y_axis_range['max']:
-                                y_axis_range['max'] = np.amax(point_values_old_global_eps)
-                    except (FileNotFoundError, AssertionError):
-                        pass
-
-                i += 1
-
-            if var == 't_2m':
-                mean = (y_axis_range['max'] + y_axis_range['min']) / 2
-                if y_axis_range['min'] < mean - 9.0:
-                    y_axis_range['min'] -= 1.0
-                else:
-                    y_axis_range['min'] = mean - 10.0
-                if y_axis_range['max'] > mean + 8.0:
-                    y_axis_range['max'] += 2.0
-                else:
-                    y_axis_range['max'] = mean + 10.0
-                y_axis_range['interval'] = 5.0
-                y_axis_range['ref'] = 0.0
-
-            elif var == 'prec_rate':
-                y_axis_range['min'] = -0.2
-                if y_axis_range['max'] < 2.75:
-                    y_axis_range['max'] = 3.0
-                    y_axis_range['interval'] = 0.5
-                elif y_axis_range['max'] < 6.0:
-                    y_axis_range['max'] += 0.1 * y_axis_range['max']
-                    y_axis_range['interval'] = 1.0
-                elif y_axis_range['max'] < 12.0:
-                    y_axis_range['max'] += 0.1 * y_axis_range['max']
-                    y_axis_range['interval'] = 2.0
-                else:
-                    y_axis_range['max'] += 0.1 * y_axis_range['max']
-                    y_axis_range['interval'] = 3.0
-                y_axis_range['ref'] = 0.0
-
-            elif var == 'prec_sum':
-                y_axis_range['min'] = -0.8
-                if y_axis_range['max'] < 8.0:
-                    y_axis_range['max'] = 10.0
-                    y_axis_range['interval'] = 2.0
-                elif y_axis_range['max'] < 20.0:
-                    y_axis_range['max'] += 0.1 * y_axis_range['max']
-                    y_axis_range['interval'] = 3.0
-                elif y_axis_range['max'] < 40.0:
-                    y_axis_range['max'] += 0.1 * y_axis_range['max']
-                    y_axis_range['interval'] = 5.0
-                elif y_axis_range['max'] < 80.0:
-                    y_axis_range['max'] += 0.1 * y_axis_range['max']
-                    y_axis_range['interval'] = 10.0
-                else:
-                    y_axis_range['max'] += 0.1 * y_axis_range['max']
-                    y_axis_range['interval'] = 20.0
-                y_axis_range['ref'] = 0.0
-
             elif var == 'wind_10m':
-                y_axis_range['min'] = 0.0
-                if y_axis_range['max'] < 27.5:
-                    y_axis_range['max'] = 30.0
-                    y_axis_range['interval'] = 5.0
-                else:
-                    y_axis_range['max'] += 0.1 * y_axis_range['max']
-                    y_axis_range['interval'] = 10.0
-                y_axis_range['ref'] = 0.0
-
-            elif var == 'mslp':
-                if y_axis_range['min'] < 990.0:
-                    y_axis_range['min'] -= 5.0
-                else:
-                    y_axis_range['min'] = 990.0
-                if y_axis_range['max'] > 1037.0:
-                    y_axis_range['max'] += 5.0
-                else:
-                    y_axis_range['max'] = 1040.0
-                y_axis_range['interval'] = 10.0
-                y_axis_range['ref'] = 0.0
-
-            elif var == 'clct':
-                y_axis_range['min'] = -6.0
-                y_axis_range['max'] = 110.0
-                y_axis_range['interval'] = 20.0
-                y_axis_range['ref'] = 0.0
-
-            elif var == 'direct_rad':
-                y_axis_range['min'] = -20.0
-                if y_axis_range['max'] < 280.0:
-                    y_axis_range['max'] = 300.0
-                else:
-                    y_axis_range['max'] += 0.1 * y_axis_range['max']
-                y_axis_range['interval'] = 100.0
-                y_axis_range['ref'] = 0.0
-
-            elif var == 'diffuse_rad':
-                y_axis_range['min'] = -20.0
-                if y_axis_range['max'] < 280.0:
-                    y_axis_range['max'] = 300.0
-                else:
-                    y_axis_range['max'] += 0.1 * y_axis_range['max']
-                y_axis_range['interval'] = 100.0
-                y_axis_range['ref'] = 0.0
-
-            elif var == 'vmax_10m':
-                y_axis_range['min'] = 0.0
-                if y_axis_range['max'] < 30.0:
-                    y_axis_range['max'] = 30.0
-                    y_axis_range['interval'] = 5.0
-                else:
-                    y_axis_range['max'] += 0.1 * y_axis_range['max']
-                    y_axis_range['interval'] = 10.0
-                y_axis_range['ref'] = 0.0
-
-            elif var == 'tqv':
-                y_axis_range['min'] = 0.0
-                if y_axis_range['max'] < 30.0:
-                    y_axis_range['max'] = 30.0
-                    y_axis_range['interval'] = 5.0
-                else:
-                    y_axis_range['max'] += 0.1 * y_axis_range['max']
-                    y_axis_range['interval'] = 10.0
-                y_axis_range['ref'] = 0.0
-
-            elif var == 't_850hPa':
-                if pointname == 'Karlsruhe' or pointname == 'Mainz' or pointname == 'Munich':
-                    ##### hard axis with extension if over borders #####
-                    if y_axis_range['min'] < 0.0:
-                        y_axis_range['min'] -= 2.5
-                    else:
-                        y_axis_range['min'] = 0.0
-                    if y_axis_range['max'] > 25.0:
-                        y_axis_range['max'] += 2.5
-                    else:
-                        y_axis_range['max'] = 25.0
-                    y_axis_range['interval'] = 5.0
-                    y_axis_range['ref'] = 0.0
-                else:
-                    ##### dynamical axis with plot in the middle #####
-                    mean = (y_axis_range['max'] + y_axis_range['min']) / 2
-                    if y_axis_range['min'] < mean - 9.0:
-                        y_axis_range['min'] -= 1.0
-                    else:
-                        y_axis_range['min'] = mean - 10.0
-                    if y_axis_range['max'] > mean + 9.0:
-                        y_axis_range['max'] += 1.0
-                    else:
-                        y_axis_range['max'] = mean + 10.0
-                    y_axis_range['interval'] = 5.0
-                    y_axis_range['ref'] = 0.0
-
-            elif var == 'gph_500hPa':
-                if y_axis_range['min'] < 530.0:
-                    y_axis_range['min'] -= 5.0
-                else:
-                    y_axis_range['min'] = 530.0
-                if y_axis_range['max'] > 595.0:
-                    y_axis_range['max'] += 5.0
-                else:
-                    y_axis_range['max'] = 595.0
-                y_axis_range['interval'] = 10.0
-                y_axis_range['ref'] = 0.0
-
-            elif var == 'wind_850hPa':
-                y_axis_range['min'] = 0.0
-                if y_axis_range['max'] < 30.0:
-                    y_axis_range['max'] = 30.0
-                    y_axis_range['interval'] = 5.0
-                else:
-                    y_axis_range['max'] += 0.1 * y_axis_range['max']
-                    y_axis_range['interval'] = 10.0
-                y_axis_range['ref'] = 0.0
-
-            elif var == 'shear_0-6km':
-                y_axis_range['min'] = 0.0
-                if y_axis_range['max'] < 30.0:
-                    y_axis_range['max'] = 30.0
-                else:
-                    y_axis_range['max'] += 0.1 * y_axis_range['max']
-                y_axis_range['interval'] = 10.0
-                y_axis_range['ref'] = 0.0
-
-            elif var == 'lapse_rate_850hPa-500hPa':
-                if y_axis_range['min'] < 0.0:
-                    y_axis_range['min'] -= 1.0
-                else:
-                    y_axis_range['min'] = 0.0
-                y_axis_range['max'] = 11.0
-                y_axis_range['interval'] = 2.0
-                y_axis_range['ref'] = 9.8
-
-
-            if latest_fcst:
-                lead_times = [0]
+                magics.plot(
+                        output_layout,
+                        page_layout,
+                        coord_system,
+                        vertical_axis,
+                        horizontal_axis,
+                        init_timeline_value,
+                        init_timeline_line,
+                        ref_level_value,
+                        ref_level_line,
+                        data_minmax_eu_mean,
+                        bar_minmax_eu_mean,
+                        data_p1090_eu_mean,
+                        bar_p1090_eu_mean,
+                        data_p2575_eu_mean,
+                        bar_p2575_eu_mean,
+                        data_median_eu_mean,
+                        bar_median_eu_mean,
+                        data_minmax_eu_gust,
+                        bar_minmax_eu_gust,
+                        data_p1090_eu_gust,
+                        bar_p1090_eu_gust,
+                        data_p2575_eu_gust,
+                        bar_p2575_eu_gust,
+                        data_median_eu_gust,
+                        bar_median_eu_gust,
+                        title,
+                        init_time,
+                        data_shading_area,
+                        bar_shading_area,
+                        shading_area_text1,
+                        unit,
+                        unit_special,
+                        logo,
+                        legend,
+                        date1_label,
+                        date2_label,
+                        date3_label,
+                        date4_label,
+                        date5_label,
+                        date6_label,
+                        date7_label,
+                        )
             else:
-                lead_times = [0,12,24,36,48,72,96,120,144,168]
-
-            for lead_time in lead_times:
-                time = datetime.datetime(date['year'], date['month'], date['day'], date['hour'])
-                time -= datetime.timedelta(0, 3600 * lead_time)
-                date_run = dict(year = time.year, month = time.month, day = time.day, hour = time.hour)
-
-                ##### make path #####
-
-                if latest_fcst:
-                    temp_subdir = 'plots/operational/boxplots_forecast/latest_forecast/'
-                else:
-                    temp_subdir = 'plots/operational/boxplots_forecast/comparison_forecast/{:03}h_ago/'.format(
-                                   lead_time)
-
-                temp_subdir = temp_subdir + pointname
-                if not os.path.isdir(path['base'] + temp_subdir):
-                    os.mkdir(path['base'] + temp_subdir)
-                path['plots'] = temp_subdir + '/'
-
-                filename = 'boxplot_{:03}h_ago_{}_{}'.format(\
-                            lead_time, var, pointname)
-
-
-                ##### get data from icon-eu-eps #####
-
-                try:
-                    path['points_eu_eps'] = \
-                     'forecast_archive/icon-eu-eps/extracted_points/run_{}{:02}{:02}{:02}/{}/'.format(\
-                      date_run['year'], date_run['month'], date_run['day'], date_run['hour'], var_str)
-                    point_values_eu_eps = read_data(path, date_run, var_str, pointname, 'icon-eu-eps')
-
-                    #if var == 'prec_sum':
-                    #    point_values_eu_eps = reduce_prec_sum(point_values_eu_eps, fcst_hours_list_eu)
-
-                except (FileNotFoundError, AssertionError):
-                    print('no icon-eu-eps data')
-                    if var == 'vmax_10m':
-                        point_values_eu_eps = np.ones((64, 40)) * -100   # will be out of plot
-                    else:
-                        point_values_eu_eps = np.ones((65, 40)) * -100   # will be out of plot
-
-
-                ##### get data from icon-eps #####
-
-                if include_global \
-                 and (var == 't_2m' or var == 'prec_rate' or var == 'prec_sum' or var == 'wind_10m' or var == 'clct'):
-                    try:
-                        path['points_global_eps'] = \
-                         'forecast_archive/icon-eps/extracted_points/run_{}{:02}{:02}{:02}/{}/'.format(
-                          date_run['year'], date_run['month'], date_run['day'], date_run['hour'], var)
-                        point_values_global_eps = read_data(path, date_run, var_str, pointname, 'icon-global-eps')
-
-                    except (FileNotFoundError, AssertionError):
-                        if var == 't_2m' or var == 'wind_10m' or var == 'clct' or var == 'prec_sum' \
-                         or var == 'prec_rate':
-                            print('no icon-global-eps data')
-                        point_values_global_eps = np.ones((5, 40)) * -100   # will be out of plot
-
-
-                ##### calculate percentiles #####
-
-                # data_percentiles_eu: 65 timesteps x 7 percentiles
-                # data_percentiles_global: 5 timesteps x 7 percentiles
-                data_percentiles_eu_eps = np.percentile(point_values_eu_eps, [0,10,25,50,75,90,100], axis = 1).T
-                if include_global \
-                 and (var == 't_2m' or var == 'prec_rate' or var == 'prec_sum' or var == 'wind_10m' or var == 'clct'):
-                    data_percentiles_global_eps = np.percentile(point_values_global_eps, 
-                                                                [0,10,25,50,75,90,100], axis = 1).T
-                else:
-                    data_percentiles_global_eps = None
-
-
-                ##### plotting #####
-
-                plot_in_magics_boxplot(path, date_run, pointname, var, meta, y_axis_range, filename,
-                                       fcst_hours_list_eu, fcst_hours_list_global,
-                                       data_percentiles_eu_eps, data_percentiles_global_eps,
-                                       include_global, with_long_time_axis, lead_time)
-            del y_axis_range
+                magics.plot(
+                        output_layout,
+                        page_layout,
+                        coord_system,
+                        vertical_axis,
+                        horizontal_axis,
+                        init_timeline_value,
+                        init_timeline_line,
+                        ref_level_value,
+                        ref_level_line,
+                        data_minmax_eu_all,
+                        bar_minmax_eu_all,
+                        data_p1090_eu_all,
+                        bar_p1090_eu_all,
+                        data_p2575_eu_all,
+                        bar_p2575_eu_all,
+                        data_median_eu_all,
+                        bar_median_eu_all,
+                        title,
+                        init_time,
+                        data_shading_area,
+                        bar_shading_area,
+                        shading_area_text1,
+                        unit,
+                        unit_special,
+                        logo,
+                        legend,
+                        date1_label,
+                        date2_label,
+                        date3_label,
+                        date4_label,
+                        date5_label,
+                        date6_label,
+                        date7_label,
+                        )
+        else:
+            if var == 't_2m':
+                magics.plot(
+                        output_layout,
+                        page_layout,
+                        coord_system,
+                        vertical_axis,
+                        horizontal_axis,
+                        init_timeline_value,
+                        init_timeline_line,
+                        ref_level_value,
+                        ref_level_line,
+                        data_minmax_eu_6h,
+                        bar_minmax_eu_6h,
+                        data_p1090_eu_6h,
+                        bar_p1090_eu_6h,
+                        data_p2575_eu_6h,
+                        bar_p2575_eu_6h,
+                        data_median_eu_6h,
+                        bar_median_eu_6h,
+                        data_minmax_eu_1h,
+                        bar_minmax_eu_1h,
+                        data_p1090_eu_1h,
+                        bar_p1090_eu_1h,
+                        data_p2575_eu_1h,
+                        bar_p2575_eu_1h,
+                        data_median_eu_1h,
+                        bar_median_eu_1h,
+                        data_minmax_global,
+                        bar_minmax_global,
+                        data_p1090_global,
+                        bar_p1090_global,
+                        data_p2575_global,
+                        bar_p2575_global,
+                        data_median_global,
+                        bar_median_global,
+                        title,
+                        init_time,
+                        unit,
+                        unit_special,
+                        logo,
+                        legend,
+                        date1_label,
+                        date2_label,
+                        date3_label,
+                        date4_label,
+                        date5_label,
+                        date6_label,
+                        date7_label,
+                        )
+            elif var == 'prec_rate':
+                magics.plot(
+                        output_layout,
+                        page_layout,
+                        coord_system,
+                        vertical_axis,
+                        horizontal_axis,
+                        init_timeline_value,
+                        init_timeline_line,
+                        ref_level_value,
+                        ref_level_line,
+                        data_minmax_eu_1h,
+                        bar_minmax_eu_1h,
+                        data_p1090_eu_1h,
+                        bar_p1090_eu_1h,
+                        data_p2575_eu_1h,
+                        bar_p2575_eu_1h,
+                        data_median_eu_1h,
+                        bar_median_eu_1h,
+                        data_minmax_global,
+                        bar_minmax_global,
+                        data_p1090_global,
+                        bar_p1090_global,
+                        data_p2575_global,
+                        bar_p2575_global,
+                        data_median_global,
+                        bar_median_global,
+                        title,
+                        init_time,
+                        unit,
+                        unit_special,
+                        logo,
+                        legend,
+                        date1_label,
+                        date2_label,
+                        date3_label,
+                        date4_label,
+                        date5_label,
+                        date6_label,
+                        date7_label,
+                        )
+            else:
+                magics.plot(
+                        output_layout,
+                        page_layout,
+                        coord_system,
+                        vertical_axis,
+                        horizontal_axis,
+                        init_timeline_value,
+                        init_timeline_line,
+                        ref_level_value,
+                        ref_level_line,
+                        data_minmax_eu_all,
+                        bar_minmax_eu_all,
+                        data_p1090_eu_all,
+                        bar_p1090_eu_all,
+                        data_p2575_eu_all,
+                        bar_p2575_eu_all,
+                        data_median_eu_all,
+                        bar_median_eu_all,
+                        data_minmax_global,
+                        bar_minmax_global,
+                        data_p1090_global,
+                        bar_p1090_global,
+                        data_p2575_global,
+                        bar_p2575_global,
+                        data_median_global,
+                        bar_median_global,
+                        title,
+                        init_time,
+                        unit,
+                        unit_special,
+                        logo,
+                        legend,
+                        date1_label,
+                        date2_label,
+                        date3_label,
+                        date4_label,
+                        date5_label,
+                        date6_label,
+                        date7_label,
+                        )
+    elif models == 'icon-global-eps':
+        if var == 't_2m':
+            magics.plot(
+                        output_layout,
+                        page_layout,
+                        coord_system,
+                        vertical_axis,
+                        horizontal_axis,
+                        init_timeline_value,
+                        init_timeline_line,
+                        ref_level_value,
+                        ref_level_line,
+                        data_minmax_global_6h,
+                        bar_minmax_global_6h,
+                        data_p1090_global_6h,
+                        bar_p1090_global_6h,
+                        data_p2575_global_6h,
+                        bar_p2575_global_6h,
+                        data_median_global_6h,
+                        bar_median_global_6h,
+                        data_minmax_global_1h,
+                        bar_minmax_global_1h,
+                        data_p1090_global_1h,
+                        bar_p1090_global_1h,
+                        data_p2575_global_1h,
+                        bar_p2575_global_1h,
+                        data_median_global_1h,
+                        bar_median_global_1h,
+                        title,
+                        init_time,
+                        unit,
+                        unit_special,
+                        logo,
+                        legend,
+                        date1_label,
+                        date2_label,
+                        date3_label,
+                        date4_label,
+                        date5_label,
+                        date6_label,
+                        date7_label,
+                        )
+        else:
+            magics.plot(
+                        output_layout,
+                        page_layout,
+                        coord_system,
+                        vertical_axis,
+                        horizontal_axis,
+                        init_timeline_value,
+                        init_timeline_line,
+                        ref_level_value,
+                        ref_level_line,
+                        data_minmax_global,
+                        bar_minmax_global,
+                        data_p1090_global,
+                        bar_p1090_global,
+                        data_p2575_global,
+                        bar_p2575_global,
+                        data_median_global,
+                        bar_median_global,
+                        title,
+                        init_time,
+                        unit,
+                        unit_special,
+                        logo,
+                        legend,
+                        date1_label,
+                        date2_label,
+                        date3_label,
+                        date4_label,
+                        date5_label,
+                        date6_label,
+                        date7_label,
+                        )
 
     return
 
+########################################################################################################################
+########################################################################################################################
+########################################################################################################################
+
+def get_variable_title_unit(var):
+    if var == 't_2m':
+        meta = dict(var = '2-m temperature', units = 'C')
+    elif var == 'prec_rate':
+        meta = dict(var = 'Precipitation rate', units = 'mm/h')
+    elif var == 'prec_sum':
+        meta = dict(var = 'Accumulated precipitation', units = 'mm')
+    elif var == 'wind_10m':
+        meta = dict(var = '10-m wind', units = 'km/h')
+    elif var == 'wind_mean_10m':
+        meta = dict(var = '10-m mean wind', units = 'km/h')
+    elif var == 'vmax_10m':
+        meta = dict(var = '10-m wind gust', units = 'km/h')
+    elif var == 'mslp':
+        meta = dict(var = 'Mean sea level pressure', units = 'hPa')
+    elif var == 'clct':
+        meta = dict(var = 'Total cloud cover', units = '%')
+    elif var == 'direct_rad':
+        meta = dict(var = 'Direct downward sw radiation', units = 'W/m')
+    elif var == 'diffuse_rad':
+        meta = dict(var = 'Diffuse downward sw radiation', units = 'W/m')
+    elif var == 'tqv':
+        meta = dict(var = 'Integrated water vapour', units = 'mm')
+    elif var == 'gph_500hPa':
+        meta = dict(var = '500hPa geopotential height', units = 'gpdm')
+    elif var == 't_850hPa':
+        meta = dict(var = '850hPa temperature', units = 'C')
+    elif var == 'wind_850hPa':
+        meta = dict(var = '850hPa wind speed', units = 'km/h')
+    elif var == 'shear_0-6km':
+        meta = dict(var = '0-6km wind shear', units = 'm/s')
+    elif var == 'lapse_rate_850hPa-500hPa':
+        meta = dict(var = '850hPa-500hPa mean lapse rate', units = 'K/km')
+
+    return meta
+
 ########################################################################
 ########################################################################
 ########################################################################
 
-def reduce_prec_sum(point_values_eu_eps, fcst_hours_list_eu):
-    timespan = 0
-    old_mean = 0.0
+def fit_y_axis_to_data(var, y_axis_range, pointname):
 
-    for i in range(1, len(fcst_hours_list_eu)):
-        new_mean = np.nanmean(point_values_eu_eps[i,:])
-        if abs(new_mean - old_mean) < 0.001:
-            timespan += fcst_hours_list_eu[i] - fcst_hours_list_eu[i-1]
-            if timespan >= 6:
-                timespan = 0
-                point_values_eu_eps[i:,:] -= point_values_eu_eps[i,:]
-        old_mean = new_mean
+    if var == 't_2m':
+        mean = (y_axis_range['max'] + y_axis_range['min']) / 2
+        if y_axis_range['min'] < mean - 9.0:
+            y_axis_range['min'] -= 1.0
+        else:
+            y_axis_range['min'] = mean - 10.0
+        if y_axis_range['max'] > mean + 8.0:
+            y_axis_range['max'] += 2.0
+        else:
+            y_axis_range['max'] = mean + 10.0
+        y_axis_range['interval'] = 5.0
+        y_axis_range['ref'] = 0.0
 
+    elif var == 'prec_rate':
+        y_axis_range['min'] = -0.2
+        if y_axis_range['max'] < 2.75:
+            y_axis_range['max'] = 3.0
+            y_axis_range['interval'] = 0.5
+        elif y_axis_range['max'] < 6.0:
+            y_axis_range['max'] += 0.1 * y_axis_range['max']
+            y_axis_range['interval'] = 1.0
+        elif y_axis_range['max'] < 12.0:
+            y_axis_range['max'] += 0.1 * y_axis_range['max']
+            y_axis_range['interval'] = 2.0
+        else:
+            y_axis_range['max'] += 0.1 * y_axis_range['max']
+            y_axis_range['interval'] = 3.0
+        y_axis_range['ref'] = 0.0
 
-    return point_values_eu_eps
+    elif var == 'prec_sum':
+        y_axis_range['min'] = -0.8
+        if y_axis_range['max'] < 8.0:
+            y_axis_range['max'] = 10.0
+            y_axis_range['interval'] = 2.0
+        elif y_axis_range['max'] < 20.0:
+            y_axis_range['max'] += 0.1 * y_axis_range['max']
+            y_axis_range['interval'] = 3.0
+        elif y_axis_range['max'] < 40.0:
+            y_axis_range['max'] += 0.1 * y_axis_range['max']
+            y_axis_range['interval'] = 5.0
+        elif y_axis_range['max'] < 80.0:
+            y_axis_range['max'] += 0.1 * y_axis_range['max']
+            y_axis_range['interval'] = 10.0
+        else:
+            y_axis_range['max'] += 0.1 * y_axis_range['max']
+            y_axis_range['interval'] = 20.0
+        y_axis_range['ref'] = 0.0
+
+    elif var == 'wind_10m':
+        y_axis_range['min'] = 0.0
+        if y_axis_range['max'] < 30.0:
+            y_axis_range['max'] = 30.0
+            y_axis_range['interval'] = 5.0
+        else:
+            y_axis_range['max'] += 0.1 * y_axis_range['max']
+            y_axis_range['interval'] = 10.0
+        y_axis_range['ref'] = 0.0
+
+    elif var == 'wind_mean_10m':
+        y_axis_range['min'] = 0.0
+        if y_axis_range['max'] < 27.5:
+            y_axis_range['max'] = 30.0
+            y_axis_range['interval'] = 5.0
+        else:
+            y_axis_range['max'] += 0.1 * y_axis_range['max']
+            y_axis_range['interval'] = 10.0
+        y_axis_range['ref'] = 0.0
+
+    elif var == 'vmax_10m':
+        y_axis_range['min'] = 0.0
+        if y_axis_range['max'] < 30.0:
+            y_axis_range['max'] = 30.0
+            y_axis_range['interval'] = 5.0
+        else:
+            y_axis_range['max'] += 0.1 * y_axis_range['max']
+            y_axis_range['interval'] = 10.0
+        y_axis_range['ref'] = 0.0
+
+    elif var == 'mslp':
+        if y_axis_range['min'] < 990.0:
+            y_axis_range['min'] -= 5.0
+        else:
+            y_axis_range['min'] = 990.0
+        if y_axis_range['max'] > 1037.0:
+            y_axis_range['max'] += 5.0
+        else:
+            y_axis_range['max'] = 1040.0
+        y_axis_range['interval'] = 10.0
+        y_axis_range['ref'] = 0.0
+
+    elif var == 'clct':
+        y_axis_range['min'] = -6.0
+        y_axis_range['max'] = 110.0
+        y_axis_range['interval'] = 20.0
+        y_axis_range['ref'] = 0.0
+
+    elif var == 'direct_rad':
+        y_axis_range['min'] = -20.0
+        if y_axis_range['max'] < 280.0:
+            y_axis_range['max'] = 300.0
+        else:
+            y_axis_range['max'] += 0.1 * y_axis_range['max']
+        y_axis_range['interval'] = 100.0
+        y_axis_range['ref'] = 0.0
+
+    elif var == 'diffuse_rad':
+        y_axis_range['min'] = -20.0
+        if y_axis_range['max'] < 280.0:
+            y_axis_range['max'] = 300.0
+        else:
+            y_axis_range['max'] += 0.1 * y_axis_range['max']
+        y_axis_range['interval'] = 100.0
+        y_axis_range['ref'] = 0.0
+
+    elif var == 'tqv':
+        y_axis_range['min'] = 0.0
+        if y_axis_range['max'] < 30.0:
+            y_axis_range['max'] = 30.0
+            y_axis_range['interval'] = 5.0
+        else:
+            y_axis_range['max'] += 0.1 * y_axis_range['max']
+            y_axis_range['interval'] = 10.0
+        y_axis_range['ref'] = 0.0
+
+    elif var == 't_850hPa':
+        if pointname == 'Karlsruhe' or pointname == 'Mainz' or pointname == 'Munich':
+            ##### hard axis with extension if over borders #####
+            if y_axis_range['min'] < 0.0:
+                y_axis_range['min'] -= 2.5
+            else:
+                y_axis_range['min'] = 0.0
+            if y_axis_range['max'] > 25.0:
+                y_axis_range['max'] += 2.5
+            else:
+                y_axis_range['max'] = 25.0
+            y_axis_range['interval'] = 5.0
+            y_axis_range['ref'] = 0.0
+        else:
+            ##### dynamical axis with plot in the middle #####
+            mean = (y_axis_range['max'] + y_axis_range['min']) / 2
+            if y_axis_range['min'] < mean - 9.0:
+                y_axis_range['min'] -= 1.0
+            else:
+                y_axis_range['min'] = mean - 10.0
+            if y_axis_range['max'] > mean + 9.0:
+                y_axis_range['max'] += 1.0
+            else:
+                y_axis_range['max'] = mean + 10.0
+            y_axis_range['interval'] = 5.0
+            y_axis_range['ref'] = 0.0
+
+    elif var == 'gph_500hPa':
+        if y_axis_range['min'] < 530.0:
+            y_axis_range['min'] -= 5.0
+        else:
+            y_axis_range['min'] = 530.0
+        if y_axis_range['max'] > 595.0:
+            y_axis_range['max'] += 5.0
+        else:
+            y_axis_range['max'] = 595.0
+        y_axis_range['interval'] = 10.0
+        y_axis_range['ref'] = 0.0
+
+    elif var == 'wind_850hPa':
+        y_axis_range['min'] = 0.0
+        if y_axis_range['max'] < 30.0:
+            y_axis_range['max'] = 30.0
+            y_axis_range['interval'] = 5.0
+        else:
+            y_axis_range['max'] += 0.1 * y_axis_range['max']
+            y_axis_range['interval'] = 10.0
+        y_axis_range['ref'] = 0.0
+
+    elif var == 'shear_0-6km':
+        y_axis_range['min'] = 0.0
+        if y_axis_range['max'] < 30.0:
+            y_axis_range['max'] = 30.0
+        else:
+            y_axis_range['max'] += 0.1 * y_axis_range['max']
+        y_axis_range['interval'] = 10.0
+        y_axis_range['ref'] = 0.0
+
+    elif var == 'lapse_rate_850hPa-500hPa':
+        if y_axis_range['min'] < 0.0:
+            y_axis_range['min'] -= 1.0
+        else:
+            y_axis_range['min'] = 0.0
+        y_axis_range['max'] = 11.0
+        y_axis_range['interval'] = 2.0
+        y_axis_range['ref'] = 9.8
+
+    return y_axis_range
 
 ########################################################################
 ########################################################################
 ########################################################################
 
+def expand_time_avg_data(model, fcst_hours_list_old, data_percentiles_old):
+    if model == 'icon-global-eps_eu-extension':
+        fcst_hours_list_new = list(range(121, fcst_hours_list_old[-1]+1, 1))
+        iteration_length = len(fcst_hours_list_old)
+    else:
+        fcst_hours_list_new = list(range(fcst_hours_list_old[0]+1, fcst_hours_list_old[-1]+1, 1))
+        iteration_length = len(fcst_hours_list_old)-1
+    data_percentiles_new = np.zeros((len(fcst_hours_list_new), 7), dtype='float32')
+
+    for i in range(iteration_length):
+        if model == 'icon-global-eps_eu-extension':
+            delta_t = 12
+        else:
+            delta_t = fcst_hours_list_old[i+1] - fcst_hours_list_old[i]
+        for j in range(delta_t):
+            #print(i, j, fcst_hours_list_old[0], fcst_hours_list_old[i] + j - fcst_hours_list_old[0], data_percentiles_new.shape)
+            data_percentiles_new[fcst_hours_list_old[i] + j - fcst_hours_list_old[0], :] = data_percentiles_old[i, :]
+    data_percentiles_new = np.where(data_percentiles_new >= 0., data_percentiles_new, 0.)
+    data_percentiles_new = np.around(data_percentiles_new, 2)
+
+    return fcst_hours_list_new, data_percentiles_new
+
+########################################################################
+########################################################################
+########################################################################

@@ -31,7 +31,7 @@ def read_forecast_data(model, date, var, **kwargs):
         varname1_folder = 'tot_prec'
         varname1_grib = 'tot_prec'
         varname1_cf = 'tp'
-    elif var == 'wind_10m':
+    elif var == 'wind_mean_10m':
         varname1_lvtype = 'sl'
         varname1_folder = 'u_10m'
         varname1_grib = 'u_10m'
@@ -268,7 +268,7 @@ def read_forecast_data(model, date, var, **kwargs):
         data_final = calculate_inst_values_of_sum(data_var1, model)
     elif var == 'prec_sum':
         data_final = data_var1
-    elif var == 'wind_10m':
+    elif var == 'wind_mean_10m':
         data_final = np.sqrt(data_var1**2 + data_var2**2) * 3.6
     elif var == 'mslp':
         if model == 'icon-eu-eps':
@@ -418,18 +418,47 @@ def calculate_inst_values_of_sum(data_sum, model):
 
     return data_inst
 
+########################################################################
+########################################################################
+########################################################################
 
 def get_fcst_hours_list(model):
     if model == 'icon-eu-eps':
         fcst_hours_list = list(range(0,48,1)) + list(range(48,72,3)) + list(range(72,120+1,6))
     elif model == 'icon-global-eps':
         fcst_hours_list = list(range(0,48,1)) + list(range(48,72,3)) + list(range(72,120,6)) +list(range(120,180+1,12))
+    elif model == 'icon-global-eps_eu-extension':
+        fcst_hours_list = list(range(132,180+1,12))
     elif model == 'icon-eu-det':
         fcst_hours_list = list(range(0,78,1)) + list(range(78,120+1,3))
     elif model == 'icon-global-det':
         fcst_hours_list = list(range(0,78,1)) + list(range(78,180+1,3))
 
     return fcst_hours_list
+
+########################################################################
+########################################################################
+########################################################################
+
+def get_all_available_vars(models, date):
+    if models == 'both-eps':
+        if date['hour'] == 0 or date['hour'] == 12:
+            #var_list = ['t_2m','prec_rate','prec_sum','wind_10m','wind_mean_10m','vmax_10m','mslp','clct','direct_rad',\
+            #            'diffuse_rad','tqv','gph_500hPa','t_850hPa','wind_850hPa',\
+            #            'shear_0-6km','lapse_rate_850hPa-500hPa']
+            var_list = ['t_2m','prec_rate','prec_sum','wind_10m','mslp','clct','direct_rad',\
+                        'diffuse_rad','tqv','gph_500hPa','t_850hPa','wind_850hPa',\
+                        'shear_0-6km','lapse_rate_850hPa-500hPa']
+        else:
+            #var_list = ['t_2m','prec_rate','prec_sum','wind_10m','wind_mean_10m','vmax_10m','mslp','clct','direct_rad',\
+            #            'diffuse_rad']
+            var_list = ['t_2m','prec_rate','prec_sum','wind_10m','mslp','clct','direct_rad',\
+                        'diffuse_rad']
+    elif models == 'icon-global-eps':
+        var_list = ['t_2m','prec_rate','prec_sum','wind_mean_10m','clct']
+
+
+    return var_list
 
 ########################################################################
 ########################################################################

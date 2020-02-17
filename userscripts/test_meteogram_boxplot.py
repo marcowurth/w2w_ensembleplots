@@ -4,26 +4,41 @@
 
 import sys
 current_path = sys.path[0]
-ex_op_str = current_path[current_path.index('scripts')+8 : current_path.index('w2w_ensembleplots')-1]
-sys.path.append('/lsdfos/kit/imk-tro/projects/MOD/Gruppe_Knippertz/nw5893/scripts/{}'.format(ex_op_str))
+ex_op_str = current_path[current_path.index('progs')+6: current_path.index('w2w_ensembleplots')-1]
+sys.path.append('/progs/{}'.format(ex_op_str))
 from w2w_ensembleplots.core.meteogram_boxplot import boxplot_forecast
 
 
 def main():
 
   ###########################################################
-    #date = dict(year = 2019, month = 12, day = 12, hour = 6)
-    date = None     # if None: get latest run
-    include_global = False
-    latest_fcst = True
-    pointnames = ['Karlsruhe','Mainz','Munich',\
-                  'Amsterdam','Athens','Berlin','Bologna','Brussels','Copenhagen','Dublin','Hamburg',\
-                  'Madrid','Leeds','Lisbon','London','Paris','Rome','Toulouse','Valencia','Vienna','Warsaw']
-    #pointnames = ['Madrid']
+    models = 'both-eps'     # plot icon-eu-eps only if global not available
+    #models = 'icon-global-eps'
+
+    #date = dict(year = 2020, month = 2, day = 16, hour = 12)
+    #date = 'latest'
+    date = 'comparison'
+
+    #var = 'all_available'
+    var = 't_2m'
+    #var = 'prec_rate'
+    #var = 'prec_sum'
+    #var = 'wind_10m'
+    #var = 'wind_mean_10m'
+    #var = 'vmax_10m'
+
+    point = dict(lat = 49.014, lon =  8.404, name='Karlsruhe')
+    #point = dict(lat = 48.860, lon =  2.350, name = 'Paris')
+    #point = dict(lat =-34.800, lon =-58.400, name = 'Buenos Aires')
+    #point = dict(lat =-31.409, lon =-64.186, name = 'Córdoba Capital')
+
     verbose = True
+
   ###########################################################
 
-    boxplot_forecast(pointnames, date, include_global, latest_fcst, verbose)
+    boxplot_forecast(models, date, var, point, verbose)
+
+
 
     return
 
