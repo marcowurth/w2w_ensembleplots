@@ -42,7 +42,7 @@ def boxplot_forecast(models, date, var, point, verbose):
               date['year'], date['month'], date['day'], date['hour']))
 
     if making_comparison_plots:
-        lead_times = [0,12,24,36,48,72,96,120,144,168]
+        lead_times = [0,12,24,36,48,72,96,120]
     else:
         lead_times = [0]
 
@@ -185,10 +185,10 @@ def boxplot_forecast(models, date, var, point, verbose):
             # make plot path #
 
             if making_comparison_plots:
-                temp_subdir = 'data/plots/experimental/meteogram_boxplot/forecast/comparison/{:03}h_ago/'.format(
+                temp_subdir = 'data/plots/operational/meteogram_boxplot/forecast/comparison/{:03}h_ago/'.format(
                                lead_time)
             else:
-                temp_subdir = 'data/plots/experimental/meteogram_boxplot/forecast/latest/'
+                temp_subdir = 'data/plots/operational/meteogram_boxplot/forecast/latest/'
 
             temp_subdir = temp_subdir + point['name']
             if not os.path.isdir(path['base'] + temp_subdir):
