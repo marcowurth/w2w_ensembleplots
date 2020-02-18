@@ -16,12 +16,13 @@ def main():
     date = 'latest'
     var = 'all_available'
     pointnames = ['Karlsruhe','Mainz','Munich']
+    plot_type = 'w2w_city'
     verbose = True
 
   ###########################################################
 
     for pointname in pointnames:
-        boxplot_forecast(models, date, var, dict(name = pointname), verbose)
+        boxplot_forecast(models, date, var, dict(name = pointname), plot_type, verbose)
 
 
     return

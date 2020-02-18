@@ -19,7 +19,7 @@ from w2w_ensembleplots.core.read_data import read_forecast_data, get_fcst_hours_
 ########################################################################
 ########################################################################
 
-def boxplot_forecast(models, date, var, point, verbose):
+def boxplot_forecast(models, date, var, point, plot_type, verbose):
 
     # determine date and lead_times list #
 
@@ -167,38 +167,38 @@ def boxplot_forecast(models, date, var, point, verbose):
         for i, lead_time in enumerate(lead_times):
             if models == 'both-eps':
                 fcst_hours_list_eu = get_fcst_hours_list('icon-eu-eps')
-                #if var == 'vmax_10m':
-                #    fcst_hours_list_eu = fcst_hours_list_eu[1:]
+                if extend_with_global:
+                    fcst_hours_list_global = get_fcst_hours_list('icon-global-eps_eu-extension')
+                else:
+                    fcst_hours_list_global = None
             elif models == 'icon-global-eps':
                 fcst_hours_list_eu = None
                 fcst_hours_list_global = get_fcst_hours_list('icon-global-eps')
-            if extend_with_global:
-                fcst_hours_list_global = get_fcst_hours_list('icon-global-eps_eu-extension')
-            else:
-                fcst_hours_list_global = None
 
             time = datetime.datetime(date['year'], date['month'], date['day'], date['hour'])
             time -= datetime.timedelta(0, 3600 * lead_time)
             date_run = dict(year = time.year, month = time.month, day = time.day, hour = time.hour)
 
 
-            # make plot path #
+            # define plot path and filename #
 
+            ex_op_str = current_path[current_path.index('progs')+6: current_path.index('w2w_ensembleplots')-1]
             if making_comparison_plots:
-                temp_subdir = 'data/plots/operational/meteogram_boxplot/forecast/comparison/{:03}h_ago/'.format(
-                               lead_time)
-            else:
-                temp_subdir = 'data/plots/operational/meteogram_boxplot/forecast/latest/'
+                temp_subdir = 'data/plots/{}/meteogram_boxplot/forecast/comparison/{:03}h_ago/'.format(
+                               ex_op_str,lead_time)
+                filename = 'meteogram_boxplot_{:03}h_ago_{}_{}'.format(lead_time, var, point['name'])
+            elif plot_type == 'w2w_city':
+                temp_subdir = 'data/plots/{}/meteogram_boxplot/forecast/w2w_cities/'.format(ex_op_str)
+                filename = 'meteogram_boxplot_{}_latest_{}'.format(point['name'], var)
+            elif plot_type == 'user_point':
+                temp_subdir = 'data/plots/{}/meteogram_boxplot/forecast/user_points/'.format(ex_op_str)
+                filename = 'meteogram_boxplot_{}_{}{:02}{:02}{:02}_{}'.format(
+                            point['name'], date['year'], date['month'], date['day'], date['hour'], var)
 
             temp_subdir = temp_subdir + point['name']
             if not os.path.isdir(path['base'] + temp_subdir):
                 os.mkdir(path['base'] + temp_subdir)
             path['plots'] = temp_subdir + '/'
-
-            if making_comparison_plots:
-                filename = 'meteogram_boxplot_{:03}h_ago_{}_{}'.format(lead_time, var, point['name'])
-            else:
-                filename = 'meteogram_boxplot_latest_{}_{}'.format(var, point['name'])
 
 
             # calculate percentiles #
@@ -240,7 +240,7 @@ def boxplot_forecast(models, date, var, point, verbose):
             plot_in_magics_boxplot(path, date_run, point, var, meta, y_axis_range, filename,
                                    fcst_hours_list_eu, fcst_hours_list_global,
                                    data_percentiles_eu_eps, data_percentiles_global_eps,
-                                   models, extend_with_global, making_comparison_plots, lead_time)
+                                   models, extend_with_global, making_comparison_plots, lead_time, plot_type)
         del y_axis_range
 
     return
@@ -252,7 +252,7 @@ def boxplot_forecast(models, date, var, point, verbose):
 def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
                            fcst_hours_list_eu, fcst_hours_list_global,
                            data_percentiles_eu, data_percentiles_global,
-                           models, extend_with_global, making_comparison_plots, lead_time):
+                           models, extend_with_global, making_comparison_plots, lead_time, plot_type):
 
     run_time = datetime.datetime(date['year'], date['month'], date['day'], date['hour'])
     if models == 'both-eps':
@@ -269,6 +269,9 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
     if var == 't_2m':
         if timeshift == 0:
             t2m_6h_times_str = '0,6,12,18 UTC'
+            if models == 'icon-global-eps':
+                t2m_0_12UTC_times_str = '0,12 UTC'
+                t2m_6_18UTC_times_str = '6,18 UTC'
         if timeshift == 1:
             t2m_6h_times_str = '1,7,13,19 CET'
         if timeshift == 2:
@@ -329,17 +332,24 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
     if models == 'icon-global-eps':
         if var == 't_2m':
             fcst_hours_list_global_6h = [x for x in fcst_hours_list_global if x % 6 == 0]
+            fcst_hours_list_global_0_12UTC = [x for x in fcst_hours_list_global_6h if x % 12 == 0]
+            fcst_hours_list_global_6_18UTC = [x for x in fcst_hours_list_global_6h if x % 12 == 6]
             fcst_hours_list_global_1h = [x for x in fcst_hours_list_global if x not in fcst_hours_list_global_6h]
 
-            dates_global_6h = []
-            for time_step in fcst_hours_list_global_6h:
-                dates_global_6h.append(str(run_time + datetime.timedelta(0, 3600 * (time_step + timeshift))))
+            dates_global_0_12UTC = []
+            for time_step in fcst_hours_list_global_0_12UTC:
+                dates_global_0_12UTC.append(str(run_time + datetime.timedelta(0, 3600 * (time_step + timeshift))))
+            dates_global_6_18UTC = []
+            for time_step in fcst_hours_list_global_6_18UTC:
+                dates_global_6_18UTC.append(str(run_time + datetime.timedelta(0, 3600 * (time_step + timeshift))))
             dates_global_1h = []
             for time_step in fcst_hours_list_global_1h:
                 dates_global_1h.append(str(run_time + datetime.timedelta(0, 3600 * (time_step + timeshift))))            
 
-            data_percentiles_global_6h = data_percentiles_global[[list(fcst_hours_list_global).index(x)\
-                                                                  for x in fcst_hours_list_global_6h]]
+            data_percentiles_global_0_12UTC = data_percentiles_global[[list(fcst_hours_list_global).index(x)\
+                                                                       for x in fcst_hours_list_global_0_12UTC]]
+            data_percentiles_global_6_18UTC = data_percentiles_global[[list(fcst_hours_list_global).index(x)\
+                                                                       for x in fcst_hours_list_global_6_18UTC]]
             data_percentiles_global_1h = data_percentiles_global[[list(fcst_hours_list_global).index(x)\
                                                                   for x in fcst_hours_list_global_1h]]
 
@@ -381,9 +391,9 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
             subpage_y_min = y_axis_range['min'],
             subpage_y_max = y_axis_range['max'],
             subpage_y_axis_type = 'regular',
-            subpage_x_position = 1.0,
+            subpage_x_position = 1.55,
             subpage_y_position = 0.48,
-            subpage_x_length = 13.7,
+            subpage_x_length = 13.25,
             subpage_y_length = 5.0,
         )
 
@@ -869,7 +879,7 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
                     graph_bar_colour = 'rgb(0, 150, 130)', # KIT turquoise
                     graph_bar_width = 3600 * width_1h,
                     legend = 'on',
-                    legend_user_text = '<font colour="black"> ICON-Global-EPS (40km)</font>'
+                    legend_user_text = '<font colour="black"> ICON-Global-EPS (40km): Other times</font>'
                 )
             data_p2575_global_1h = magics.minput(
                     input_x_type = 'date',
@@ -893,53 +903,105 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
 
     ########################################################################
 
-            bar_minmax_global_6h = magics.mgraph(
+            bar_minmax_global_0_12UTC = magics.mgraph(
                     graph_type = 'bar',
                     graph_bar_colour = 'black',
                     graph_bar_width = 3600 * 0.05,
                 )
-            data_minmax_global_6h = magics.minput(
+            data_minmax_global_0_12UTC = magics.minput(
                     input_x_type = 'date',
-                    input_date_x_values = dates_global_6h,
-                    input_y_values  = data_percentiles_global_6h[:,0],
-                    input_y2_values = data_percentiles_global_6h[:,6],
+                    input_date_x_values = dates_global_0_12UTC,
+                    input_y_values  = data_percentiles_global_0_12UTC[:,0],
+                    input_y2_values = data_percentiles_global_0_12UTC[:,6],
                 )
-            bar_p1090_global_6h = magics.mgraph(
+            bar_p1090_global_0_12UTC = magics.mgraph(
                     graph_type = 'bar',
                     graph_bar_colour = 'rgb(0, 242, 209)', # bright turquoise
                     graph_bar_width = 3600 * 0.5,
                 )
-            data_p1090_global_6h = magics.minput(
+            data_p1090_global_0_12UTC = magics.minput(
                     input_x_type = 'date',
-                    input_date_x_values = dates_global_6h,
-                    input_y_values  = data_percentiles_global_6h[:,1],
-                    input_y2_values = data_percentiles_global_6h[:,5],
+                    input_date_x_values = dates_global_0_12UTC,
+                    input_y_values  = data_percentiles_global_0_12UTC[:,1],
+                    input_y2_values = data_percentiles_global_0_12UTC[:,5],
                 )
-            bar_p2575_global_6h = magics.mgraph(
+            bar_p2575_global_0_12UTC = magics.mgraph(
                     graph_type = 'bar',
                     graph_bar_colour = 'rgb(0, 242, 209)', # bright turquoise
                     graph_bar_width = 3600 * width_1h,
                     legend = 'on',
                     legend_user_text = '<font colour="black"> ICON-Global-EPS (40km): {}</font>'.format(
-                                        t2m_6h_times_str)
+                                        t2m_0_12UTC_times_str)
                 )
-            data_p2575_global_6h = magics.minput(
+            data_p2575_global_0_12UTC = magics.minput(
                     input_x_type = 'date',
-                    input_date_x_values = dates_global_6h,
-                    input_y_values  = data_percentiles_global_6h[:,2],
-                    input_y2_values = data_percentiles_global_6h[:,4],
+                    input_date_x_values = dates_global_0_12UTC,
+                    input_y_values  = data_percentiles_global_0_12UTC[:,2],
+                    input_y2_values = data_percentiles_global_0_12UTC[:,4],
                 )
-            bar_median_global_6h = magics.mgraph(
+            bar_median_global_0_12UTC = magics.mgraph(
                     graph_type = 'bar',
                     graph_bar_colour = 'black',
                     graph_bar_width = 3600 * width_1h,
                 )
-            data_median_global_6h = magics.minput(
+            data_median_global_0_12UTC = magics.minput(
                     input_x_type = 'date',
-                    input_date_x_values = dates_global_6h,
-                    input_y_values  = data_percentiles_global_6h[:,3]\
+                    input_date_x_values = dates_global_0_12UTC,
+                    input_y_values  = data_percentiles_global_0_12UTC[:,3]\
                                       - (y_axis_range['max'] - y_axis_range['min']) / 400.,
-                    input_y2_values = data_percentiles_global_6h[:,3]\
+                    input_y2_values = data_percentiles_global_0_12UTC[:,3]\
+                                      + (y_axis_range['max'] - y_axis_range['min']) / 400.,
+                )
+
+    ########################################################################
+
+            bar_minmax_global_6_18UTC = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'black',
+                    graph_bar_width = 3600 * 0.05,
+                )
+            data_minmax_global_6_18UTC = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_global_6_18UTC,
+                    input_y_values  = data_percentiles_global_6_18UTC[:,0],
+                    input_y2_values = data_percentiles_global_6_18UTC[:,6],
+                )
+            bar_p1090_global_6_18UTC = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'rgb(88, 217, 34)', # green
+                    graph_bar_width = 3600 * 0.5,
+                )
+            data_p1090_global_6_18UTC = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_global_6_18UTC,
+                    input_y_values  = data_percentiles_global_6_18UTC[:,1],
+                    input_y2_values = data_percentiles_global_6_18UTC[:,5],
+                )
+            bar_p2575_global_6_18UTC = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'rgb(88, 217, 34)', # green
+                    graph_bar_width = 3600 * width_1h,
+                    legend = 'on',
+                    legend_user_text = '<font colour="black"> ICON-Global-EPS (40km): {}</font>'.format(
+                                        t2m_6_18UTC_times_str)
+                )
+            data_p2575_global_6_18UTC = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_global_6_18UTC,
+                    input_y_values  = data_percentiles_global_6_18UTC[:,2],
+                    input_y2_values = data_percentiles_global_6_18UTC[:,4],
+                )
+            bar_median_global_6_18UTC = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'black',
+                    graph_bar_width = 3600 * width_1h,
+                )
+            data_median_global_6_18UTC = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_global_6_18UTC,
+                    input_y_values  = data_percentiles_global_6_18UTC[:,3]\
+                                      - (y_axis_range['max'] - y_axis_range['min']) / 400.,
+                    input_y2_values = data_percentiles_global_6_18UTC[:,3]\
                                       + (y_axis_range['max'] - y_axis_range['min']) / 400.,
                 )
 
@@ -1099,16 +1161,28 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
 
     ########################################################################
 
-    title_str = '{} in {}'.format(meta['var'], point['name'])
+    if plot_type == 'w2w_city':
+        title_str = '<b>{} in {}</b>'.format(meta['var'], point['name'])
+    elif plot_type == 'user_point':
+        if point['lat'] >= 0.0 and point['lon'] >= 0.0:
+            coord_str = '{:.2f}°N, {:.2f}°E'.format(abs(point['lat']), abs(point['lon']))
+        elif point['lat'] >= 0.0 and point['lon'] < 0.0:
+            coord_str = '{:.2f}°N, {:.2f}°W'.format(abs(point['lat']), abs(point['lon']))
+        elif point['lat'] < 0.0 and point['lon'] >= 0.0:
+            coord_str = '{:.2f}°S, {:.2f}°E'.format(abs(point['lat']), abs(point['lon']))
+        elif point['lat'] < 0.0 and point['lon'] < 0.0:
+            coord_str = '{:.2f}°S, {:.2f}°W'.format(abs(point['lat']), abs(point['lon']))
+        title_str = '<b>{} in {}</b> ({})'.format(meta['var'], point['name'], coord_str)
+
     title = magics.mtext(
             text_line_1 = title_str,
             text_font_size = 1.0,
             text_colour = 'black',
-            text_justification = 'centre',
+            text_justification = 'left',
             text_mode = 'positional',
-            text_box_x_position = 5.3,
+            text_box_x_position = 5.85,
             text_box_y_position = 5.45,
-            text_box_x_length = 5.0,
+            text_box_x_length = 8.0,
             text_box_y_length = 0.7,
         )
 
@@ -1130,7 +1204,7 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
             text_colour = 'black',
             text_justification = 'left',
             text_mode = 'positional',
-            text_box_x_position = 1.0,
+            text_box_x_position = 1.55,
             text_box_y_position = 5.45,
             text_box_x_length = 1.5,
             text_box_y_length = 0.5,
@@ -1146,7 +1220,7 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
             text_colour = 'black',
             text_justification = 'centre',
             text_mode = 'positional',
-            text_box_x_position = 10.5,
+            text_box_x_position = 10.65,
             text_box_y_position = 2.3,
             text_box_x_length = 4.0,
             text_box_y_length = 1.3,
@@ -1163,7 +1237,7 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
             text_colour = 'black',
             text_justification = 'right',
             text_mode = 'positional',
-            text_box_x_position = 0.31,
+            text_box_x_position = 0.86,
             text_box_y_position = 5.51,
             text_box_x_length = 0.5,
             text_box_y_length = 0.5,
@@ -1184,7 +1258,7 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
             text_colour = 'black',
             text_justification = 'right',
             text_mode = 'positional',
-            text_box_x_position = 0.31 + correction,
+            text_box_x_position = 0.86 + correction,
             text_box_y_position = 5.51+0.14,
             text_box_x_length = 0.5,
             text_box_y_length = 0.5,
@@ -1192,9 +1266,17 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
 
     ########################################################################
 
-    logo = magics.mimport(
+    logo_percentiles = magics.mimport(
+                    import_file_name = path['base'] + 'data/plots/additional/' + 'percentiles_description.png',
+                    import_x_position = 0.18,
+                    import_y_position = 1.5,
+                    import_height = 3.340,
+                    import_width =  0.720,
+                )
+
+    logo_w2w = magics.mimport(
                     import_file_name = path['base'] + 'data/plots/additional/' + 'w2w_icon.png',
-                    import_x_position = 13.74,
+                    import_x_position = 13.95,
                     import_y_position = 5.52,
                     import_height = 0.474,
                     import_width =  1.000,
@@ -1208,7 +1290,7 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
                 legend = magics.mlegend(
                         legend_text_font_size = 0.7,
                         legend_box_mode = 'positional',
-                        legend_box_x_position = 4.2,
+                        legend_box_x_position = 4.49,
                         legend_box_y_position = 5.07,
                         legend_box_x_length = 12.0,
                         legend_box_y_length = 0.5,
@@ -1218,17 +1300,27 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
                 legend = magics.mlegend(
                         legend_text_font_size = 0.7,
                         legend_box_mode = 'positional',
-                        legend_box_x_position = 4.2,
+                        legend_box_x_position = 7.5,
                         legend_box_y_position = 5.07,
-                        legend_box_x_length = 12.0,
+                        legend_box_x_length = 8.0,
                         legend_box_y_length = 0.5,
                         legend_entry_text_width = 90,
                     )
+        elif var == 'wind_10m':
+            legend = magics.mlegend(
+                    legend_text_font_size = 0.7,
+                    legend_box_mode = 'positional',
+                    legend_box_x_position = 8.4,
+                    legend_box_y_position = 5.07,
+                    legend_box_x_length = 7.5,
+                    legend_box_y_length = 0.5,
+                    legend_entry_text_width = 90,
+                )
         elif extend_with_global:
             legend = magics.mlegend(
                     legend_text_font_size = 0.7,
                     legend_box_mode = 'positional',
-                    legend_box_x_position = 9.7,
+                    legend_box_x_position = 9.9,
                     legend_box_y_position = 5.07,
                     legend_box_x_length = 5.0,
                     legend_box_y_length = 0.5,
@@ -1238,9 +1330,9 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
             legend = magics.mlegend(
                     legend_text_font_size = 0.7,
                     legend_box_mode = 'positional',
-                    legend_box_x_position = 4.2,
+                    legend_box_x_position = 12.55,
                     legend_box_y_position = 5.07,
-                    legend_box_x_length = 12.0,
+                    legend_box_x_length = 3.0,
                     legend_box_y_length = 0.5,
                     legend_entry_text_width = 90,
                 )
@@ -1250,9 +1342,9 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
             legend = magics.mlegend(
                     legend_text_font_size = 0.7,
                     legend_box_mode = 'positional',
-                    legend_box_x_position = 7.15,
+                    legend_box_x_position = 3.55,
                     legend_box_y_position = 5.07,
-                    legend_box_x_length = 8.3,
+                    legend_box_x_length = 11.8,
                     legend_box_y_length = 0.5,
                     legend_entry_text_width = 90,
                 )
@@ -1260,7 +1352,7 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
             legend = magics.mlegend(
                     legend_text_font_size = 0.7,
                     legend_box_mode = 'positional',
-                    legend_box_x_position = 12.3,
+                    legend_box_x_position = 12.2,
                     legend_box_y_position = 5.07,
                     legend_box_x_length = 3.0,
                     legend_box_y_length = 0.5,
@@ -1290,8 +1382,8 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
     else:
         print(time_start.hour, timeshift)
 
-    spacing = 1.78
-    left_pos = 0.40 - timeshift * 0.11 + factor * spacing / 4
+    spacing = 1.73
+    left_pos = 0.92 - timeshift * 0.11 + factor * spacing / 4
     date1_label = magics.mtext(
             text_line_1 = date1.strftime('%a., %d %b.'),
             text_font_size = 0.8,
@@ -1427,7 +1519,8 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
                         shading_area_text1,
                         unit,
                         unit_special,
-                        logo,
+                        logo_w2w,
+                        logo_percentiles,
                         legend,
                         date1_label,
                         date2_label,
@@ -1463,7 +1556,8 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
                         shading_area_text1,
                         unit,
                         unit_special,
-                        logo,
+                        logo_w2w,
+                        logo_percentiles,
                         legend,
                         date1_label,
                         date2_label,
@@ -1507,7 +1601,8 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
                         shading_area_text1,
                         unit,
                         unit_special,
-                        logo,
+                        logo_w2w,
+                        logo_percentiles,
                         legend,
                         date1_label,
                         date2_label,
@@ -1543,7 +1638,8 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
                         shading_area_text1,
                         unit,
                         unit_special,
-                        logo,
+                        logo_w2w,
+                        logo_percentiles,
                         legend,
                         date1_label,
                         date2_label,
@@ -1593,7 +1689,8 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
                         init_time,
                         unit,
                         unit_special,
-                        logo,
+                        logo_w2w,
+                        logo_percentiles,
                         legend,
                         date1_label,
                         date2_label,
@@ -1634,7 +1731,8 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
                         init_time,
                         unit,
                         unit_special,
-                        logo,
+                        logo_w2w,
+                        logo_percentiles,
                         legend,
                         date1_label,
                         date2_label,
@@ -1675,7 +1773,8 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
                         init_time,
                         unit,
                         unit_special,
-                        logo,
+                        logo_w2w,
+                        logo_percentiles,
                         legend,
                         date1_label,
                         date2_label,
@@ -1697,14 +1796,22 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
                         init_timeline_line,
                         ref_level_value,
                         ref_level_line,
-                        data_minmax_global_6h,
-                        bar_minmax_global_6h,
-                        data_p1090_global_6h,
-                        bar_p1090_global_6h,
-                        data_p2575_global_6h,
-                        bar_p2575_global_6h,
-                        data_median_global_6h,
-                        bar_median_global_6h,
+                        data_minmax_global_0_12UTC,
+                        bar_minmax_global_0_12UTC,
+                        data_p1090_global_0_12UTC,
+                        bar_p1090_global_0_12UTC,
+                        data_p2575_global_0_12UTC,
+                        bar_p2575_global_0_12UTC,
+                        data_median_global_0_12UTC,
+                        bar_median_global_0_12UTC,
+                        data_minmax_global_6_18UTC,
+                        bar_minmax_global_6_18UTC,
+                        data_p1090_global_6_18UTC,
+                        bar_p1090_global_6_18UTC,
+                        data_p2575_global_6_18UTC,
+                        bar_p2575_global_6_18UTC,
+                        data_median_global_6_18UTC,
+                        bar_median_global_6_18UTC,
                         data_minmax_global_1h,
                         bar_minmax_global_1h,
                         data_p1090_global_1h,
@@ -1717,7 +1824,8 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
                         init_time,
                         unit,
                         unit_special,
-                        logo,
+                        logo_w2w,
+                        logo_percentiles,
                         legend,
                         date1_label,
                         date2_label,
@@ -1750,7 +1858,8 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
                         init_time,
                         unit,
                         unit_special,
-                        logo,
+                        logo_w2w,
+                        logo_percentiles,
                         legend,
                         date1_label,
                         date2_label,

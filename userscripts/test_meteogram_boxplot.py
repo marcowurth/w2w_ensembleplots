@@ -16,8 +16,8 @@ def main():
     #models = 'icon-global-eps'
 
     #date = dict(year = 2020, month = 2, day = 16, hour = 12)
-    #date = 'latest'
-    date = 'comparison'
+    date = 'latest'
+    #date = 'comparison'
 
     #var = 'all_available'
     var = 't_2m'
@@ -32,11 +32,14 @@ def main():
     #point = dict(lat =-34.800, lon =-58.400, name = 'Buenos Aires')
     #point = dict(lat =-31.409, lon =-64.186, name = 'Córdoba Capital')
 
+    plot_type = 'w2w_city'
+    #plot_type = 'user_point'
+
     verbose = True
 
   ###########################################################
 
-    boxplot_forecast(models, date, var, point, verbose)
+    boxplot_forecast(models, date, var, point, plot_type, verbose)
 
 
 
