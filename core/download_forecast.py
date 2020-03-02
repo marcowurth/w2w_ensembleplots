@@ -55,6 +55,8 @@ def convert_gribfiles_to_one_netcdf(path, grib_filename, netcdf_filename):
 
     for idx_filename in fnmatch.filter(os.listdir(path['base'] + path['subdir']), '*.idx'):
         os.remove(path['base'] + path['subdir'] + idx_filename)
+    for grib2_filename in fnmatch.filter(os.listdir(path['base'] + path['subdir']), '*.grib2'):
+        os.remove(path['base'] + path['subdir'] + grib2_filename)
     return
 
 ########################################################################
