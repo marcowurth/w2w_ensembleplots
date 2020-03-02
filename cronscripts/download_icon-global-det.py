@@ -50,7 +50,7 @@ def main():
         os.mkdir(path['base'] + path['data'])
     path['data'] = path['data'] + '/'
 
-    for var in var_list[-1:]:
+    for var in var_list:
         if var[1] == 'sl':      # sl = single-level
             temp_subdir = path['data'] + var[0]
         else:
