@@ -28,7 +28,7 @@ def main():
     # explicit download options #
 
    ###########################################################
-    #date = dict(year = 2020, month = 3, day = 2, hour = 0)
+    #date = dict(year = 2020, month = 5, day = 14, hour = 12)
    ###########################################################
 
     print('download run_{}{:02}{:02}{:02}'.format(
@@ -38,7 +38,7 @@ def main():
     # list of dwd variable names #
 
     var_list = [['tot_prec','sl'],['t_2m','sl'],['u_10m','sl'],['v_10m','sl'],['pmsl','sl'],['clct','sl'],
-                ['t','850hPa'],['fi','500hPa'],['fi','300hPa'],['u','300hPa'],['v','300hPa']]
+                ['t','850hPa'],['relhum','850hPa'],['fi','500hPa'],['fi','300hPa'],['u','300hPa'],['v','300hPa']]
 
 
     # create paths if necessary #

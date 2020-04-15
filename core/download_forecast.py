@@ -78,7 +78,7 @@ def calc_latest_run_time(model):
 
 
     datenow  = datetime.datetime.now().date()
-    timenow  = datetime.datetime.now().time()
+    timenow  = datetime.datetime.now(datetime.timezone.utc).time()
     run_year  = datenow.year
     run_month = datenow.month
     run_day   = datenow.day
@@ -86,7 +86,7 @@ def calc_latest_run_time(model):
 
     timeshift = get_timeshift()
     update_times_localtime = np.array(update_times_utc) + timeshift
-    
+
     if len(update_times_utc) == 2:
         if   run_time_float >= update_times_localtime[0] and run_time_float < update_times_localtime[1]: run_hour = 0
         elif run_time_float >= update_times_localtime[1]  or run_time_float < update_times_localtime[0]: run_hour = 12
