@@ -51,7 +51,7 @@ def read_forecast_data(model, date, var, **kwargs):
             varname2_grib = 't_2m'
             varname2_cf = 't2m'
             filename_inv = 'icon-eu-eps_europe_icosahedral_time-invariant_2018121312_hsurf.grib2'
-        elif model == 'icon-eu-det':
+        elif model == 'icon-eu-det' or model == 'icon-global-det':
             varname1_lvtype = 'sl'
             varname1_folder = 'pmsl'
             varname1_grib = 'pmsl'
@@ -96,6 +96,15 @@ def read_forecast_data(model, date, var, **kwargs):
         varname1_folder = 't_850hPa'
         varname1_grib = '850_t'
         varname1_cf = 't'
+    elif var == 'theta_e_850hPa':
+        varname1_lvtype = 'pl'
+        varname1_folder = 't_850hPa'
+        varname1_grib = '850_t'
+        varname1_cf = 't'
+        varname2_lvtype = 'pl'
+        varname2_folder = 'relhum_850hPa'
+        varname2_grib = '850_relhum'
+        varname2_cf = 'r'
     elif var == 'wind_850hPa':
         varname1_lvtype = 'pl'
         varname1_folder = 'u_850hPa'
@@ -104,6 +113,15 @@ def read_forecast_data(model, date, var, **kwargs):
         varname2_lvtype = 'pl'
         varname2_folder = 'v_850hPa'
         varname2_grib = '850_v'
+        varname2_cf = 'v'
+    elif var == 'wind_500hPa':
+        varname1_lvtype = 'pl'
+        varname1_folder = 'u_500hPa'
+        varname1_grib = '500_u'
+        varname1_cf = 'u'
+        varname2_lvtype = 'pl'
+        varname2_folder = 'v_500hPa'
+        varname2_grib = '500_v'
         varname2_cf = 'v'
     elif var == 'wind_300hPa':
         varname1_lvtype = 'pl'
@@ -184,7 +202,14 @@ def read_forecast_data(model, date, var, **kwargs):
             else:
                 data_var1 = ds[varname1_cf].loc[dict(values = point_index[0])].values
         elif 'fcst_hour' in kwargs:
-            data_var1 = ds[varname1_cf][dict(step = fcst_hour_index)].values
+            if var == 'prec_rate':
+                data_var1 = (ds[varname1_cf][dict(step = fcst_hour_index)].values \
+                            - ds[varname1_cf][dict(step = fcst_hour_index - 1)].values) \
+                            / float(fcst_hours_list[fcst_hour_index] - fcst_hours_list[fcst_hour_index - 1])
+                data_var1 = np.where(data_var1 >= 0.0, data_var1, 0.0)
+                data_var1 = np.around(data_var1, 2)
+            else:
+                data_var1 = ds[varname1_cf][dict(step = fcst_hour_index)].values
         ds.close()
         del ds
 
@@ -262,46 +287,51 @@ def read_forecast_data(model, date, var, **kwargs):
 
     # calculate final variables out of the read data arrays #
 
-    if var == 't_2m':
+    if var == 't_2m':           # in deg C
         data_final = data_var1 - 273.15
-    elif var == 'prec_rate':
-        data_final = calculate_inst_values_of_sum(data_var1, model)
-    elif var == 'prec_sum':
+    elif var == 'prec_rate':    # in mm/h
+        if 'point' in kwargs:
+            data_final = calculate_inst_values_of_sum(data_var1, model)
+        elif 'fcst_hour' in kwargs:
+            data_final = data_var1
+    elif var == 'prec_sum':     # in mm
         data_final = data_var1
-    elif var == 'wind_mean_10m':
+    elif var == 'wind_mean_10m':    # in km/h
         data_final = np.sqrt(data_var1**2 + data_var2**2) * 3.6
-    elif var == 'mslp':
+    elif var == 'mslp':         # in hPa
         if model == 'icon-eu-eps':
             # reduce surface pressure to mslp with DWD formula and height and t2m #
             data_final = data_var1 * 1e-2 * np.exp(9.80665 * data_var_inv / (287.05 * data_var2))
-        elif model == 'icon-eu-det':
+        elif model == 'icon-eu-det' or model == 'icon-global-det':
             data_final = data_var1 * 1e-2
-    elif var == 'clct':
+    elif var == 'clct':         # in %
         data_final = data_var1
     elif var == 'direct_rad':
         data_final = calculate_inst_values_of_avg(data_var1, model)
     elif var == 'diffuse_rad':
         data_final = calculate_inst_values_of_avg(data_var1, model)
-    elif var == 'vmax_10m':
+    elif var == 'vmax_10m':     # in km/h
         data_final = data_var1 * 3.6
-    elif var == 'tqv':
+    elif var == 'tqv':          # in mm
         data_final = data_var1
-    elif var == 'gph_500hPa':
+    elif var == 'gph_500hPa':   # in gpdm
         data_final = data_var1 / 98.0665
-    elif var == 'gph_300hPa':
+    elif var == 'gph_300hPa':   # in gpdm
         data_final = data_var1 / 98.0665
-    elif var == 't_850hPa':
+    elif var == 't_850hPa':     # in deg C
         data_final = data_var1 - 273.15
-    elif var == 'wind_850hPa':
+    elif var == 'wind_850hPa':  # in km/h
         data_final = np.sqrt(data_var1**2 + data_var2**2) * 3.6
-    elif var == 'wind_300hPa':
+    elif var == 'wind_500hPa':  # in km/h
         data_final = np.sqrt(data_var1**2 + data_var2**2) * 3.6
-    elif var == 'shear_0-6km':
+    elif var == 'wind_300hPa':  # in km/h
+        data_final = np.sqrt(data_var1**2 + data_var2**2) * 3.6
+    elif var == 'shear_0-6km':  # in m/s
         data_final = np.sqrt((data_var3 - data_var1)**2 + (data_var4 - data_var2)**2)
-    elif var == 'lapse_rate_850hPa-500hPa':
+    elif var == 'lapse_rate_850hPa-500hPa':     # in k/km
         data_final = 9806.65 * (data_var1 - data_var3) / (data_var4 - data_var2)
 
-    print(data_final.shape)
+    print(var + ':', data_final.shape)
     return data_final
 
 ########################################################################
@@ -405,7 +435,7 @@ def calculate_inst_values_of_sum(data_sum, model):
     # calculate prec_rate #
 
     fcst_hours_list = get_fcst_hours_list(model)
-    if model == 'icon-eu-eps' or model == 'icon-global-eps':
+    if model == 'icon-eu-eps' or model == 'icon-global-eps' or model == 'pamore_icon-global-eps':
         data_inst = np.zeros((len(fcst_hours_list)-1, 40), dtype='float32')
         for i in range(len(fcst_hours_list)-1):
             data_inst[i,:] = (data_sum[i+1,:] - data_sum[i,:]) / float(fcst_hours_list[i+1] - fcst_hours_list[i])
@@ -433,6 +463,8 @@ def get_fcst_hours_list(model):
         fcst_hours_list = list(range(0,78,1)) + list(range(78,120+1,3))
     elif model == 'icon-global-det':
         fcst_hours_list = list(range(0,78,1)) + list(range(78,180+1,3))
+    elif model == 'pamore_icon-global-eps':
+        fcst_hours_list = list(range(0,75,1)) + list(range(75,180+1,3))
 
     return fcst_hours_list
 
@@ -447,7 +479,7 @@ def get_all_available_vars(models, date):
             #            'diffuse_rad','tqv','gph_500hPa','t_850hPa','wind_850hPa',\
             #            'shear_0-6km','lapse_rate_850hPa-500hPa']
             var_list = ['t_2m','prec_rate','prec_sum','wind_10m','mslp','clct','direct_rad',\
-                        'diffuse_rad','tqv','gph_500hPa','t_850hPa','wind_850hPa',\
+                        'diffuse_rad','tqv','gph_500hPa','t_850hPa','wind_3pl',\
                         'shear_0-6km','lapse_rate_850hPa-500hPa']
         else:
             #var_list = ['t_2m','prec_rate','prec_sum','wind_10m','wind_mean_10m','vmax_10m','mslp','clct','direct_rad',\
