@@ -74,7 +74,7 @@ def calc_latest_run_time(model):
     elif model == 'icon-eu-det':
         update_times_utc = [3+47/60, 9+41/60, 15+47/60, 21+41/60]
     elif model == 'icon-global-det':
-        update_times_utc = [3+38/60, 15+38/60]
+        update_times_utc = [4+20/60, 15+29/60]
 
 
     datenow  = datetime.datetime.now().date()
