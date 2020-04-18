@@ -84,21 +84,18 @@ def calc_latest_run_time(model):
     run_day   = datenow.day
     run_time_float = timenow.hour + timenow.minute / 60
 
-    timeshift = get_timeshift()
-    update_times_localtime = np.array(update_times_utc) + timeshift
-
     if len(update_times_utc) == 2:
-        if   run_time_float >= update_times_localtime[0] and run_time_float < update_times_localtime[1]: run_hour = 0
-        elif run_time_float >= update_times_localtime[1]  or run_time_float < update_times_localtime[0]: run_hour = 12
+        if   run_time_float >= update_times_utc[0] and run_time_float < update_times_utc[1]: run_hour = 0
+        elif run_time_float >= update_times_utc[1]  or run_time_float < update_times_utc[0]: run_hour = 12
         else: exit()
     elif len(update_times_utc) == 4:
-        if   run_time_float >= update_times_localtime[0] and run_time_float < update_times_localtime[1]: run_hour = 0
-        elif run_time_float >= update_times_localtime[1] and run_time_float < update_times_localtime[2]: run_hour = 6
-        elif run_time_float >= update_times_localtime[2] and run_time_float < update_times_localtime[3]: run_hour = 12
-        elif run_time_float >= update_times_localtime[3]  or run_time_float < update_times_localtime[0]: run_hour = 18
+        if   run_time_float >= update_times_utc[0] and run_time_float < update_times_utc[1]: run_hour = 0
+        elif run_time_float >= update_times_utc[1] and run_time_float < update_times_utc[2]: run_hour = 6
+        elif run_time_float >= update_times_utc[2] and run_time_float < update_times_utc[3]: run_hour = 12
+        elif run_time_float >= update_times_utc[3]  or run_time_float < update_times_utc[0]: run_hour = 18
         else: exit()
 
-    if run_time_float < update_times_localtime[0]:
+    if run_time_float < update_times_utc[0]:
         run_year, run_month, run_day = go_back_one_day(run_year, run_month, run_day)
 
     date = dict(year = run_year, month = run_month, day = run_day, hour = run_hour)
