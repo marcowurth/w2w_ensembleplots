@@ -12,33 +12,37 @@ from w2w_ensembleplots.core.meteogram_boxplot import boxplot_forecast
 def main():
 
   ###########################################################
-    #models = 'both-eps'     # plot icon-eu-eps only if global not available
-    models = 'icon-global-eps'
+    #date = dict(year = 2020, month = 3, day = 3, hour = 0)
+    date = 'latest'
 
-    date = dict(year = 2020, month = 4, day = 23, hour = 0)
-    #date = 'latest'
-    #date = 'comparison'
-
-    #var = 'all_available'
+    var = 'all_available'
     #var = 't_2m'
-    var = 'prec_rate'
+    #var = 'prec_rate'
     #var = 'prec_sum'
+    #var = 'mslp'
     #var = 'wind_10m'
-    #var = 'wind_3pl'
-    #var = 'wind_mean_10m'
-    #var = 'vmax_10m'
+    #var = 'wind_850hPa'
 
-    point = dict(lat = 49.014, lon =  8.404, name='Karlsruhe')
-    #point = dict(lat = 48.860, lon =  2.350, name = 'Paris')
-    #point = dict(lat =-34.800, lon =-58.400, name = 'Buenos Aires')
+    #point = dict(lat = 52.519, lon = 13.407, name = 'Berlin')
+    #point = dict(lat = 49.014, lon =  8.404, name='Karlsruhe')
+    #point = dict(lat = 37.984, lon = 23.690, name = 'Athens')
+    #point = dict(lat =-33.337, lon =-60.213, name = 'San Nicolás')
+    point = dict(lat =-34.800, lon =-58.400, name = 'Buenos Aires')
     #point = dict(lat =-31.409, lon =-64.186, name = 'Córdoba Capital')
 
-    plot_type = 'w2w_city'
-    #plot_type = 'user_point'
+    plot_type = 'user_point'
 
     verbose = True
 
   ###########################################################
+
+    if point['lon'] > 180.0:
+        point['lon'] -= 360.0
+    if point['lat'] > 29.5 and point['lat'] < 70.5 and point['lon'] > -23.5 and point['lon'] < 62.5:
+        models = 'both-eps'
+    #else:
+    models = 'icon-global-eps'
+
 
     boxplot_forecast(models, date, var, point, plot_type, verbose)
 
