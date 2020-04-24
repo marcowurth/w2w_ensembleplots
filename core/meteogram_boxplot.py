@@ -1622,7 +1622,7 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
         time_code = 'CET'                           # UTC+1
     elif timeshift == 2:
         time_code = 'CEST'                          # UTC+2
-    print(run_time)
+
     init_time_str = 'Initial time: {}, {:02}{}'.format(\
                         run_time.strftime('%a., %d %b. %Y'), initial_time, time_code)
     init_time = magics.mtext(
@@ -2512,7 +2512,7 @@ def fit_y_axis_to_data(var, y_axis_range, pointname):
         y_axis_range['ref'] = 0.0
 
     elif var == 'prec_rate':
-        y_axis_range['min'] = -0.2
+        y_axis_range['min'] = -0.1
         if y_axis_range['max'] < 2.75:
             y_axis_range['max'] = 3.0
             y_axis_range['interval'] = 0.5

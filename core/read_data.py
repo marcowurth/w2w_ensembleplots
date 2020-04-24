@@ -475,17 +475,15 @@ def get_fcst_hours_list(model):
 def get_all_available_vars(models, date):
     if models == 'both-eps':
         if date['hour'] == 0 or date['hour'] == 12:
-            #var_list = ['t_2m','prec_rate','prec_sum','wind_10m','wind_mean_10m','vmax_10m','mslp','clct','direct_rad',\
-            #            'diffuse_rad','tqv','gph_500hPa','t_850hPa','wind_850hPa',\
-            #            'shear_0-6km','lapse_rate_850hPa-500hPa']
-            var_list = ['t_2m','prec_rate','prec_sum','wind_10m','mslp','clct','direct_rad',\
-                        'diffuse_rad','tqv','gph_500hPa','t_850hPa',\
-                        'shear_0-6km','lapse_rate_850hPa-500hPa']
+            #var_list = ['t_2m','prec_rate','prec_sum','wind_10m','wind_mean_10m','vmax_10m','mslp','clct',\
+            #'direct_rad','diffuse_rad','tqv','gph_500hPa','t_850hPa','wind_850hPa',\
+            #'shear_0-6km','lapse_rate_850hPa-500hPa']
+            var_list = ['t_2m','prec_rate','prec_sum','wind_10m','mslp','clct','direct_rad','diffuse_rad','tqv',\
+                        't_850hPa','shear_0-6km']
         else:
-            #var_list = ['t_2m','prec_rate','prec_sum','wind_10m','wind_mean_10m','vmax_10m','mslp','clct','direct_rad',\
-            #            'diffuse_rad']
-            var_list = ['t_2m','prec_rate','prec_sum','wind_10m','mslp','clct','direct_rad',\
-                        'diffuse_rad']
+            #var_list = ['t_2m','prec_rate','prec_sum','wind_10m','wind_mean_10m','vmax_10m','mslp','clct',\
+            #'direct_rad','diffuse_rad']
+            var_list = ['t_2m','prec_rate','prec_sum','wind_10m','mslp','clct','direct_rad', 'diffuse_rad']
     elif models == 'icon-global-eps':
         var_list = ['t_2m','prec_rate','prec_sum','wind_mean_10m','clct']
 
