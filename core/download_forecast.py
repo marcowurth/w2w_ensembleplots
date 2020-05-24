@@ -2,13 +2,15 @@
 ###  container for various functions  ###
 #########################################
 
-import requests
-import bz2
 import os
 import fnmatch
 import datetime
+import bz2
+
+import requests
 import numpy as np
 import xarray as xr
+import cdo
 
 
 ########################################################################
@@ -41,6 +43,20 @@ def unzip(path, filename):
 
     os.remove(path['base'] + path['subdir'] + filename)
     return newfilename
+
+########################################################################
+########################################################################
+########################################################################
+
+def interpolate_icon_grib_to_latlon(path, grib_filename, latlon_filename):
+    targetgridfile = path['base'] + path['cdo'] + 'target_grid_world_025.txt'
+    weightsfile = path['base'] + path['cdo'] + 'weights_icogl2world_025.nc'
+    cdo_module = cdo.Cdo()
+    cdo_module.remap(targetgridfile + ',' + weightsfile,
+                     input = path['base'] + path['subdir'] + grib_filename,
+                     output = path['base'] + path['subdir'] + latlon_filename,
+                     options='-f nc')
+    return
 
 ########################################################################
 ########################################################################
