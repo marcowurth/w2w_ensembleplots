@@ -14,7 +14,7 @@ from w2w_ensembleplots.core.grid_information_around_point import get_latlon_filt
 ########################################################################
 ########################################################################
 
-def read_forecast_data(model, date, var, **kwargs):
+def read_forecast_data(model, grid, date, var, **kwargs):
 
     if var == 't_2m':
         varname1_lvtype = 'sl'
@@ -167,6 +167,7 @@ def read_forecast_data(model, date, var, **kwargs):
         varname4_grib = '500_fi'
         varname4_cf = 'z'
 
+
     if model == 'icon-eu-eps':
         model_grib_str = 'icon-eu-eps_europe_icosahedral'
     elif model == 'icon-global-eps':
@@ -174,7 +175,10 @@ def read_forecast_data(model, date, var, **kwargs):
     elif model == 'icon-eu-det':
         model_grib_str = 'icon-eu_europe_regular-lat-lon'
     elif model == 'icon-global-det':
-        model_grib_str = 'icon_global_icosahedral'
+        if grid == 'icosahedral':
+            model_grib_str = 'icon_global_icosahedral'
+        elif grid == 'latlon_0.25':
+            model_grib_str = 'icon_global_latlon_0.25'
 
 
     path = dict(base = '/')
@@ -186,6 +190,7 @@ def read_forecast_data(model, date, var, **kwargs):
         fcst_hours_list = get_fcst_hours_list(model)
         fcst_hour_index = fcst_hours_list.index(kwargs['fcst_hour'])
 
+
     if 'varname1_folder' in locals():
         if varname1_lvtype == 'sl':
             level_str = 'single-level'
@@ -193,8 +198,14 @@ def read_forecast_data(model, date, var, **kwargs):
             level_str = 'pressure-level'
         path['subdir'] = 'data/model_data/{}/forecasts/run_{}{:02}{:02}{:02}/{}/'.format(
                           model, date['year'], date['month'], date['day'], date['hour'], varname1_folder)
-        filename = '{}_{}_{}{:02}{:02}{:02}_{}.nc'.format(
-                    model_grib_str, level_str, date['year'], date['month'], date['day'], date['hour'], varname1_grib)
+        if grid == 'icosahedral':
+            filename = '{}_{}_{}{:02}{:02}{:02}_{}.nc'.format(
+                        model_grib_str, level_str, date['year'], date['month'], date['day'], date['hour'],
+                        varname1_grib)
+        elif grid == 'latlon_0.25':
+            filename = '{}_{}_{}{:02}{:02}{:02}_{:03d}_{}.nc'.format(
+                        model_grib_str, level_str, date['year'], date['month'], date['day'], date['hour'],
+                        kwargs['fcst_hour'], varname1_grib)
         ds = xr.open_dataset(path['base'] + path['subdir'] + filename)
         if 'point' in kwargs:
             if model == 'icon-eu-det':
@@ -209,7 +220,13 @@ def read_forecast_data(model, date, var, **kwargs):
                 data_var1 = np.where(data_var1 >= 0.0, data_var1, 0.0)
                 data_var1 = np.around(data_var1, 2)
             else:
-                data_var1 = ds[varname1_cf][dict(step = fcst_hour_index)].values
+                if grid == 'icosahedral':
+                    data_var1 = ds[varname1_cf][dict(step = fcst_hour_index)].values
+                elif grid == 'latlon_0.25':
+                    if varname1_lvtype == 'sl':
+                        data_var1 = ds[varname1_cf][dict(time = 0)].values
+                    elif varname1_lvtype == 'pl':
+                        data_var1 = ds[varname1_cf][dict(time = 0, plev = 0)].values
         ds.close()
         del ds
 
@@ -220,8 +237,14 @@ def read_forecast_data(model, date, var, **kwargs):
             level_str = 'pressure-level'
         path['subdir'] = 'data/model_data/{}/forecasts/run_{}{:02}{:02}{:02}/{}/'.format(
                           model, date['year'], date['month'], date['day'], date['hour'], varname2_folder)
-        filename = '{}_{}_{}{:02}{:02}{:02}_{}.nc'.format(
-                    model_grib_str, level_str, date['year'], date['month'], date['day'], date['hour'], varname2_grib)
+        if grid == 'icosahedral':
+            filename = '{}_{}_{}{:02}{:02}{:02}_{}.nc'.format(
+                        model_grib_str, level_str, date['year'], date['month'], date['day'], date['hour'],
+                        varname2_grib)
+        elif grid == 'latlon_0.25':
+            filename = '{}_{}_{}{:02}{:02}{:02}_{:03d}_{}.nc'.format(
+                        model_grib_str, level_str, date['year'], date['month'], date['day'], date['hour'],
+                        kwargs['fcst_hour'], varname2_grib)
         ds = xr.open_dataset(path['base'] + path['subdir'] + filename)
         if 'point' in kwargs:
             if model == 'icon-eu-det':
@@ -229,7 +252,13 @@ def read_forecast_data(model, date, var, **kwargs):
             else:
                 data_var2 = ds[varname2_cf].loc[dict(values = point_index[0])].values
         elif 'fcst_hour' in kwargs:
-            data_var2 = ds[varname2_cf][dict(step = fcst_hour_index)].values
+            if grid == 'icosahedral':
+                data_var2 = ds[varname2_cf][dict(step = fcst_hour_index)].values
+            elif grid == 'latlon_0.25':
+                if varname2_lvtype == 'sl':
+                    data_var2 = ds[varname2_cf][dict(time = 0)].values
+                elif varname2_lvtype == 'pl':
+                    data_var2 = ds[varname2_cf][dict(time = 0, plev = 0)].values
         ds.close()
         del ds
 
@@ -240,8 +269,14 @@ def read_forecast_data(model, date, var, **kwargs):
             level_str = 'pressure-level'
         path['subdir'] = 'data/model_data/{}/forecasts/run_{}{:02}{:02}{:02}/{}/'.format(
                           model, date['year'], date['month'], date['day'], date['hour'], varname3_folder)
-        filename = '{}_{}_{}{:02}{:02}{:02}_{}.nc'.format(
-                    model_grib_str, level_str, date['year'], date['month'], date['day'], date['hour'], varname3_grib)
+        if grid == 'icosahedral':
+            filename = '{}_{}_{}{:02}{:02}{:02}_{}.nc'.format(
+                        model_grib_str, level_str, date['year'], date['month'], date['day'], date['hour'],
+                        varname3_grib)
+        elif grid == 'latlon_0.25':
+            filename = '{}_{}_{}{:02}{:02}{:02}_{:03d}_{}.nc'.format(
+                        model_grib_str, level_str, date['year'], date['month'], date['day'], date['hour'],
+                        kwargs['fcst_hour'], varname3_grib)
         ds = xr.open_dataset(path['base'] + path['subdir'] + filename)
         if 'point' in kwargs:
             if model == 'icon-eu-det':
@@ -249,7 +284,13 @@ def read_forecast_data(model, date, var, **kwargs):
             else:
                 data_var3 = ds[varname3_cf].loc[dict(values = point_index[0])].values
         elif 'fcst_hour' in kwargs:
-            data_var3 = ds[varname3_cf][dict(step = fcst_hour_index)].values
+            if grid == 'icosahedral':
+                data_var3 = ds[varname3_cf][dict(step = fcst_hour_index)].values
+            elif grid == 'latlon_0.25':
+                if varname3_lvtype == 'sl':
+                    data_var3 = ds[varname3_cf][dict(time = 0)].values
+                elif varname3_lvtype == 'pl':
+                    data_var3 = ds[varname3_cf][dict(time = 0, plev = 0)].values
         ds.close()
         del ds
 
@@ -260,8 +301,14 @@ def read_forecast_data(model, date, var, **kwargs):
             level_str = 'pressure-level'
         path['subdir'] = 'data/model_data/{}/forecasts/run_{}{:02}{:02}{:02}/{}/'.format(
                           model, date['year'], date['month'], date['day'], date['hour'], varname4_folder)
-        filename = '{}_{}_{}{:02}{:02}{:02}_{}.nc'.format(
-                    model_grib_str, level_str, date['year'], date['month'], date['day'], date['hour'], varname4_grib)
+        if grid == 'icosahedral':
+            filename = '{}_{}_{}{:02}{:02}{:02}_{}.nc'.format(
+                        model_grib_str, level_str, date['year'], date['month'], date['day'], date['hour'],
+                        varname4_grib)
+        elif grid == 'latlon_0.25':
+            filename = '{}_{}_{}{:02}{:02}{:02}_{:03d}_{}.nc'.format(
+                        model_grib_str, level_str, date['year'], date['month'], date['day'], date['hour'],
+                        kwargs['fcst_hour'], varname4_grib)
         ds = xr.open_dataset(path['base'] + path['subdir'] + filename)
         if 'point' in kwargs:
             if model == 'icon-eu-det':
@@ -269,7 +316,13 @@ def read_forecast_data(model, date, var, **kwargs):
             else:
                 data_var4 = ds[varname4_cf].loc[dict(values = point_index[0])].values
         elif 'fcst_hour' in kwargs:
-            data_var4 = ds[varname4_cf][dict(step = fcst_hour_index)].values
+            if grid == 'icosahedral':
+                data_var4 = ds[varname4_cf][dict(step = fcst_hour_index)].values
+            elif grid == 'latlon_0.25':
+                if varname4_lvtype == 'sl':
+                    data_var4 = ds[varname4_cf][dict(time = 0)].values
+                elif varname4_lvtype == 'pl':
+                    data_var4 = ds[varname4_cf][dict(time = 0, plev = 0)].values
         ds.close()
         del ds
 

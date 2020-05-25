@@ -8,7 +8,7 @@ from w2w_ensembleplots.core.read_data import read_forecast_data
 
 def main():
 
-    date = dict(year = 2020, month = 4, day = 16, hour = 12)
+    date = dict(year = 2020, month = 5, day = 25, hour = 12)
 
     #model = 'icon-eu-eps'
     #var_list = ['t_2m','prec_rate','prec_sum','wind_mean_10m','mslp','clct','direct_rad','diffuse_rad','vmax_10m',\
@@ -24,11 +24,14 @@ def main():
     #var_list = ['t_2m','prec_rate','prec_sum','wind_mean_10m','clct']
     #var_list = ['prec_rate']
 
-    #model = 'icon-global-det'
+    model = 'icon-global-det'
     #var_list = ['t_2m','prec_rate','prec_sum','wind_mean_10m','clct','mslp','t_850hPa',\
     #            'gph_500hPa','gph_300hPa','wind_300hPa']
     #var_list = ['prec_rate']
-    #var_list = ['t_2m','prec_sum','wind_mean_10m','clct']
+    var_list = ['mslp','t_850hPa','gph_500hPa','gph_300hPa','wind_300hPa']
+
+    #grid = 'icosahedral'
+    grid = 'latlon_0.25'
 
     #point = dict(lat = 49.014, lon =  8.404)
     #point = dict(name = 'Mainz')
@@ -37,8 +40,8 @@ def main():
 
     for var in var_list:
         print(var)
-        #data = read_forecast_data(model, date, var, point=point)
-        data = read_forecast_data(model, date, var, fcst_hour=fcst_hour)
+        #data = read_forecast_data(model, grid, date, var, point=point)
+        data = read_forecast_data(model, grid, date, var, fcst_hour=fcst_hour)
         print(data)
 
     return
