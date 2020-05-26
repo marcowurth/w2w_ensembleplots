@@ -74,7 +74,7 @@ def main():
                          date['year'], date['month'], date['day'], date['hour'], var)
         netcdf_filename = 'icon-eps_global_icosahedral_single-level_{}{:02}{:02}{:02}_{}.nc'.format(
                            date['year'], date['month'], date['day'], date['hour'], var)
-        convert_gribfiles_to_one_netcdf(path, grib_filename, netcdf_filename)
+        convert_gribfiles_to_one_netcdf(path, grib_filename, netcdf_filename, 'icon-global-eps')
 
     return
 

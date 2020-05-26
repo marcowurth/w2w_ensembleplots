@@ -108,7 +108,7 @@ def main():
                              date['year'], date['month'], date['day'], date['hour'], level, var[0].upper())
             netcdf_filename = 'icon_global_icosahedral_pressure-level_{}{:02}{:02}{:02}_{}_{}.nc'.format(
                                date['year'], date['month'], date['day'], date['hour'], level, var[0])
-        convert_gribfiles_to_one_netcdf(path, grib_filename, netcdf_filename)
+        convert_gribfiles_to_one_netcdf(path, grib_filename, netcdf_filename, 'icon-global-det')
 
     return
 

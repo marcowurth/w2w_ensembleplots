@@ -75,7 +75,7 @@ def main():
                          date['year'], date['month'], date['day'], date['hour'], var_list_capitalized[i])
         netcdf_filename = 'icon-eu_europe_regular-lat-lon_single-level_{}{:02}{:02}{:02}_{}.nc'.format(
                            date['year'], date['month'], date['day'], date['hour'], var)
-        convert_gribfiles_to_one_netcdf(path, grib_filename, netcdf_filename)
+        convert_gribfiles_to_one_netcdf(path, grib_filename, netcdf_filename, 'icon-eu-det')
 
     return
 

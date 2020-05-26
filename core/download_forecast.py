@@ -62,12 +62,28 @@ def interpolate_icon_grib_to_latlon(path, grib_filename, latlon_filename):
 ########################################################################
 ########################################################################
 
-def convert_gribfiles_to_one_netcdf(path, grib_filename, netcdf_filename):
+def convert_gribfiles_to_one_netcdf(path, grib_filename, netcdf_filename, model):
     ds = xr.open_mfdataset(path['base'] + path['subdir'] + grib_filename, engine='cfgrib',
                            combine='nested', concat_dim='step', parallel=False, backend_kwargs={'errors': 'ignore'})
     ds.to_netcdf(path['base'] + path['subdir'] + netcdf_filename)
+
+    if model == 'icon-eu-eps' or model == 'icon-global-eps':
+        if model == 'icon-eu-eps':
+            total_values = 75948
+        elif model == 'icon-global-eps':
+            total_values = 327680
+
+        values_chunksize = 5000
+        for i in range(total_values // values_chunksize):
+            ds_subset = ds[dict(values = slice(i*values_chunksize, (i+1)*values_chunksize))]
+            chunk_str = '_{:04d}'.format(i)
+            ds_subset.to_netcdf(path['base'] + path['subdir'] + netcdf_filename[:-3] + chunk_str + '.nc')
+        ds_subset = ds[dict(values = slice((i+1)*values_chunksize, None))]
+        chunk_str = '_{:04d}'.format(i+1)
+        ds_subset.to_netcdf(path['base'] + path['subdir'] + netcdf_filename[:-3] + chunk_str + '.nc')
+
     ds.close()
-    del ds
+    del ds, ds_subset
 
     for idx_filename in fnmatch.filter(os.listdir(path['base'] + path['subdir']), '*.idx'):
         os.remove(path['base'] + path['subdir'] + idx_filename)

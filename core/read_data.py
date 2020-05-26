@@ -186,6 +186,7 @@ def read_forecast_data(model, grid, date, var, **kwargs):
     if 'point' in kwargs:
         point_index = get_point_index(model, kwargs['point'])
         # icon-eu-det: point_index = [latitude, longitude], other models: point_index = [index]
+        values_chunksize = 5000
     elif 'fcst_hour' in kwargs:
         fcst_hours_list = get_fcst_hours_list(model)
         fcst_hour_index = fcst_hours_list.index(kwargs['fcst_hour'])
@@ -199,18 +200,30 @@ def read_forecast_data(model, grid, date, var, **kwargs):
         path['subdir'] = 'data/model_data/{}/forecasts/run_{}{:02}{:02}{:02}/{}/'.format(
                           model, date['year'], date['month'], date['day'], date['hour'], varname1_folder)
         if grid == 'icosahedral':
-            filename = '{}_{}_{}{:02}{:02}{:02}_{}.nc'.format(
-                        model_grib_str, level_str, date['year'], date['month'], date['day'], date['hour'],
-                        varname1_grib)
+            if 'point' in kwargs:
+                if model == 'icon-eu-eps' or model == 'icon-global-eps':
+                    filename = '{}_{}_{}{:02}{:02}{:02}_{}_{:04d}.nc'.format(
+                                model_grib_str, level_str, date['year'], date['month'], date['day'], date['hour'],
+                                varname1_grib, point_index[0] // values_chunksize)
+                elif model == 'icon-eu-det' or model == 'icon-global-det':
+                    filename = '{}_{}_{}{:02}{:02}{:02}_{}.nc'.format(
+                                model_grib_str, level_str, date['year'], date['month'], date['day'], date['hour'],
+                                varname1_grib)
+            elif 'fcst_hour' in kwargs:
+                filename = '{}_{}_{}{:02}{:02}{:02}_{}.nc'.format(
+                            model_grib_str, level_str, date['year'], date['month'], date['day'], date['hour'],
+                            varname1_grib)
         elif grid == 'latlon_0.25':
             filename = '{}_{}_{}{:02}{:02}{:02}_{:03d}_{}.nc'.format(
                         model_grib_str, level_str, date['year'], date['month'], date['day'], date['hour'],
                         kwargs['fcst_hour'], varname1_grib)
         ds = xr.open_dataset(path['base'] + path['subdir'] + filename)
         if 'point' in kwargs:
-            if model == 'icon-eu-det':
+            if model == 'icon-eu-eps' or model == 'icon-global-eps':
+                data_var1 = ds[varname1_cf].loc[dict(values = point_index[0] % values_chunksize)].values
+            elif model == 'icon-eu-det':
                 data_var1 = ds[varname1_cf][dict(latitude = point_index[0], longitude = point_index[1])].values
-            else:
+            elif 'icon-global-det':
                 data_var1 = ds[varname1_cf].loc[dict(values = point_index[0])].values
         elif 'fcst_hour' in kwargs:
             if var == 'prec_rate':
@@ -238,18 +251,30 @@ def read_forecast_data(model, grid, date, var, **kwargs):
         path['subdir'] = 'data/model_data/{}/forecasts/run_{}{:02}{:02}{:02}/{}/'.format(
                           model, date['year'], date['month'], date['day'], date['hour'], varname2_folder)
         if grid == 'icosahedral':
-            filename = '{}_{}_{}{:02}{:02}{:02}_{}.nc'.format(
-                        model_grib_str, level_str, date['year'], date['month'], date['day'], date['hour'],
-                        varname2_grib)
+            if 'point' in kwargs:
+                if model == 'icon-eu-eps' or model == 'icon-global-eps':
+                    filename = '{}_{}_{}{:02}{:02}{:02}_{}_{:04d}.nc'.format(
+                                model_grib_str, level_str, date['year'], date['month'], date['day'], date['hour'],
+                                varname2_grib, point_index[0] // values_chunksize)
+                elif model == 'icon-eu-det' or model == 'icon-global-det':
+                    filename = '{}_{}_{}{:02}{:02}{:02}_{}.nc'.format(
+                                model_grib_str, level_str, date['year'], date['month'], date['day'], date['hour'],
+                                varname2_grib)
+            elif 'fcst_hour' in kwargs:
+                filename = '{}_{}_{}{:02}{:02}{:02}_{}.nc'.format(
+                            model_grib_str, level_str, date['year'], date['month'], date['day'], date['hour'],
+                            varname2_grib)
         elif grid == 'latlon_0.25':
             filename = '{}_{}_{}{:02}{:02}{:02}_{:03d}_{}.nc'.format(
                         model_grib_str, level_str, date['year'], date['month'], date['day'], date['hour'],
                         kwargs['fcst_hour'], varname2_grib)
         ds = xr.open_dataset(path['base'] + path['subdir'] + filename)
         if 'point' in kwargs:
-            if model == 'icon-eu-det':
+            if model == 'icon-eu-eps' or model == 'icon-global-eps':
+                data_var2 = ds[varname2_cf].loc[dict(values = point_index[0] % values_chunksize)].values
+            elif model == 'icon-eu-det':
                 data_var2 = ds[varname2_cf][dict(latitude = point_index[0], longitude = point_index[1])].values
-            else:
+            elif 'icon-global-det':
                 data_var2 = ds[varname2_cf].loc[dict(values = point_index[0])].values
         elif 'fcst_hour' in kwargs:
             if grid == 'icosahedral':
@@ -270,18 +295,30 @@ def read_forecast_data(model, grid, date, var, **kwargs):
         path['subdir'] = 'data/model_data/{}/forecasts/run_{}{:02}{:02}{:02}/{}/'.format(
                           model, date['year'], date['month'], date['day'], date['hour'], varname3_folder)
         if grid == 'icosahedral':
-            filename = '{}_{}_{}{:02}{:02}{:02}_{}.nc'.format(
-                        model_grib_str, level_str, date['year'], date['month'], date['day'], date['hour'],
-                        varname3_grib)
+            if 'point' in kwargs:
+                if model == 'icon-eu-eps' or model == 'icon-global-eps':
+                    filename = '{}_{}_{}{:02}{:02}{:02}_{}_{:04d}.nc'.format(
+                                model_grib_str, level_str, date['year'], date['month'], date['day'], date['hour'],
+                                varname3_grib, point_index[0] // values_chunksize)
+                elif model == 'icon-eu-det' or model == 'icon-global-det':
+                    filename = '{}_{}_{}{:02}{:02}{:02}_{}.nc'.format(
+                                model_grib_str, level_str, date['year'], date['month'], date['day'], date['hour'],
+                                varname3_grib)
+            elif 'fcst_hour' in kwargs:
+                filename = '{}_{}_{}{:02}{:02}{:02}_{}.nc'.format(
+                            model_grib_str, level_str, date['year'], date['month'], date['day'], date['hour'],
+                            varname3_grib)
         elif grid == 'latlon_0.25':
             filename = '{}_{}_{}{:02}{:02}{:02}_{:03d}_{}.nc'.format(
                         model_grib_str, level_str, date['year'], date['month'], date['day'], date['hour'],
                         kwargs['fcst_hour'], varname3_grib)
         ds = xr.open_dataset(path['base'] + path['subdir'] + filename)
         if 'point' in kwargs:
-            if model == 'icon-eu-det':
+            if model == 'icon-eu-eps' or model == 'icon-global-eps':
+                data_var3 = ds[varname3_cf].loc[dict(values = point_index[0] % values_chunksize)].values
+            elif model == 'icon-eu-det':
                 data_var3 = ds[varname3_cf][dict(latitude = point_index[0], longitude = point_index[1])].values
-            else:
+            elif 'icon-global-det':
                 data_var3 = ds[varname3_cf].loc[dict(values = point_index[0])].values
         elif 'fcst_hour' in kwargs:
             if grid == 'icosahedral':
@@ -302,18 +339,30 @@ def read_forecast_data(model, grid, date, var, **kwargs):
         path['subdir'] = 'data/model_data/{}/forecasts/run_{}{:02}{:02}{:02}/{}/'.format(
                           model, date['year'], date['month'], date['day'], date['hour'], varname4_folder)
         if grid == 'icosahedral':
-            filename = '{}_{}_{}{:02}{:02}{:02}_{}.nc'.format(
-                        model_grib_str, level_str, date['year'], date['month'], date['day'], date['hour'],
-                        varname4_grib)
+            if 'point' in kwargs:
+                if model == 'icon-eu-eps' or model == 'icon-global-eps':
+                    filename = '{}_{}_{}{:02}{:02}{:02}_{}_{:04d}.nc'.format(
+                                model_grib_str, level_str, date['year'], date['month'], date['day'], date['hour'],
+                                varname4_grib, point_index[0] // values_chunksize)
+                elif model == 'icon-eu-det' or model == 'icon-global-det':
+                    filename = '{}_{}_{}{:02}{:02}{:02}_{}.nc'.format(
+                                model_grib_str, level_str, date['year'], date['month'], date['day'], date['hour'],
+                                varname4_grib)
+            elif 'fcst_hour' in kwargs:
+                filename = '{}_{}_{}{:02}{:02}{:02}_{}.nc'.format(
+                            model_grib_str, level_str, date['year'], date['month'], date['day'], date['hour'],
+                            varname4_grib)
         elif grid == 'latlon_0.25':
             filename = '{}_{}_{}{:02}{:02}{:02}_{:03d}_{}.nc'.format(
                         model_grib_str, level_str, date['year'], date['month'], date['day'], date['hour'],
                         kwargs['fcst_hour'], varname4_grib)
         ds = xr.open_dataset(path['base'] + path['subdir'] + filename)
         if 'point' in kwargs:
-            if model == 'icon-eu-det':
+            if model == 'icon-eu-eps' or model == 'icon-global-eps':
+                data_var4 = ds[varname4_cf].loc[dict(values = point_index[0] % values_chunksize)].values
+            elif model == 'icon-eu-det':
                 data_var4 = ds[varname4_cf][dict(latitude = point_index[0], longitude = point_index[1])].values
-            else:
+            elif 'icon-global-det':
                 data_var4 = ds[varname4_cf].loc[dict(values = point_index[0])].values
         elif 'fcst_hour' in kwargs:
             if grid == 'icosahedral':

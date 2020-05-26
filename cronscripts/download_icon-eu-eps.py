@@ -30,7 +30,7 @@ def main():
     # explicit download options #
 
    ###########################################################
-    #date = dict(year = 2020, month = 1, day = 20, hour = 12)
+    #date = dict(year = 2020, month = 5, day = 25, hour = 18)
    ###########################################################
 
     print('download run_{}{:02}{:02}{:02}'.format(
@@ -104,7 +104,7 @@ def main():
                              date['year'], date['month'], date['day'], date['hour'], level, var[0])
             netcdf_filename = 'icon-eu-eps_europe_icosahedral_pressure-level_{}{:02}{:02}{:02}_{}_{}.nc'.format(
                                date['year'], date['month'], date['day'], date['hour'], level, var[0])
-        convert_gribfiles_to_one_netcdf(path, grib_filename, netcdf_filename)
+        convert_gribfiles_to_one_netcdf(path, grib_filename, netcdf_filename, 'icon-eu-eps')
 
     return
 
