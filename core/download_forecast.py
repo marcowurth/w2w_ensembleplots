@@ -81,9 +81,10 @@ def convert_gribfiles_to_one_netcdf(path, grib_filename, netcdf_filename, model)
         ds_subset = ds[dict(values = slice((i+1)*values_chunksize, None))]
         chunk_str = '_{:04d}'.format(i+1)
         ds_subset.to_netcdf(path['base'] + path['subdir'] + netcdf_filename[:-3] + chunk_str + '.nc')
+        del ds_subset
 
     ds.close()
-    del ds, ds_subset
+    del ds
 
     for idx_filename in fnmatch.filter(os.listdir(path['base'] + path['subdir']), '*.idx'):
         os.remove(path['base'] + path['subdir'] + idx_filename)
