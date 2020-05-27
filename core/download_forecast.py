@@ -73,7 +73,7 @@ def convert_gribfiles_to_one_netcdf(path, grib_filename, netcdf_filename, model)
         elif model == 'icon-global-eps':
             total_values = 327680
 
-        values_chunksize = 5000
+        values_chunksize = 26000
         for i in range(total_values // values_chunksize):
             ds_subset = ds[dict(values = slice(i*values_chunksize, (i+1)*values_chunksize))]
             chunk_str = '_{:04d}'.format(i)
