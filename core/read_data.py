@@ -184,9 +184,12 @@ def read_forecast_data(model, grid, date, var, **kwargs):
     path = dict(base = '/')
 
     if 'point' in kwargs:
+        # structure: icon-eu-det: point_index = [latitude, longitude], other models: point_index = [index]
         point_index = get_point_index(model, kwargs['point'])
-        # icon-eu-det: point_index = [latitude, longitude], other models: point_index = [index]
-        values_chunksize = 26000
+        if model == 'icon-eu-eps':
+            values_chunksize = 19000
+        elif model == 'icon-global-eps':
+            values_chunksize = 82000
     elif 'fcst_hour' in kwargs:
         fcst_hours_list = get_fcst_hours_list(model)
         fcst_hour_index = fcst_hours_list.index(kwargs['fcst_hour'])
