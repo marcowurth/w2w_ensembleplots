@@ -4,6 +4,7 @@
 
 import os
 import datetime
+
 import numpy as np
 import Magics.macro as magics
 
@@ -113,22 +114,30 @@ def boxplot_forecast(models, date, var, point, plot_type, verbose):
             if models == 'both-eps':
                 try:
                     if var == 'wind_10m':
-                        point_values_eu_eps[i, :, :, 0] = read_forecast_data('icon-eu-eps', old_run_date,
-                                                                             'wind_mean_10m', point=point)
-                        point_values_eu_eps[i, 1:, :, 1] = read_forecast_data('icon-eu-eps', old_run_date,
-                                                                             'vmax_10m', point=point)
+                        point_values_eu_eps[i, :, :, 0] = read_forecast_data('icon-eu-eps', 'icosahedral',
+                                                                              old_run_date, 'wind_mean_10m',
+                                                                              point = point)
+                        point_values_eu_eps[i, 1:, :, 1] = read_forecast_data('icon-eu-eps', 'icosahedral',
+                                                                               old_run_date, 'vmax_10m',
+                                                                               point = point)
                     elif var == 'vmax_10m':
-                        point_values_eu_eps[i, 1:, :] = read_forecast_data('icon-eu-eps', old_run_date,
-                                                                           var, point=point)
+                        point_values_eu_eps[i, 1:, :] = read_forecast_data('icon-eu-eps', 'icosahedral',
+                                                                            old_run_date, var,
+                                                                            point = point)
                     elif var == 'wind_3pl':
-                        point_values_eu_eps[i, :, :, 0] = read_forecast_data('icon-eu-eps', old_run_date,
-                                                                             'wind_850hPa', point=point)
-                        point_values_eu_eps[i, :, :, 1] = read_forecast_data('icon-eu-eps', old_run_date,
-                                                                             'wind_500hPa', point=point)
-                        point_values_eu_eps[i, :, :, 2] = read_forecast_data('icon-eu-eps', old_run_date,
-                                                                             'wind_300hPa', point=point)
+                        point_values_eu_eps[i, :, :, 0] = read_forecast_data('icon-eu-eps', 'icosahedral',
+                                                                              old_run_date, 'wind_850hPa',
+                                                                              point = point)
+                        point_values_eu_eps[i, :, :, 1] = read_forecast_data('icon-eu-eps', 'icosahedral',
+                                                                              old_run_date, 'wind_500hPa',
+                                                                              point = point)
+                        point_values_eu_eps[i, :, :, 2] = read_forecast_data('icon-eu-eps', 'icosahedral',
+                                                                              old_run_date, 'wind_300hPa',
+                                                                              point = point)
                     else:
-                        point_values_eu_eps[i, :, :] = read_forecast_data('icon-eu-eps', old_run_date, var, point=point)
+                        point_values_eu_eps[i, :, :] = read_forecast_data('icon-eu-eps', 'icosahedral',
+                                                                           old_run_date, var,
+                                                                           point = point)
                 except FileNotFoundError:
                     point_values_eu_eps[i, :, :] = -100
                     print('-- icon-eu-eps forecast not found --')
@@ -138,16 +147,18 @@ def boxplot_forecast(models, date, var, point, plot_type, verbose):
 
             if extend_with_global:
                 try:
-                    point_values_global_eps[i, :, :] = read_forecast_data('icon-global-eps', old_run_date, var,
-                                                                          point=point)[-5:, :]
+                    point_values_global_eps[i, :, :] = read_forecast_data('icon-global-eps', 'icosahedral',
+                                                                           old_run_date, var,
+                                                                           point = point)[-5:, :]
                 except FileNotFoundError:
                     point_values_global_eps[i, :, :] = -100
                     print('-- icon-global-eps forecast not found --')
 
             if models == 'icon-global-eps':
                 try:
-                    point_values_global_eps[i, :, :] = read_forecast_data('icon-global-eps', old_run_date, var,
-                                                                          point=point)
+                    point_values_global_eps[i, :, :] = read_forecast_data('icon-global-eps', 'icosahedral',
+                                                                           old_run_date, var,
+                                                                           point = point)
                 except FileNotFoundError:
                     point_values_global_eps[i, :, :] = -100
                     print('-- icon-global-eps forecast not found --')
