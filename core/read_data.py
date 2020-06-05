@@ -598,3 +598,49 @@ def get_all_available_vars(models, date):
 ########################################################################
 ########################################################################
 ########################################################################
+
+def read_grid_coordinates(model, grid):
+    path = dict(base = '/')
+    path['grid'] = 'data/model_data/{}/grid/'.format(model)
+
+    if model == 'icon-eu-eps':
+        filename = 'icon_grid_0028_R02B07_N02.nc'
+    elif model == 'icon-global-eps':
+        filename = 'icon_grid_0024_R02B06_G.nc'
+    elif model == 'icon-eu-det':
+        filename_clat = 'icon-eu_europe_regular-lat-lon_time-invariant_2019040800_RLAT.grib2'
+        filename_clon = 'icon-eu_europe_regular-lat-lon_time-invariant_2019040800_RLON.grib2'
+    elif model == 'icon-global-det':
+        if grid == 'icosahedral':
+            filename = 'icon_grid_0026_R03B07_G.nc'
+        elif grid == 'latlon_0.25':
+            filename = 'icon_global_latlon_0.25_grid_coordinates.nc'
+
+    if grid == 'icosahedral':
+        with xr.open_dataset(path['base'] + path['grid'] + filename) as ds:
+            clat = ds['clat'].values * 180 / np.pi
+            clon = ds['clon'].values * 180 / np.pi
+            vlat = ds['clat_vertices'].values * 180 / np.pi
+            vlon = ds['clon_vertices'].values * 180 / np.pi
+        return clat, clon, vlat, vlon
+
+    elif grid == 'latlon_0.0625':
+        with open(path['base'] + path['grid'] + filename_clat,'rb') as file:
+            grib_id = eccodes.codes_grib_new_from_file(file)
+            clat = eccodes.codes_get_array(grib_id, 'values')
+            eccodes.codes_release(grib_id)
+        with open(path['base'] + path['grid'] + filename_clon,'rb') as file:
+            grib_id = eccodes.codes_grib_new_from_file(file)
+            clon = eccodes.codes_get_array(grib_id, 'values')
+            eccodes.codes_release(grib_id)
+        return clat, clon
+
+    elif grid == 'latlon_0.25':
+        with xr.open_dataset(path['base'] + path['grid'] + filename) as ds:
+            clat = ds['lat'].values
+            clon = ds['lon'].values
+        return clat, clon
+
+########################################################################
+########################################################################
+########################################################################
