@@ -26,7 +26,7 @@ def det_contourplot(domain, variable1, variable2, model, run):
                 data1 = 'data/model_data/{}/forecasts/'.format(model),
                 data2 = 'data/model_data/{}/forecasts/'.format(model),
                 grid = 'data/model_data/{}/grid/'.format(model),
-                plots = 'data/plots/experimental/map_deterministic/{}/'.format(model), #use format to get variable1+2 names in as subdir
+                plots = 'data/plots/operational/map_deterministic/{}/'.format(model), #use format to get variable1+2 names in as subdir
                 #colorpalette # for now i would use one from pyngl
                 #shapefiles = 'data/additional_data/shapefiles/', #this dir is still empty, brauch ich auch nicht
                 topo = 'data/model_data/{}/invariant/'.format(model) #some grib files, dont know what they mean
