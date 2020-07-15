@@ -31,6 +31,9 @@ def det_contourplot(domains, variable1, variable2, model, run):
 
     subfolder = 'run_{:4d}{:02d}{:02d}{:02d}'.format(run['year'], run['month'], run['day'], run['hour'])
 
+    with open(path['base'] + path['plots'] + 'latest_run.txt', 'w') as file:
+        file.write(subfolder[4:])
+
     if not os.path.isdir(path['base'] + path['plots'] + subfolder):
         os.makedirs(path['base'] + path['plots'] + subfolder)
     path['plots'] += subfolder + '/' 
@@ -303,10 +306,15 @@ def det_contourplot(domains, variable1, variable2, model, run):
     del data_array1, data_array2, vlat, vlon, clat, clon
 
 
-    # copy all plots to imk-tss-web server #
+    # copy all plots and .txt-file to imk-tss-web server #
 
     path_webserver = '/home/iconeps/Data3/plots/icon/deterministic_overview_maps/{}'.format(var1var2)
     os.system('scp ' + path['base'] + path['plots'] + '*.png '\
+              + 'iconeps@imk-tss-web.imk-tro.kit.edu:' + path_webserver)
+
+    path_webserver = '/home/iconeps/Data3/plots/icon/deterministic_overview_maps'
+    path_plots = 'data/plots/{}/map_deterministic_overview/'.format(ex_op_str)
+    os.system('scp ' + path['base'] + path_plots + 'latest_run.txt '\
               + 'iconeps@imk-tss-web.imk-tro.kit.edu:' + path_webserver)
 
     return
