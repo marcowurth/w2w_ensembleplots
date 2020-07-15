@@ -12,7 +12,7 @@ current_path = sys.path[0]
 ex_op_str = current_path[current_path.index('progs')+6: current_path.index('w2w_ensembleplots')-1]
 sys.path.append('/progs/{}'.format(ex_op_str))
 from w2w_ensembleplots.core.download_forecast import download, unzip, calc_latest_run_time
-from w2w_ensembleplots.core.download_forecast import convert_gribfiles_to_one_netcdf
+from w2w_ensembleplots.core.download_forecast import convert_gribfiles_to_one_netcdf, interpolate_icon_grib_to_latlon
 
 
 def main():
@@ -45,6 +45,7 @@ def main():
                     ['fi','500hPa'],['t','500hPa'],['u','500hPa'],['v','500hPa'],
                     ['fi','850hPa'],['t','850hPa'],['u','850hPa'],['v','850hPa'],
                     ['fi','300hPa'],['u','300hPa'],['v','300hPa']]
+        vars_to_interpolate = [['pmsl','sl'],['t','850hPa'],['fi','500hPa']]
 
     elif date['hour'] == 6 or date['hour'] == 18:
         var_list = [['tot_prec','sl'],['t_2m','sl'],['u_10m','sl'],['v_10m','sl'],['ps','sl'],['clct','sl'],
@@ -54,6 +55,7 @@ def main():
     # create paths if necessary #
 
     path = dict(base = '/')
+    path['grid'] = 'data/model_data/icon-eu-eps/grid/'
     path['data'] = 'data/model_data/icon-eu-eps/forecasts/run_{}{:02}{:02}{:02}'.format(
                     date['year'], date['month'], date['day'], date['hour'])
     if not os.path.isdir(path['base'] + path['data']):
@@ -89,6 +91,16 @@ def main():
 
             if download(url, filename, path):
                 filename = unzip(path, filename)
+
+            if var in  vars_to_interpolate:
+                if var[1] == 'sl':
+                    latlon_filename = 'icon_eu-eps_latlon_0.25_single-level_{}{:02}{:02}{:02}_{:03}_{}.nc'.format(
+                                       date['year'], date['month'], date['day'], date['hour'], fcst_hour, var[0])
+                else:
+                    level = var[1][:3]
+                    latlon_filename = 'icon_eu-eps_latlon_0.25_pressure-level_{}{:02}{:02}{:02}_{:03}_{}_{}.nc'.format(
+                                       date['year'], date['month'], date['day'], date['hour'], fcst_hour, level, var[0])
+                interpolate_icon_grib_to_latlon(path, filename, latlon_filename, 'icon-eu-eps')
 
 
         # read in all grib files of variable and save as one combined netcdf file #

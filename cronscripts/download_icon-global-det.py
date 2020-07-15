@@ -45,7 +45,7 @@ def main():
     # create paths if necessary #
 
     path = dict(base = '/')
-    path['cdo'] = 'data/additional_data/cdo/'
+    path['grid'] = 'data/model_data/icon-global-det/grid/'
     path['data'] = 'data/model_data/icon-global-det/forecasts/run_{}{:02}{:02}{:02}'.format(
                     date['year'], date['month'], date['day'], date['hour'])
     if not os.path.isdir(path['base'] + path['data']):
@@ -88,7 +88,7 @@ def main():
                     level = var[1][:3]
                     latlon_filename = 'icon_global_latlon_0.25_pressure-level_{}{:02}{:02}{:02}_{:03}_{}_{}.nc'.format(
                                        date['year'], date['month'], date['day'], date['hour'], fcst_hour, level, var[0])
-                interpolate_icon_grib_to_latlon(path, filename, latlon_filename)
+                interpolate_icon_grib_to_latlon(path, filename, latlon_filename, 'icon-global-det')
 
 
         # read in all grib files of variable and save as one combined netcdf file #
