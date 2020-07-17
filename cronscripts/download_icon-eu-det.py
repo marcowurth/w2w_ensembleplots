@@ -73,7 +73,7 @@ def main():
 
         grib_filename = 'icon-eu_europe_regular-lat-lon_single-level_{}{:02}{:02}{:02}_*_{}.grib2'.format(
                          date['year'], date['month'], date['day'], date['hour'], var_list_capitalized[i])
-        netcdf_filename = 'icon-eu_europe_regular-lat-lon_single-level_{}{:02}{:02}{:02}_{}.nc'.format(
+        netcdf_filename = 'icon-eu-det_latlon_dwd_single-level_{}{:02}{:02}{:02}_{}.nc'.format(
                            date['year'], date['month'], date['day'], date['hour'], var)
         convert_gribfiles_to_one_netcdf(path, grib_filename, netcdf_filename, 'icon-eu-det')
 
@@ -88,4 +88,10 @@ if __name__ == '__main__':
     t1 = time.time()
     main()
     t2 = time.time()
-    print('total script time:  {:.1f}s'.format(t2-t1))
+    delta_t = t2-t1
+    if delta_t < 60:
+        print('total script time:  {:.1f}s'.format(delta_t))
+    elif 60 <= delta_t <= 3600:
+        print('total script time:  {:.0f}min{:.0f}s'.format(delta_t//60, delta_t-delta_t//60*60))
+    else:
+        print('total script time:  {:.0f}h{:.1f}min'.format(delta_t//3600, (delta-delta_t//3600*3600)/60))

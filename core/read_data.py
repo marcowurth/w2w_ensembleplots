@@ -20,7 +20,10 @@ def read_forecast_data(model, grid, date, var, **kwargs):
         varname1_lvtype = 'sl'
         varname1_folder = 't_2m'
         varname1_grib = 't_2m'
-        varname1_cf = 't2m'
+        if model == 'icon-eu-eps' and grid == 'latlon_0.25':
+            varname1_cf = '2t'
+        else:
+            varname1_cf = 't2m'
     elif var == 'prec_rate':
         varname1_lvtype = 'sl'
         varname1_folder = 'tot_prec'
@@ -49,8 +52,12 @@ def read_forecast_data(model, grid, date, var, **kwargs):
             varname2_lvtype = 'sl'
             varname2_folder = 't_2m'
             varname2_grib = 't_2m'
-            varname2_cf = 't2m'
-            filename_inv = 'icon-eu-eps_europe_icosahedral_time-invariant_2018121312_hsurf.grib2'
+            if grid == 'latlon_0.25':
+                varname2_cf = '2t'
+                filename_inv = 'icon-eu-eps_latlon_0.25_time-invariant_hsurf.nc'
+            else:
+                varname2_cf = 't2m'
+                filename_inv = 'icon-eu-eps_europe_icosahedral_time-invariant_2018121312_hsurf.grib2'
         elif model == 'icon-eu-det' or model == 'icon-global-det':
             varname1_lvtype = 'sl'
             varname1_folder = 'pmsl'
@@ -168,19 +175,6 @@ def read_forecast_data(model, grid, date, var, **kwargs):
         varname4_cf = 'z'
 
 
-    if model == 'icon-eu-eps':
-        model_grib_str = 'icon-eu-eps_europe_icosahedral'
-    elif model == 'icon-global-eps':
-        model_grib_str = 'icon-eps_global_icosahedral'
-    elif model == 'icon-eu-det':
-        model_grib_str = 'icon-eu_europe_regular-lat-lon'
-    elif model == 'icon-global-det':
-        if grid == 'icosahedral':
-            model_grib_str = 'icon_global_icosahedral'
-        elif grid == 'latlon_0.25':
-            model_grib_str = 'icon_global_latlon_0.25'
-
-
     path = dict(base = '/')
 
     if 'point' in kwargs:
@@ -193,6 +187,8 @@ def read_forecast_data(model, grid, date, var, **kwargs):
     elif 'fcst_hour' in kwargs:
         fcst_hours_list = get_fcst_hours_list(model)
         fcst_hour_index = fcst_hours_list.index(kwargs['fcst_hour'])
+
+    model_grib_str = model + '_' + grid
 
 
     if 'varname1_folder' in locals():
@@ -217,10 +213,12 @@ def read_forecast_data(model, grid, date, var, **kwargs):
                             model_grib_str, level_str, date['year'], date['month'], date['day'], date['hour'],
                             varname1_grib)
         elif grid == 'latlon_0.25':
-            filename = '{}_{}_{}{:02}{:02}{:02}_{:03d}_{}.nc'.format(
+            filename = '{}_{}_{}{:02}{:02}{:02}_{:03d}h_{}.nc'.format(
                         model_grib_str, level_str, date['year'], date['month'], date['day'], date['hour'],
                         kwargs['fcst_hour'], varname1_grib)
+
         ds = xr.open_dataset(path['base'] + path['subdir'] + filename)
+
         if 'point' in kwargs:
             if model == 'icon-eu-eps' or model == 'icon-global-eps':
                 data_var1 = ds[varname1_cf].loc[dict(values = point_index[0] % values_chunksize)].values
@@ -228,6 +226,7 @@ def read_forecast_data(model, grid, date, var, **kwargs):
                 data_var1 = ds[varname1_cf][dict(latitude = point_index[0], longitude = point_index[1])].values
             elif 'icon-global-det':
                 data_var1 = ds[varname1_cf].loc[dict(values = point_index[0])].values
+
         elif 'fcst_hour' in kwargs:
             if var == 'prec_rate':
                 data_var1 = (ds[varname1_cf][dict(step = fcst_hour_index)].values \
@@ -238,13 +237,35 @@ def read_forecast_data(model, grid, date, var, **kwargs):
             else:
                 if grid == 'icosahedral':
                     data_var1 = ds[varname1_cf][dict(step = fcst_hour_index)].values
+
                 elif grid == 'latlon_0.25':
-                    if varname1_lvtype == 'sl':
-                        data_var1 = ds[varname1_cf][dict(time = 0)].values
-                    elif varname1_lvtype == 'pl':
-                        data_var1 = ds[varname1_cf][dict(time = 0, plev = 0)].values
+                    if model == 'icon-eu-eps':
+                        if varname1_lvtype == 'sl':
+                            if varname1_cf == '2t':
+                                filter_vars_dict = dict(time = 0, height = 0)
+                            else:
+                                filter_vars_dict = dict(time = 0)
+                        elif varname1_lvtype == 'pl':
+                            filter_vars_dict = dict(time = 0, plev = 0)
+
+                        new_data_shape = ds[varname1_cf][filter_vars_dict].values.shape
+                        data_var1 = np.empty((40, new_data_shape[0], new_data_shape[1]))
+
+                        for i in range(1, 40+1):
+                            if i == 1:
+                                varname_str = varname1_cf
+                            else:
+                                varname_str = varname1_cf + '_{:d}'.format(i)
+                            data_var1[i-1, :, :] = ds[varname_str][filter_vars_dict].values
+
+                    elif model == 'icon-global-det':
+                        if varname1_lvtype == 'sl':
+                            data_var1 = ds[varname1_cf][dict(time = 0)].values
+                        elif varname1_lvtype == 'pl':
+                            data_var1 = ds[varname1_cf][dict(time = 0, plev = 0)].values
         ds.close()
         del ds
+
 
     if 'varname2_folder' in locals():
         if varname2_lvtype == 'sl':
@@ -268,10 +289,12 @@ def read_forecast_data(model, grid, date, var, **kwargs):
                             model_grib_str, level_str, date['year'], date['month'], date['day'], date['hour'],
                             varname2_grib)
         elif grid == 'latlon_0.25':
-            filename = '{}_{}_{}{:02}{:02}{:02}_{:03d}_{}.nc'.format(
+            filename = '{}_{}_{}{:02}{:02}{:02}_{:03d}h_{}.nc'.format(
                         model_grib_str, level_str, date['year'], date['month'], date['day'], date['hour'],
                         kwargs['fcst_hour'], varname2_grib)
+
         ds = xr.open_dataset(path['base'] + path['subdir'] + filename)
+
         if 'point' in kwargs:
             if model == 'icon-eu-eps' or model == 'icon-global-eps':
                 data_var2 = ds[varname2_cf].loc[dict(values = point_index[0] % values_chunksize)].values
@@ -279,16 +302,39 @@ def read_forecast_data(model, grid, date, var, **kwargs):
                 data_var2 = ds[varname2_cf][dict(latitude = point_index[0], longitude = point_index[1])].values
             elif 'icon-global-det':
                 data_var2 = ds[varname2_cf].loc[dict(values = point_index[0])].values
+
         elif 'fcst_hour' in kwargs:
             if grid == 'icosahedral':
                 data_var2 = ds[varname2_cf][dict(step = fcst_hour_index)].values
+
             elif grid == 'latlon_0.25':
-                if varname2_lvtype == 'sl':
-                    data_var2 = ds[varname2_cf][dict(time = 0)].values
-                elif varname2_lvtype == 'pl':
-                    data_var2 = ds[varname2_cf][dict(time = 0, plev = 0)].values
+                if model == 'icon-eu-eps':
+                    if varname2_lvtype == 'sl':
+                        if varname2_cf == '2t':
+                            filter_vars_dict = dict(time = 0, height = 0)
+                        else:
+                            filter_vars_dict = dict(time = 0)
+                    elif varname2_lvtype == 'pl':
+                        filter_vars_dict = dict(time = 0, plev = 0)
+
+                    new_data_shape = ds[varname2_cf][filter_vars_dict].values.shape
+                    data_var2 = np.empty((40, new_data_shape[0], new_data_shape[1]))
+
+                    for i in range(1, 40+1):
+                        if i == 1:
+                            varname_str = varname2_cf
+                        else:
+                            varname_str = varname2_cf + '_{:d}'.format(i)
+                        data_var2[i-1, :, :] = ds[varname_str][filter_vars_dict].values
+
+                elif model == 'icon-global-det':
+                    if varname2_lvtype == 'sl':
+                        data_var2 = ds[varname2_cf][dict(time = 0)].values
+                    elif varname2_lvtype == 'pl':
+                        data_var2 = ds[varname2_cf][dict(time = 0, plev = 0)].values
         ds.close()
         del ds
+
 
     if 'varname3_folder' in locals():
         if varname3_lvtype == 'sl':
@@ -312,10 +358,12 @@ def read_forecast_data(model, grid, date, var, **kwargs):
                             model_grib_str, level_str, date['year'], date['month'], date['day'], date['hour'],
                             varname3_grib)
         elif grid == 'latlon_0.25':
-            filename = '{}_{}_{}{:02}{:02}{:02}_{:03d}_{}.nc'.format(
+            filename = '{}_{}_{}{:02}{:02}{:02}_{:03d}h_{}.nc'.format(
                         model_grib_str, level_str, date['year'], date['month'], date['day'], date['hour'],
                         kwargs['fcst_hour'], varname3_grib)
+
         ds = xr.open_dataset(path['base'] + path['subdir'] + filename)
+
         if 'point' in kwargs:
             if model == 'icon-eu-eps' or model == 'icon-global-eps':
                 data_var3 = ds[varname3_cf].loc[dict(values = point_index[0] % values_chunksize)].values
@@ -323,16 +371,39 @@ def read_forecast_data(model, grid, date, var, **kwargs):
                 data_var3 = ds[varname3_cf][dict(latitude = point_index[0], longitude = point_index[1])].values
             elif 'icon-global-det':
                 data_var3 = ds[varname3_cf].loc[dict(values = point_index[0])].values
+
         elif 'fcst_hour' in kwargs:
             if grid == 'icosahedral':
                 data_var3 = ds[varname3_cf][dict(step = fcst_hour_index)].values
+
             elif grid == 'latlon_0.25':
-                if varname3_lvtype == 'sl':
-                    data_var3 = ds[varname3_cf][dict(time = 0)].values
-                elif varname3_lvtype == 'pl':
-                    data_var3 = ds[varname3_cf][dict(time = 0, plev = 0)].values
+                if model == 'icon-eu-eps':
+                    if varname3_lvtype == 'sl':
+                        if varname3_cf == '2t':
+                            filter_vars_dict = dict(time = 0, height = 0)
+                        else:
+                            filter_vars_dict = dict(time = 0)
+                    elif varname3_lvtype == 'pl':
+                        filter_vars_dict = dict(time = 0, plev = 0)
+
+                    new_data_shape = ds[varname3_cf][filter_vars_dict].values.shape
+                    data_var3 = np.empty((40, new_data_shape[0], new_data_shape[1]))
+
+                    for i in range(1, 40+1):
+                        if i == 1:
+                            varname_str = varname3_cf
+                        else:
+                            varname_str = varname3_cf + '_{:d}'.format(i)
+                        data_var3[i-1, :, :] = ds[varname_str][filter_vars_dict].values
+
+                elif model == 'icon-global-det':
+                    if varname3_lvtype == 'sl':
+                        data_var3 = ds[varname3_cf][dict(time = 0)].values
+                    elif varname3_lvtype == 'pl':
+                        data_var3 = ds[varname3_cf][dict(time = 0, plev = 0)].values
         ds.close()
         del ds
+
 
     if 'varname4_folder' in locals():
         if varname4_lvtype == 'sl':
@@ -356,10 +427,12 @@ def read_forecast_data(model, grid, date, var, **kwargs):
                             model_grib_str, level_str, date['year'], date['month'], date['day'], date['hour'],
                             varname4_grib)
         elif grid == 'latlon_0.25':
-            filename = '{}_{}_{}{:02}{:02}{:02}_{:03d}_{}.nc'.format(
+            filename = '{}_{}_{}{:02}{:02}{:02}_{:03d}h_{}.nc'.format(
                         model_grib_str, level_str, date['year'], date['month'], date['day'], date['hour'],
                         kwargs['fcst_hour'], varname4_grib)
+
         ds = xr.open_dataset(path['base'] + path['subdir'] + filename)
+
         if 'point' in kwargs:
             if model == 'icon-eu-eps' or model == 'icon-global-eps':
                 data_var4 = ds[varname4_cf].loc[dict(values = point_index[0] % values_chunksize)].values
@@ -367,27 +440,56 @@ def read_forecast_data(model, grid, date, var, **kwargs):
                 data_var4 = ds[varname4_cf][dict(latitude = point_index[0], longitude = point_index[1])].values
             elif 'icon-global-det':
                 data_var4 = ds[varname4_cf].loc[dict(values = point_index[0])].values
+
         elif 'fcst_hour' in kwargs:
             if grid == 'icosahedral':
                 data_var4 = ds[varname4_cf][dict(step = fcst_hour_index)].values
+
             elif grid == 'latlon_0.25':
-                if varname4_lvtype == 'sl':
-                    data_var4 = ds[varname4_cf][dict(time = 0)].values
-                elif varname4_lvtype == 'pl':
-                    data_var4 = ds[varname4_cf][dict(time = 0, plev = 0)].values
+                if model == 'icon-eu-eps':
+                    if varname4_lvtype == 'sl':
+                        if varname4_cf == '2t':
+                            filter_vars_dict = dict(time = 0, height = 0)
+                        else:
+                            filter_vars_dict = dict(time = 0)
+                    elif varname4_lvtype == 'pl':
+                        filter_vars_dict = dict(time = 0, plev = 0)
+
+                    new_data_shape = ds[varname4_cf][filter_vars_dict].values.shape
+                    data_var4 = np.empty((40, new_data_shape[0], new_data_shape[1]))
+
+                    for i in range(1, 40+1):
+                        if i == 1:
+                            varname_str = varname4_cf
+                        else:
+                            varname_str = varname4_cf + '_{:d}'.format(i)
+                        data_var4[i-1, :, :] = ds[varname_str][filter_vars_dict].values
+
+                elif model == 'icon-global-det':
+                    if varname4_lvtype == 'sl':
+                        data_var4 = ds[varname4_cf][dict(time = 0)].values
+                    elif varname4_lvtype == 'pl':
+                        data_var4 = ds[varname4_cf][dict(time = 0, plev = 0)].values
         ds.close()
         del ds
 
+
     if 'filename_inv' in locals():
         path['subdir'] = 'data/model_data/{}/invariant/'.format(model)
-        with open(path['base'] + path['subdir'] + filename_inv,'rb') as file:
-            grib_id = eccodes.codes_grib_new_from_file(file)
-            if 'point' in kwargs:
-                data_var_inv = eccodes.codes_get_array(grib_id, 'values')[point_index[0]]
-            elif 'fcst_hour' in kwargs:
-                data_var_inv = eccodes.codes_get_array(grib_id, 'values')[:]
-            eccodes.codes_release(grib_id)
-        del grib_id
+        if grid == 'latlon_0.25':
+            ds = xr.open_dataset(path['base'] + path['subdir'] + filename_inv)
+            data_var_inv = ds['HSURF'][dict(time = 0)].values
+            ds.close()
+            del ds
+        else:
+            with open(path['base'] + path['subdir'] + filename_inv,'rb') as file:
+                grib_id = eccodes.codes_grib_new_from_file(file)
+                if 'point' in kwargs:
+                    data_var_inv = eccodes.codes_get_array(grib_id, 'values')[point_index[0]]
+                elif 'fcst_hour' in kwargs:
+                    data_var_inv = eccodes.codes_get_array(grib_id, 'values')[:]
+                eccodes.codes_release(grib_id)
+            del grib_id
 
 
     # calculate final variables out of the read data arrays #

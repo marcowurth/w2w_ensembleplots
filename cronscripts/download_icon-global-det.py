@@ -82,31 +82,27 @@ def main():
 
             if var in  vars_to_interpolate:
                 if var[1] == 'sl':
-                    latlon_filename = 'icon_global_latlon_0.25_single-level_{}{:02}{:02}{:02}_{:03}_{}.nc'.format(
+                    latlon_filename = 'icon-global-det_latlon_0.25_single-level_{}{:02}{:02}{:02}_{:03}h_{}.nc'.format(
                                        date['year'], date['month'], date['day'], date['hour'], fcst_hour, var[0])
                 else:
                     level = var[1][:3]
-                    latlon_filename = 'icon_global_latlon_0.25_pressure-level_{}{:02}{:02}{:02}_{:03}_{}_{}.nc'.format(
+                    latlon_filename = 'icon-global-det_latlon_0.25_pressure-level_{}{:02}{:02}{:02}_{:03}h_{}_{}.nc'.format(
                                        date['year'], date['month'], date['day'], date['hour'], fcst_hour, level, var[0])
                 interpolate_icon_grib_to_latlon(path, filename, latlon_filename, 'icon-global-det')
 
 
         # read in all grib files of variable and save as one combined netcdf file #
 
-        grib_filename = 'icon_global_icosahedral_single-level_{}{:02}{:02}{:02}_*_{}.grib2'.format(
-                         date['year'], date['month'], date['day'], date['hour'], var[0].upper())
-        netcdf_filename = 'icon_global_icosahedral_single-level_{}{:02}{:02}{:02}_{}.nc'.format(
-                           date['year'], date['month'], date['day'], date['hour'], var)
         if var[1] == 'sl':
             grib_filename = 'icon_global_icosahedral_single-level_{}{:02}{:02}{:02}_*_{}.grib2'.format(
                              date['year'], date['month'], date['day'], date['hour'], var[0].upper())
-            netcdf_filename = 'icon_global_icosahedral_single-level_{}{:02}{:02}{:02}_{}.nc'.format(
+            netcdf_filename = 'icon-global-det_icosahedral_single-level_{}{:02}{:02}{:02}_{}.nc'.format(
                                date['year'], date['month'], date['day'], date['hour'], var[0])
         else:
             level = var[1][:3]
             grib_filename = 'icon_global_icosahedral_pressure-level_{}{:02}{:02}{:02}_*_{}_{}.grib2'.format(
                              date['year'], date['month'], date['day'], date['hour'], level, var[0].upper())
-            netcdf_filename = 'icon_global_icosahedral_pressure-level_{}{:02}{:02}{:02}_{}_{}.nc'.format(
+            netcdf_filename = 'icon-global-det_icosahedral_pressure-level_{}{:02}{:02}{:02}_{}_{}.nc'.format(
                                date['year'], date['month'], date['day'], date['hour'], level, var[0])
         convert_gribfiles_to_one_netcdf(path, grib_filename, netcdf_filename, 'icon-global-det')
 
@@ -121,4 +117,10 @@ if __name__ == '__main__':
     t1 = time.time()
     main()
     t2 = time.time()
-    print('total script time:  {:.1f}s'.format(t2-t1))
+    delta_t = t2-t1
+    if delta_t < 60:
+        print('total script time:  {:.1f}s'.format(delta_t))
+    elif 60 <= delta_t <= 3600:
+        print('total script time:  {:.0f}min{:.0f}s'.format(delta_t//60, delta_t-delta_t//60*60))
+    else:
+        print('total script time:  {:.0f}h{:.1f}min'.format(delta_t//3600, (delta-delta_t//3600*3600)/60))

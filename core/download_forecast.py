@@ -18,9 +18,10 @@ import cdo
 ########################################################################
 
 def download(url, filename, path):
-    r = requests.get(url + filename, timeout=10)
+    r = requests.get(url + filename, timeout=60)
     with open(path['base'] + path['subdir'] + filename, 'wb') as file:
         file.write(r.content)
+    r.close()
     return 1
 
 ########################################################################
