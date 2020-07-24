@@ -94,4 +94,4 @@ if __name__ == '__main__':
     elif 60 <= delta_t <= 3600:
         print('total script time:  {:.0f}min{:.0f}s'.format(delta_t//60, delta_t-delta_t//60*60))
     else:
-        print('total script time:  {:.0f}h{:.1f}min'.format(delta_t//3600, (delta-delta_t//3600*3600)/60))
+        print('total script time:  {:.0f}h{:.1f}min'.format(delta_t//3600, (delta_t-delta_t//3600*3600)/60))

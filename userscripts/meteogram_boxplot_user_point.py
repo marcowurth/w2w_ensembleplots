@@ -29,6 +29,7 @@ def main():
     #point = dict(lat =-33.337, lon =-60.213, name = 'San Nicolás')
     point = dict(lat =-34.800, lon =-58.400, name = 'Buenos Aires')
     #point = dict(lat =-31.409, lon =-64.186, name = 'Córdoba Capital')
+    #point = dict(lat =-27.486, lon =-58.814, name = 'Corrientes Capital')
 
     plot_type = 'user_point'
 
@@ -59,4 +60,10 @@ if __name__ == '__main__':
     t1 = time.time()
     main()
     t2 = time.time()
-    print('total script time:  {:.1f}s'.format(t2-t1))
+    delta_t = t2-t1
+    if delta_t < 60:
+        print('total script time:  {:.1f}s'.format(delta_t))
+    elif 60 <= delta_t <= 3600:
+        print('total script time:  {:.0f}min{:.0f}s'.format(delta_t//60, delta_t-delta_t//60*60))
+    else:
+        print('total script time:  {:.0f}h{:.1f}min'.format(delta_t//3600, (delta_t-delta_t//3600*3600)/60))

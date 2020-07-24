@@ -92,15 +92,16 @@ def main():
             if download(url, filename, path):
                 filename = unzip(path, filename)
 
-            if var in  vars_to_interpolate:
-                if var[1] == 'sl':
-                    latlon_filename = 'icon-eu-eps_latlon_0.25_single-level_{}{:02}{:02}{:02}_{:03}h_{}.nc'.format(
-                                       date['year'], date['month'], date['day'], date['hour'], fcst_hour, var[0])
-                else:
-                    level = var[1][:3]
-                    latlon_filename = 'icon-eu-eps_latlon_0.25_pressure-level_{}{:02}{:02}{:02}_{:03}h_{}_{}.nc'.format(
-                                       date['year'], date['month'], date['day'], date['hour'], fcst_hour, level, var[0])
-                interpolate_icon_grib_to_latlon(path, filename, latlon_filename, 'icon-eu-eps')
+            if date['hour'] == 0 or date['hour'] == 12:
+                if var in  vars_to_interpolate:
+                    if var[1] == 'sl':
+                        latlon_filename = 'icon-eu-eps_latlon_0.25_single-level_{}{:02}{:02}{:02}_{:03}h_{}.nc'.format(
+                                           date['year'], date['month'], date['day'], date['hour'], fcst_hour, var[0])
+                    else:
+                        level = var[1][:3]
+                        latlon_filename = 'icon-eu-eps_latlon_0.25_pressure-level_{}{:02}{:02}{:02}_{:03}h_{}_{}.nc'.format(
+                                           date['year'], date['month'], date['day'], date['hour'], fcst_hour, level, var[0])
+                    interpolate_icon_grib_to_latlon(path, filename, latlon_filename, 'icon-eu-eps')
 
 
         # read in all grib files of variable and save as one combined netcdf file #
@@ -135,4 +136,4 @@ if __name__ == '__main__':
     elif 60 <= delta_t <= 3600:
         print('total script time:  {:.0f}min{:.0f}s'.format(delta_t//60, delta_t-delta_t//60*60))
     else:
-        print('total script time:  {:.0f}h{:.1f}min'.format(delta_t//3600, (delta-delta_t//3600*3600)/60))
+        print('total script time:  {:.0f}h{:.1f}min'.format(delta_t//3600, (delta_t-delta_t//3600*3600)/60))

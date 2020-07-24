@@ -538,7 +538,7 @@ def read_forecast_data(model, grid, date, var, **kwargs):
     elif var == 'lapse_rate_850hPa-500hPa':     # in k/km
         data_final = 9806.65 * (data_var1 - data_var3) / (data_var4 - data_var2)
 
-    print(var + ':', data_final.shape)
+    print(var + ', shape:', data_final.shape)
     return data_final
 
 ########################################################################
@@ -706,7 +706,10 @@ def read_grid_coordinates(model, grid):
     path['grid'] = 'data/model_data/{}/grid/'.format(model)
 
     if model == 'icon-eu-eps':
-        filename = 'icon_grid_0028_R02B07_N02.nc'
+        if grid == 'icosahedral':
+            filename = 'icon_grid_0028_R02B07_N02.nc'
+        elif grid == 'latlon_0.25':
+            filename = 'icon-eu-eps_latlon_0.25_grid_coordinates.nc'
     elif model == 'icon-global-eps':
         filename = 'icon_grid_0024_R02B06_G.nc'
     elif model == 'icon-eu-det':
@@ -716,7 +719,7 @@ def read_grid_coordinates(model, grid):
         if grid == 'icosahedral':
             filename = 'icon_grid_0026_R03B07_G.nc'
         elif grid == 'latlon_0.25':
-            filename = 'icon_global_latlon_0.25_grid_coordinates.nc'
+            filename = 'icon-global-det_latlon_0.25_grid_coordinates.nc'
 
     if grid == 'icosahedral':
         with xr.open_dataset(path['base'] + path['grid'] + filename) as ds:
