@@ -29,6 +29,11 @@ def read_forecast_data(model, grid, date, var, **kwargs):
         varname1_folder = 'tot_prec'
         varname1_grib = 'tot_prec'
         varname1_cf = 'tp'
+    elif var == 'prec_6h':
+        varname1_lvtype = 'sl'
+        varname1_folder = 'tot_prec'
+        varname1_grib = 'tot_prec'
+        varname1_cf = 'tp'
     elif var == 'prec_sum':
         varname1_lvtype = 'sl'
         varname1_folder = 'tot_prec'
@@ -187,6 +192,11 @@ def read_forecast_data(model, grid, date, var, **kwargs):
     elif 'fcst_hour' in kwargs:
         fcst_hours_list = get_fcst_hours_list(model)
         fcst_hour_index = fcst_hours_list.index(kwargs['fcst_hour'])
+        if var == 'prec_6h':
+            fcst_hour2 = kwargs['fcst_hour'] + 6
+            if fcst_hour2 > 180:
+                fcst_hour2 = 180
+            fcst_hour_index2 = fcst_hours_list.index(fcst_hour2)
 
     model_grib_str = model + '_' + grid
 
@@ -229,9 +239,16 @@ def read_forecast_data(model, grid, date, var, **kwargs):
 
         elif 'fcst_hour' in kwargs:
             if var == 'prec_rate':
+                if fcst_hour_index == 0:
+                    fcst_hour_index = 1
                 data_var1 = (ds[varname1_cf][dict(step = fcst_hour_index)].values \
                             - ds[varname1_cf][dict(step = fcst_hour_index - 1)].values) \
                             / float(fcst_hours_list[fcst_hour_index] - fcst_hours_list[fcst_hour_index - 1])
+                data_var1 = np.where(data_var1 >= 0.0, data_var1, 0.0)
+                data_var1 = np.around(data_var1, 2)
+            elif var == 'prec_6h':
+                data_var1 = (ds[varname1_cf][dict(step = fcst_hour_index2)].values \
+                            - ds[varname1_cf][dict(step = fcst_hour_index)].values) / 6
                 data_var1 = np.where(data_var1 >= 0.0, data_var1, 0.0)
                 data_var1 = np.around(data_var1, 2)
             else:
@@ -501,6 +518,8 @@ def read_forecast_data(model, grid, date, var, **kwargs):
             data_final = calculate_inst_values_of_sum(data_var1, model)
         elif 'fcst_hour' in kwargs:
             data_final = data_var1
+    elif var == 'prec_6h':     # in mm
+        data_final = data_var1
     elif var == 'prec_sum':     # in mm
         data_final = data_var1
     elif var == 'wind_mean_10m':    # in km/h

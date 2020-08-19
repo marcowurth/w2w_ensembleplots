@@ -8,30 +8,30 @@ ex_op_str = current_path[current_path.index('progs')+6: current_path.index('w2w_
 sys.path.append('/progs/{}'.format(ex_op_str))
 from w2w_ensembleplots.core.deterministic_contourplot import det_contourplot
 from w2w_ensembleplots.core.download_forecast import calc_latest_run_time
+from w2w_ensembleplots.core.domain_definitions import get_domain
+
 
 def main():
 
     model = 'icon-global-det'
 
     run = calc_latest_run_time(model)
-    #run = dict(year = 2020, month = 6, day = 21, hour = 12)
+    #run = dict(year = 2020, month = 8, day = 19, hour = 0)
 
-    domains =[]
-    domains.append(dict(method = 'centerpoint', radius = 1400, deltalat =   0, deltalon =   0,
-                   lat = 48.0, lon =  9.0, name = 'europe'))
-    domains.append(dict(method = 'centerpoint', radius = 1900, deltalat =   0, deltalon =   0,
-                   lat = 37.0, lon =  -99.0, name = 'usa'))
-    #domains.append(dict(method = 'centerpoint', radius = 1400, deltalat =   0, deltalon =   0,
-    #               lat = 48.0, lon =  -171, name = 'pacific'))
-    #domains.append(dict(method = 'centerpoint', radius = 1400, deltalat =   0, deltalon =   0,
-    #               lat = 90, lon =  0, name = 'north pole'))
-    #domains.append(dict(method = 'centerpoint', radius = 2400, deltalat =   0, deltalon =   0,
-    #               lat = -90, lon =  0, name = 'south pole'))
+    domains = []
+    domains.append(get_domain('europe'))
+    domains.append(get_domain('europe_and_north_atlantic'))
+    domains.append(get_domain('usa'))
+    domains.append(get_domain('southern_south_america'))
+    domains.append(get_domain('north_pole'))
+    domains.append(get_domain('south_pole'))
 
     variable1 = dict(name='prec_rate', unit='mm/h', grid='icosahedral')
     variable2 = dict(name='mslp', unit='hPa', grid='latlon_0.25')
 
-    det_contourplot(domains, variable1, variable2, model, run)
+    plot_type = 'map_deterministic_overview'
+
+    det_contourplot(domains, variable1, variable2, model, run, plot_type)
 
     return
 
