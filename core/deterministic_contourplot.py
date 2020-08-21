@@ -32,13 +32,14 @@ def det_contourplot(domains, variable1, variable2, model, run, plot_type):
 
     path = dict(base = '/')
     if plot_type == 'map_deterministic_overview':
-        path['plots'] = 'data/plots/{}/map_deterministic_overview/'.format(ex_op_str)
+        path['plots'] = 'data/plots/{}/deterministic_overview_maps/'.format(ex_op_str)
+        filename_latest_run = 'latest_run_det_overview_map_{}.txt'.format(var1var2)
     elif plot_type == 'map_hurricane':
-        path['plots'] = 'data/plots/{}/map_hurricane/'.format(ex_op_str)
+        path['plots'] = 'data/plots/{}/deterministic_hurricane_maps/'.format(ex_op_str)
+        filename_latest_run = 'latest_run_det_hurricane_map_{}.txt'.format(var1var2)
 
     subfolder = 'run_{:4d}{:02d}{:02d}{:02d}'.format(run['year'], run['month'], run['day'], run['hour'])
 
-    filename_latest_run = 'latest_run_det_overview_map_{}.txt'.format(var1var2)
     with open(path['base'] + path['plots'] + filename_latest_run, 'w') as file:
         file.write(subfolder[4:])
 
@@ -62,7 +63,7 @@ def det_contourplot(domains, variable1, variable2, model, run, plot_type):
           model, run['day'], run['month'], run['year'], run['hour'],
           variable1['name'], variable2['name']))
 
-    for hour in hours[:1]:
+    for hour in hours:
         print('forecast hour:', hour)
 
         ll_lat, ll_lon = read_grid_coordinates(model, 'latlon_0.25')
@@ -398,13 +399,18 @@ def det_contourplot(domains, variable1, variable2, model, run, plot_type):
 
     # copy all plots and .txt-file to imk-tss-web server #
 
-    '''path_webserver = '/home/iconeps/Data3/plots/icon/deterministic_overview_maps/{}'.format(var1var2)
+    if plot_type == 'map_deterministic_overview':
+        subfolder_name = 'deterministic_overview_maps'
+    elif plot_type == 'map_hurricane':
+        subfolder_name = 'deterministic_hurricane_maps'
+
+    path_webserver = '/home/iconeps/Data3/plots/icon/{}/{}'.format(subfolder_name, var1var2)
     os.system('scp ' + path['base'] + path['plots'] + '*.png '\
               + 'iconeps@imk-tss-web.imk-tro.kit.edu:' + path_webserver)
 
-    path_webserver = '/home/iconeps/Data3/plots/icon/deterministic_overview_maps'
-    path_latest_run_files = 'data/plots/{}/map_deterministic_overview/'.format(ex_op_str)
+    path_webserver = '/home/iconeps/Data3/plots/icon/{}'.format(subfolder_name)
+    path_latest_run_files = 'data/plots/{}/{}/'.format(ex_op_str, subfolder_name)
     os.system('scp ' + path['base'] + path_latest_run_files + filename_latest_run\
-              + ' iconeps@imk-tss-web.imk-tro.kit.edu:' + path_webserver)'''
+              + ' iconeps@imk-tss-web.imk-tro.kit.edu:' + path_webserver)
 
     return
