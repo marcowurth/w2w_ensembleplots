@@ -55,6 +55,7 @@ def det_contourplot(domains, variable1, variable2, model, run, plot_type):
     # load icosahedral grid information only once #
 
     clat, clon, vlat, vlon = read_grid_coordinates(model, 'icosahedral')
+    ll_lat, ll_lon = read_grid_coordinates(model, 'latlon_0.25')
 
 
     # start here the whole plotting routine #
@@ -66,12 +67,9 @@ def det_contourplot(domains, variable1, variable2, model, run, plot_type):
     for hour in hours:
         print('forecast hour:', hour)
 
-        ll_lat, ll_lon = read_grid_coordinates(model, 'latlon_0.25')
         data_array1 = read_forecast_data(model, variable1['grid'], run, variable1['name'], fcst_hour=hour)
-
-        data_array2f = read_forecast_data(model, variable2['grid'], run, variable2['name'], fcst_hour=hour)
-        if variable2['grid'] == 'latlon_0.25':
-            data_array2, ll_lon = Ngl.add_cyclic(data_array2f, ll_lon)
+        data_array2_non_cyclic = read_forecast_data(model, variable2['grid'], run, variable2['name'], fcst_hour=hour)
+        data_array2, ll_lon_cyclic = Ngl.add_cyclic(data_array2_non_cyclic, ll_lon)
 
 
         for domain in domains:
@@ -275,7 +273,7 @@ def det_contourplot(domains, variable1, variable2, model, run, plot_type):
 
             v2res = Ngl.Resources()
             v2res.sfDataArray       = data_array2
-            v2res.sfXArray          = ll_lon
+            v2res.sfXArray          = ll_lon_cyclic
             v2res.sfYArray          = ll_lat
             v2res.sfMissingValueV   = 9999  
             #v2res.trGridType        = 'TriangularMesh'
@@ -393,8 +391,9 @@ def det_contourplot(domains, variable1, variable2, model, run, plot_type):
             im_cropped.save(path['base'] + path['plots'] + plot_name + '.png', 'png')
             im_cropped.close()
 
+            del data_array1_cut, clat_cut, clon_cut, vlat_cut, vlon_cut
 
-    del data_array1, data_array1_cut, data_array2, vlat, vlon, clat, clon
+        del data_array1, data_array2, data_array2_non_cyclic, ll_lon_cyclic
 
 
     # copy all plots and .txt-file to imk-tss-web server #

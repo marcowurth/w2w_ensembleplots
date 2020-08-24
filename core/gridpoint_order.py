@@ -287,4 +287,11 @@ def cut_by_domain(cut_domain, grid_type, data_array1, clat, clon, vlat, vlon, ma
         print('grid_type "{}" not supported!'.format(grid_type))
         exit()
 
-    return data_array1[filter_total], clat[filter_total], clon[filter_total], vlat[filter_total], vlon[filter_total]
+    data_array1_cut = data_array1[filter_total]
+    clat_cut = clat[filter_total]
+    clon_cut = clon[filter_total]
+    vlat_cut = vlat[filter_total]
+    vlon_cut = vlon[filter_total]
+    del data_array1, clat, clon, vlat, vlon
+
+    return data_array1_cut, clat_cut, clon_cut, vlat_cut, vlon_cut
