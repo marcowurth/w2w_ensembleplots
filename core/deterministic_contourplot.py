@@ -33,15 +33,16 @@ def det_contourplot(domains, variable1, variable2, model, run, plot_type):
     path = dict(base = '/')
     if plot_type == 'map_deterministic_overview':
         path['plots'] = 'data/plots/{}/deterministic_overview_maps/'.format(ex_op_str)
-        filename_latest_run = 'latest_run_det_overview_map_{}.txt'.format(var1var2)
+        filename_latest_run = 'latest_run_det_overview_map.txt'
     elif plot_type == 'map_hurricane':
         path['plots'] = 'data/plots/{}/deterministic_hurricane_maps/'.format(ex_op_str)
         filename_latest_run = 'latest_run_det_hurricane_map_{}.txt'.format(var1var2)
 
     subfolder = 'run_{:4d}{:02d}{:02d}{:02d}'.format(run['year'], run['month'], run['day'], run['hour'])
 
-    with open(path['base'] + path['plots'] + filename_latest_run, 'w') as file:
-        file.write(subfolder[4:])
+    if variable1['name'] == 'wind_300hPa':
+        with open(path['base'] + path['plots'] + filename_latest_run, 'w') as file:
+            file.write(subfolder[4:])
 
     if not os.path.isdir(path['base'] + path['plots'] + subfolder):
         os.makedirs(path['base'] + path['plots'] + subfolder)
@@ -241,11 +242,11 @@ def det_contourplot(domains, variable1, variable2, model, run, plot_type):
             v1res.lbBoxMinorExtentF     = 0.20      # minor axis fraction: width of the color boxes when labelbar down
             v1res.lbTopMarginF          = 0.2      # make a little more space at top for the unit label
             v1res.lbRightMarginF        = 0.0
-            if variable1['name'] == 't_850hPa' :
+            if variable1['name'] == 't_850hPa':
                 v1res.lbBottomMarginF   = -0.07
-            elif variable1['name'] == 'wind_300hPa' :
+            elif variable1['name'] == 'wind_300hPa':
                 v1res.lbBottomMarginF   = -0.35
-            elif variable1['name'] == 'prec_rate' :
+            elif variable1['name'] == 'prec_rate':
                 v1res.lbBottomMarginF   = -0.2
             v1res.lbLeftMarginF         = -0.35
 
@@ -407,9 +408,10 @@ def det_contourplot(domains, variable1, variable2, model, run, plot_type):
     os.system('scp ' + path['base'] + path['plots'] + '*.png '\
               + 'iconeps@imk-tss-web.imk-tro.kit.edu:' + path_webserver)
 
-    path_webserver = '/home/iconeps/Data3/plots/icon/{}'.format(subfolder_name)
-    path_latest_run_files = 'data/plots/{}/{}/'.format(ex_op_str, subfolder_name)
-    os.system('scp ' + path['base'] + path_latest_run_files + filename_latest_run\
-              + ' iconeps@imk-tss-web.imk-tro.kit.edu:' + path_webserver)
+    if variable1['name'] == 'wind_300hPa':
+        path_webserver = '/home/iconeps/Data3/plots/icon/{}'.format(subfolder_name)
+        path_latest_run_files = 'data/plots/{}/{}/'.format(ex_op_str, subfolder_name)
+        os.system('scp ' + path['base'] + path_latest_run_files + filename_latest_run\
+                  + ' iconeps@imk-tss-web.imk-tro.kit.edu:' + path_webserver)
 
     return
