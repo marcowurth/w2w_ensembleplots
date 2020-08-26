@@ -8,6 +8,7 @@ import eccodes
 
 from w2w_ensembleplots.core.grid_information_around_point import which_grid_point
 from w2w_ensembleplots.core.grid_information_around_point import get_latlon_filter_distance
+from w2w_ensembleplots.core.python_module_julian import calc_the_from_relhum
 
 
 ########################################################################
@@ -546,6 +547,8 @@ def read_forecast_data(model, grid, date, var, **kwargs):
         data_final = data_var1 / 98.0665
     elif var == 't_850hPa':     # in deg C
         data_final = data_var1 - 273.15
+    elif var == 'theta_e_850hPa':
+        data_final = calc_the_from_relhum(data_var2, data_var1, 850) - 273.15
     elif var == 'wind_850hPa':  # in km/h
         data_final = np.sqrt(data_var1**2 + data_var2**2) * 3.6
     elif var == 'wind_500hPa':  # in km/h

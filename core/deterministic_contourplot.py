@@ -112,7 +112,10 @@ def det_contourplot(domains, variable1, variable2, model, run, plot_type):
                 levels1 = ([0.1,0.2,0.5,1,2,5,10,20,50])
             elif variable1['name'] == 't_850hPa':
                 wks_res.wkColorMap = 'BkBlAqGrYeOrReViWh200'
-                levels1 = np.arange(-40,40,4)
+                levels1 = np.arange(-40, 40, 4)
+            elif variable1['name'] == 'theta_e_850hPa':
+                wks_res.wkColorMap = 'BkBlAqGrYeOrReViWh200'
+                levels1 = np.arange(-20, 80+1, 5)
             elif variable1['name'] == 'wind_300hPa':
                 wks_res.wkColorMap = 'wh-bl-gr-ye-re' #from 100 to 200
                 levels1 = np.arange(150,300,25) # irgendwie so machen dass es erst bei grün anfängt
@@ -177,11 +180,13 @@ def det_contourplot(domains, variable1, variable2, model, run, plot_type):
             mpres.vpWidthF      = 0.88
             mpres.vpHeightF     = 1.00
             mpres.mpMonoFillColor = 'True'
-            if variable1['name'] == 't_850hPa' :
+            if variable1['name'] == 't_850hPa':
                 mpres.mpFillColors = ['transparent', 'transparent', 'transparent', 'transparent']
-            elif variable1['name'] == 'wind_300hPa' :
+            elif variable1['name'] == 'theta_e_850hPa':
                 mpres.mpFillColors = ['transparent', 'white', 'navajowhite1', 'transparent']
-            elif variable1['name'] == 'prec_rate' :
+            elif variable1['name'] == 'wind_300hPa':
+                mpres.mpFillColors = ['transparent', 'white', 'navajowhite1', 'transparent']
+            elif variable1['name'] == 'prec_rate':
                 mpres.mpFillColors = ['transparent', 'transparent', 'transparent', 'transparent']
 
             #Ngl.set_values(wks,mpres)
@@ -243,6 +248,8 @@ def det_contourplot(domains, variable1, variable2, model, run, plot_type):
             v1res.lbTopMarginF          = 0.2      # make a little more space at top for the unit label
             v1res.lbRightMarginF        = 0.0
             if variable1['name'] == 't_850hPa':
+                v1res.lbBottomMarginF   = -0.07
+            elif variable1['name'] == 'theta_e_850hPa':
                 v1res.lbBottomMarginF   = -0.07
             elif variable1['name'] == 'wind_300hPa':
                 v1res.lbBottomMarginF   = -0.35
