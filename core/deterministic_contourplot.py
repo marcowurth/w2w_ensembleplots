@@ -18,7 +18,7 @@ from w2w_ensembleplots.core.gridpoint_order import cut_by_domain
 def det_contourplot(domains, variable1, variable2, model, run, plot_type):
 
     if plot_type == 'map_deterministic_overview':
-        hours = list(range(0, 180+1, 12))
+        hours = list(range(0, 180+1, 6))
     elif plot_type == 'map_hurricane':
         hours = list(range(0, 180+1, 6))
 
