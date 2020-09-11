@@ -179,6 +179,11 @@ def read_forecast_data(model, grid, date, var, **kwargs):
         varname4_folder = 'fi_500hPa'
         varname4_grib = '500_fi'
         varname4_cf = 'z'
+    elif var == 'synth_bt_ir10.8':
+        varname1_lvtype = 'sl'
+        varname1_folder = 'synmsg_bt_cl_ir10.8'
+        varname1_grib = 'synmsg_bt_cl_ir10.8'
+        varname1_cf = 'clbt'
 
 
     path = dict(base = '/')
@@ -227,6 +232,10 @@ def read_forecast_data(model, grid, date, var, **kwargs):
             filename = '{}_{}_{}{:02}{:02}{:02}_{:03d}h_{}.nc'.format(
                         model_grib_str, level_str, date['year'], date['month'], date['day'], date['hour'],
                         kwargs['fcst_hour'], varname1_grib)
+        elif grid == 'latlon_0.0625':
+            filename = '{}_{}_{}{:02}{:02}{:02}_{}.nc'.format(
+                        model_grib_str, level_str, date['year'], date['month'], date['day'], date['hour'],
+                        varname1_grib)
 
         ds = xr.open_dataset(path['base'] + path['subdir'] + filename)
 
@@ -245,6 +254,7 @@ def read_forecast_data(model, grid, date, var, **kwargs):
                 data_var1 = (ds[varname1_cf][dict(step = fcst_hour_index)].values \
                             - ds[varname1_cf][dict(step = fcst_hour_index - 1)].values) \
                             / float(fcst_hours_list[fcst_hour_index] - fcst_hours_list[fcst_hour_index - 1])
+                print(fcst_hours_list[fcst_hour_index - 1], fcst_hours_list[fcst_hour_index])
                 data_var1 = np.where(data_var1 >= 0.0, data_var1, 0.0)
                 data_var1 = np.around(data_var1, 2)
             elif var == 'prec_6h':
@@ -281,6 +291,9 @@ def read_forecast_data(model, grid, date, var, **kwargs):
                             data_var1 = ds[varname1_cf][dict(time = 0)].values
                         elif varname1_lvtype == 'pl':
                             data_var1 = ds[varname1_cf][dict(time = 0, plev = 0)].values
+
+                elif grid == 'latlon_0.0625':
+                    data_var1 = ds[varname1_cf][dict(step = fcst_hour_index)].values
         ds.close()
         del ds
 
@@ -559,6 +572,8 @@ def read_forecast_data(model, grid, date, var, **kwargs):
         data_final = np.sqrt((data_var3 - data_var1)**2 + (data_var4 - data_var2)**2)
     elif var == 'lapse_rate_850hPa-500hPa':     # in k/km
         data_final = 9806.65 * (data_var1 - data_var3) / (data_var4 - data_var2)
+    elif var == 'synth_bt_ir10.8':     # deg C
+        data_final = data_var1 - 273.15
 
     print(var + ', shape:', data_final.shape)
     return data_final
@@ -760,13 +775,18 @@ def read_grid_coordinates(model, grid):
             grib_id = eccodes.codes_grib_new_from_file(file)
             clon = eccodes.codes_get_array(grib_id, 'values')
             eccodes.codes_release(grib_id)
-        return clat, clon
+        return clat.reshape((657, 1097)), clon.reshape((657, 1097))
 
     elif grid == 'latlon_0.25':
         with xr.open_dataset(path['base'] + path['grid'] + filename) as ds:
             clat = ds['lat'].values
             clon = ds['lon'].values
-        return clat, clon
+        clon = np.where(clon > 180, clon - 360, clon)
+        clon_new = np.empty_like(clon)
+        clon_new[719:] = clon[:721]
+        clon_new[:719] = clon[721:]
+
+        return clat, clon_new
 
 ########################################################################
 ########################################################################
