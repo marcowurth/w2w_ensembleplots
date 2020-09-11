@@ -193,9 +193,10 @@ def double_contourplot(var1var2):
     with open(recoverpath['base'] + recoverpath['temp'] + numpyarrays_filename, 'rb') as f:
         with np.load(f) as loadedfile:
             data_array1 = loadedfile['data_array1']
-            data_array2 = loadedfile['data_array2']
+            if variable2['name'] != '':
+                data_array2 = loadedfile['data_array2']
 
-    print('loaded all vars')
+    #print('loaded all vars')
 
 
     if domain['limits_type'] == 'radius':
@@ -204,7 +205,7 @@ def double_contourplot(var1var2):
         margin_deg = 20
 
     if variable1['name'] == 'synth_bt_ir10.8':
-        data_array1_cut, clat_cut, clon_cut, vlat_cut, vlon_cut = data_array1, clat, clon, vlat, vlon
+        data_array1_cut, clat_cut, clon_cut, vlat_cut, vlon_cut = data_array1, clat, clon, None, None
     else:
         data_array1_cut, clat_cut, clon_cut, vlat_cut, vlon_cut = \
           cut_by_domain(domain, variable1['grid'], data_array1, clat, clon, vlat, vlon, margin_deg)

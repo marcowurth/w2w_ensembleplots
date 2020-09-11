@@ -74,12 +74,11 @@ def main():
 
         # read in all grib files of variable and save as one combined netcdf file #
 
-        if var != 'synmsg_bt_cl_ir10.8':
-            grib_filename = 'icon-eu_europe_regular-lat-lon_single-level_{}{:02}{:02}{:02}_*_{}.grib2'.format(
-                             date['year'], date['month'], date['day'], date['hour'], var.upper())
-            netcdf_filename = 'icon-eu-det_latlon_0.0625_single-level_{}{:02}{:02}{:02}_{}.nc'.format(
-                               date['year'], date['month'], date['day'], date['hour'], var)
-            convert_gribfiles_to_one_netcdf(path, grib_filename, netcdf_filename, 'icon-eu-det')
+        grib_filename = 'icon-eu_europe_regular-lat-lon_single-level_{}{:02}{:02}{:02}_*_{}.grib2'.format(
+                         date['year'], date['month'], date['day'], date['hour'], var.upper())
+        netcdf_filename = 'icon-eu-det_latlon_0.0625_single-level_{}{:02}{:02}{:02}_{}.nc'.format(
+                           date['year'], date['month'], date['day'], date['hour'], var)
+        convert_gribfiles_to_one_netcdf(path, grib_filename, netcdf_filename, 'icon-eu-det')
 
     return
 
