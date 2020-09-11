@@ -37,8 +37,11 @@ def main():
 
     # list of dwd variable names #
 
-    var_list = ['tot_prec','t_2m','u_10m','v_10m','pmsl','clct','aswdir_s','aswdifd_s','vmax_10m']
-    var_list_capitalized = ['TOT_PREC','T_2M','U_10M','V_10M','PMSL','CLCT','ASWDIR_S','ASWDIFD_S','VMAX_10M']
+    if date['hour'] == 0 or date['hour'] == 12:
+        var_list = ['synmsg_bt_cl_ir10.8','tot_prec','t_2m','u_10m','v_10m','pmsl','clct',
+                    'aswdir_s','aswdifd_s','vmax_10m']
+    else:
+        var_list = ['tot_prec','t_2m','u_10m','v_10m','pmsl','clct','aswdir_s','aswdifd_s','vmax_10m']
 
 
     # create paths if necessary
@@ -50,7 +53,7 @@ def main():
         os.mkdir(path['base'] + path['data'])
     path['data'] = path['data'] + '/'
 
-    for i, var in enumerate(var_list):
+    for var in var_list:
         temp_subdir = path['data'] + var
         if not os.path.isdir(path['base'] + temp_subdir):
             os.mkdir(path['base'] + temp_subdir)
@@ -61,7 +64,7 @@ def main():
 
         for fcst_hour in fcst_hours_list:
             filename = 'icon-eu_europe_regular-lat-lon_single-level_{}{:02}{:02}{:02}_{:03}_{}.grib2.bz2'.format(
-                        date['year'], date['month'], date['day'], date['hour'], fcst_hour, var_list_capitalized[i])
+                        date['year'], date['month'], date['day'], date['hour'], fcst_hour, var.upper())
             url = 'https://opendata.dwd.de/weather/nwp/icon-eu/grib/{:02}/{}/'.format(
                    date['hour'], var)
 
@@ -71,11 +74,12 @@ def main():
 
         # read in all grib files of variable and save as one combined netcdf file #
 
-        grib_filename = 'icon-eu_europe_regular-lat-lon_single-level_{}{:02}{:02}{:02}_*_{}.grib2'.format(
-                         date['year'], date['month'], date['day'], date['hour'], var_list_capitalized[i])
-        netcdf_filename = 'icon-eu-det_latlon_dwd_single-level_{}{:02}{:02}{:02}_{}.nc'.format(
-                           date['year'], date['month'], date['day'], date['hour'], var)
-        convert_gribfiles_to_one_netcdf(path, grib_filename, netcdf_filename, 'icon-eu-det')
+        if var != 'synmsg_bt_cl_ir10.8':
+            grib_filename = 'icon-eu_europe_regular-lat-lon_single-level_{}{:02}{:02}{:02}_*_{}.grib2'.format(
+                             date['year'], date['month'], date['day'], date['hour'], var.upper())
+            netcdf_filename = 'icon-eu-det_latlon_0.0625_single-level_{}{:02}{:02}{:02}_{}.nc'.format(
+                               date['year'], date['month'], date['day'], date['hour'], var)
+            convert_gribfiles_to_one_netcdf(path, grib_filename, netcdf_filename, 'icon-eu-det')
 
     return
 

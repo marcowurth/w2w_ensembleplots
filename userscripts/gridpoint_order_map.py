@@ -13,12 +13,21 @@ def main():
 
     model = 'icon-global-det'
 
-    #cut_domain = dict(name = 'uncut')
-    cut_domain = get_domain('europe')
-    cut_domain = get_domain('northern_pacific')
-    cut_domain = get_domain('atlantic_basin')
+    #grid = 'icosahedral'
+    grid = 'latlon_0.25'
+    #grid = 'latlon_0.0625'
 
-    grid_order_contourplot(model, cut_domain)
+    #first_varying_var = 'gridpoint_index'      # this setting is never neeeded because implied in grid = 'icosahedral'
+    #first_varying_var = 'lat'
+    first_varying_var = 'lon'
+
+    #cut_domain = dict(name = 'uncut')
+    #cut_domain = get_domain('europe')
+    #cut_domain = get_domain('northern_pacific')
+    #cut_domain = get_domain('atlantic_hurricane_basin')
+    cut_domain = get_domain('north_pole')
+
+    grid_order_contourplot(model, grid, first_varying_var, cut_domain)
 
     return
 

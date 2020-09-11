@@ -37,8 +37,9 @@ def main():
 
     # list of dwd variable names #
 
-    var_list = [['tot_prec','sl'],['t_2m','sl'],['u_10m','sl'],['v_10m','sl'],['pmsl','sl'],['clct','sl'],
-                ['t','850hPa'],['relhum','850hPa'],['fi','500hPa'],['fi','300hPa'],['u','300hPa'],['v','300hPa']]
+    var_list = [['tot_prec','sl'],['pmsl','sl'],['relhum','850hPa'],['t','850hPa'],['fi','500hPa'],
+                ['fi','300hPa'],['u','300hPa'],['v','300hPa'],
+                ['t_2m','sl'],['u_10m','sl'],['v_10m','sl'],['clct','sl']]
     vars_to_interpolate = [['pmsl','sl'],['t','850hPa'],['fi','500hPa'],['fi','300hPa'],['u','300hPa'],['v','300hPa']]
 
 

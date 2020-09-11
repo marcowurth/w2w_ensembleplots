@@ -13,7 +13,7 @@ sys.path.append('/progs/{}'.format(ex_op_str))
 from w2w_ensembleplots.core.read_data import read_grid_coordinates
 
 
-def grid_order_contourplot(model, cut_domain):
+def grid_order_contourplot(model, grid, first_varying_var, cut_domain):
 
     # define paths #
 
@@ -24,35 +24,58 @@ def grid_order_contourplot(model, cut_domain):
 
     # load icosahedral grid information #
 
-    clat, clon, vlat, vlon = read_grid_coordinates(model, 'icosahedral')
-    data_array1 = np.arange(clat.shape[0], dtype='float32')
+    if grid == 'icosahedral':
+        clat, clon, vlat, vlon = read_grid_coordinates(model, grid)
+        data_array1 = np.arange(clat.shape[0], dtype='float32')
+    else:
+        clat, clon = read_grid_coordinates(model, grid)
+        clon = clon - 180
+        if first_varying_var == 'lon':
+            data_array1 = np.arange(clat.shape[0]*clon.shape[0], dtype='float32').reshape((clat.shape[0],
+                                                                                           clon.shape[0]))
+        elif first_varying_var == 'lat':
+            data_array1 = np.arange(clat.shape[0]*clon.shape[0], dtype='float32').reshape((clon.shape[0],
+                                                                                           clat.shape[0])).T
 
 
-    '''print('data_array1:', data_array1.shape, 'clat:', clat.shape, 'clon:', clon.shape, 'vlat:', vlat.shape,
-    'vlon:', vlon.shape)
+    print('data_array1:', data_array1.shape, 'clat:', clat.shape, 'clon:', clon.shape)
+    if grid == 'icosahedral':
+        print('vlat:', vlat.shape, 'vlon:', vlon.shape)
     print('data_array1 min,max:', data_array1.min(), data_array1.max())
     print('clat min,max:', clat.min(), clat.max())
     print('clon min,max:', clon.min(), clon.max())
-    print('vlat min,max:', vlat.min(), vlat.max())
-    print('vlon min,max:', vlon.min(), vlon.max())'''
+    if grid == 'icosahedral':
+        print('vlat min,max:', vlat.min(), vlat.max())
+        print('vlon min,max:', vlon.min(), vlon.max())
     print('------------------------------------------')
 
     if cut_domain['name'] == 'uncut':
         data_array1_cut = data_array1
     else:
-        data_array1_cut, clat, clon, vlat, vlon = cut_by_domain(cut_domain, 'icosahedral',
-                                                                data_array1, clat, clon, vlat, vlon)
+        margin_deg = 0
+        if grid == 'icosahedral':
+            data_array1_cut, clat, clon, vlat, vlon \
+              = cut_by_domain(cut_domain, grid, data_array1, clat, clon, vlat, vlon, margin_deg)
+        else:
+            data_array1_cut, clat, clon \
+              = cut_by_domain(cut_domain, grid, data_array1, clat, clon, None, None, margin_deg)
 
-    '''print('data_array1:', data_array1.shape, 'clat:', clat.shape, 'clon:', clon.shape, 'vlat:', vlat.shape,
-    'vlon:', vlon.shape)
-    print('data_array1 min,max:', data_array1.min(), data_array1.max())
+    print('data_array1:', data_array1_cut.shape, 'clat:', clat.shape, 'clon:', clon.shape)
+    if grid == 'icosahedral':
+        print('vlat:', vlat.shape, 'vlon:', vlon.shape)
+    print('data_array1_cut min,max:', data_array1_cut.min(), data_array1_cut.max())
     print('clat min,max:', clat.min(), clat.max())
     print('clon min,max:', clon.min(), clon.max())
-    print('vlat min,max:', vlat.min(), vlat.max())
-    print('vlon min,max:', vlon.min(), vlon.max())'''
+    if grid == 'icosahedral':
+        print('vlat min,max:', vlat.min(), vlat.max())
+        print('vlon min,max:', vlon.min(), vlon.max())
 
 
-    plot_name = 'gridpoint_order_{}_icosahedral_global_{}'.format(model, cut_domain['name'])
+    if grid == 'icosahedral':
+        plot_name = 'gridpoint_order_{}_{}_global_{}'.format(model, grid, cut_domain['name'])
+    else:
+        plot_name = 'gridpoint_order_{}_{}_{}-varying-first_global_{}'.format(model, grid,
+                                                                              first_varying_var, cut_domain['name'])
 
 
     # plot basic map with borders #
@@ -123,15 +146,19 @@ def grid_order_contourplot(model, cut_domain):
     v1res.sfDataArray       = data_array1_cut
     v1res.sfXArray          = clon
     v1res.sfYArray          = clat
-    v1res.sfXCellBounds     = vlon
-    v1res.sfYCellBounds     = vlat
+    if grid == 'icosahedral':
+        v1res.cnFillMode            = 'CellFill'
+        v1res.sfXCellBounds     = vlon
+        v1res.sfYCellBounds     = vlat
+    else:
+        v1res.cnFillMode = 'RasterFill'
     v1res.sfMissingValueV   = 9999
 
     v1res.cnLinesOn             = False   # Turn off contour lines.
     v1res.cnFillOn              = True
-    v1res.cnFillMode            = 'CellFill'
     #v1res.cnFillOpacityF        = 0.5   
     #v1res.cnFillDrawOrder       = 'Predraw'
+    v1res.cnLineLabelsOn = False
     v1res.cnLevelSelectionMode = 'ExplicitLevels' 
     v1res.cnLevels      = levels1
 
@@ -205,13 +232,15 @@ def grid_order_contourplot(model, cut_domain):
     im_cropped.close()
 
 
-    del data_array1, data_array1_cut, vlat, vlon, clat, clon
+    del data_array1, data_array1_cut, clat, clon
+    if grid == 'icosahedral':
+        del vlat, vlon
 
     return
 
 
 
-def cut_by_domain(cut_domain, grid_type, data_array1, clat, clon, vlat, vlon, margin_deg):
+def cut_by_domain(cut_domain, grid, data_array1, clat, clon, vlat, vlon, margin_deg):
 
     if cut_domain['limits_type'] == 'deltalatlon':
         lat_min = cut_domain['centerlat'] - cut_domain['deltalat_deg'] - margin_deg
@@ -224,10 +253,10 @@ def cut_by_domain(cut_domain, grid_type, data_array1, clat, clon, vlat, vlon, ma
                                  cut_domain['centerlat'] - cut_domain['radius'] / 111.2 - margin_deg))
         lat_max = float(np.where(cut_domain['centerlat'] + cut_domain['radius'] / 111.2 + margin_deg > 90, 90,
                                  cut_domain['centerlat'] + cut_domain['radius'] / 111.2 + margin_deg))
-        lon_min = float(np.where(lat_min <= -90 or lat_max >= 90, 0,
+        lon_min = float(np.where(lat_min <= -90 or lat_max >= 90, -180.1,
                                  cut_domain['centerlon'] - cut_domain['radius'] \
                                   / (111.2 * np.cos(cut_domain['centerlat']*np.pi/180)) - margin_deg))
-        lon_max = float(np.where(lat_min <= -90 or lat_max >= 90, 360,
+        lon_max = float(np.where(lat_min <= -90 or lat_max >= 90, 180,
                                  cut_domain['centerlon'] + cut_domain['radius'] \
                                   / (111.2 * np.cos(cut_domain['centerlat']*np.pi/180)) + margin_deg))
 
@@ -236,15 +265,15 @@ def cut_by_domain(cut_domain, grid_type, data_array1, clat, clon, vlat, vlon, ma
                                  cut_domain['centerlat'] - cut_domain['angle'] - margin_deg))
         lat_max = float(np.where(cut_domain['centerlat'] + cut_domain['angle'] + margin_deg > 90, 90,
                                  cut_domain['centerlat'] + cut_domain['angle'] + margin_deg))
-        lon_min = -180
+        lon_min = -180.1
         lon_max = 180
 
     else:
         print('cut_domain limits_type "{}" not supported!'.format(cut_domain['limits_type']))
         exit()
+    #print(lat_min, lat_max, lon_min, lon_max)
 
-
-    if grid_type == 'icosahedral':
+    if grid == 'icosahedral':
         filter_lat_high = list(np.where(clat < lat_max)[0])
         filter_lat_low = list(np.where(clat > lat_min)[0])
         if lon_min < -180:
@@ -279,19 +308,43 @@ def cut_by_domain(cut_domain, grid_type, data_array1, clat, clon, vlat, vlon, ma
             filter_total = list(set(filter_total).intersection(filter_lon_low))
 
         filter_total.sort()
-        filter_total_array = np.array(filter_total)
-
+        #filter_total_array = np.array(filter_total)
         #print('filter_total shape:', filter_total_array.shape)
         #print('filter_total min,max:', filter_total_array.min(), filter_total_array.max())
+
+        data_array1_cut = data_array1[filter_total]
+        clat_cut = clat[filter_total]
+        clon_cut = clon[filter_total]
+        vlat_cut = vlat[filter_total]
+        vlon_cut = vlon[filter_total]
+        del data_array1, clat, clon, vlat, vlon, filter_lat_high, filter_lat_low
+        if lon_min < -180 or lon_max > 180:
+            del filter_lon1_high, filter_lon1_low, filter_lon2_high, filter_lon2_low
+            del filter_total1, filter_total2, filter_total
+        else:
+            del filter_lon_high, filter_lon_low, filter_total
+
+        return data_array1_cut, clat_cut, clon_cut, vlat_cut, vlon_cut
+
+    elif grid == 'latlon_0.25':
+        filter_lat_high = list(np.where(clat < lat_max)[0])
+        filter_lat_low = list(np.where(clat > lat_min)[0])
+        filter_lon_high = list(np.where(clon < lon_max)[0])
+        filter_lon_low = list(np.where(clon > lon_min)[0])
+        filter_total_lat = list(set(filter_lat_high).intersection(filter_lat_low))
+        filter_total_lon = list(set(filter_lon_high).intersection(filter_lon_low))
+        filter_total_lat.sort()
+        filter_total_lon.sort()
+
+        data_array1_cut = data_array1[filter_total_lat, :][:, filter_total_lon]
+        clat_cut = clat[filter_total_lat]
+        clon_cut = clon[filter_total_lon]
+        del data_array1, clat, clon, filter_lat_high, filter_lat_low, filter_lon_high, filter_lon_low
+        del filter_total_lat, filter_total_lon
+
+        return data_array1_cut, clat_cut, clon_cut
+
     else:
-        print('grid_type "{}" not supported!'.format(grid_type))
+        print('grid "{}" not supported!'.format(grid))
         exit()
 
-    data_array1_cut = data_array1[filter_total]
-    clat_cut = clat[filter_total]
-    clon_cut = clon[filter_total]
-    vlat_cut = vlat[filter_total]
-    vlon_cut = vlon[filter_total]
-    del data_array1, clat, clon, vlat, vlon
-
-    return data_array1_cut, clat_cut, clon_cut, vlat_cut, vlon_cut
