@@ -138,7 +138,7 @@ def det_contourplot(domains, variable1, variable2, model, run, plot_type):
 
     # copy all plots and .txt-file to imk-tss-web server #
 
-    '''if plot_type == 'map_deterministic_overview':
+    if plot_type == 'map_deterministic_overview':
         subfolder_name = 'deterministic_overview_maps'
     elif plot_type == 'map_hurricane':
         subfolder_name = 'deterministic_hurricane_maps'
@@ -151,7 +151,7 @@ def det_contourplot(domains, variable1, variable2, model, run, plot_type):
         path_webserver = '/home/iconeps/Data3/plots/icon/{}'.format(subfolder_name)
         path_latest_run_files = 'data/plots/{}/{}/'.format(ex_op_str, subfolder_name)
         os.system('scp ' + path['base'] + path_latest_run_files + filename_latest_run\
-                  + ' iconeps@imk-tss-web.imk-tro.kit.edu:' + path_webserver)'''
+                  + ' iconeps@imk-tss-web.imk-tro.kit.edu:' + path_webserver)
 
     return
 

@@ -22,24 +22,27 @@ def main():
 
     if grid == 'icosahedral':
         clat, clon, vlat, vlon = read_grid_coordinates(model, grid)
-        print(clat.shape, clon.shape, vlat.shape, vlon.shape)
-        print(clat.min(), clat.max())
-        print(clon.min(), clon.max())
-        print(vlat.min(), vlat.max())
-        print(vlon.min(), vlon.max())
+        print('clat:', clat.shape, 'clon:', clon.shape, 'vlat:', vlat.shape, 'vlon:', vlon.shape)
+        print('clat min,max:', clat.min(), clat.max())
+        print('clon min,max:', clon.min(), clon.max())
+        print('vlat min,max:', vlat.min(), vlat.max())
+        print('vlon min,max:', vlon.min(), vlon.max())
 
     elif grid == 'latlon_0.25':
         clat, clon = read_grid_coordinates(model, grid)
         print(clat.shape, clon.shape)
         print(clat.min(), clat.max())
         print(clon.min(), clon.max())
-        print(clon[::10])
+        print(clat[::20])
+        print(clon[::20])
 
     elif grid == 'latlon_0.0625':
         clat, clon = read_grid_coordinates(model, grid)
         print(clat.shape, clon.shape)
         print(clat.min(), clat.max())
         print(clon.min(), clon.max())
+        print(clat)
+        print(clon)
 
 
     return
@@ -53,4 +56,10 @@ if __name__ == '__main__':
     t1 = time.time()
     main()
     t2 = time.time()
-    print('total script time:  {:.0f}ms'.format( 1000 * (t2-t1) ))
+    delta_t = t2-t1
+    if delta_t < 60:
+        print('total script time:  {:.1f}s'.format(delta_t))
+    elif 60 <= delta_t <= 3600:
+        print('total script time:  {:.0f}min{:.0f}s'.format(delta_t//60, delta_t-delta_t//60*60))
+    else:
+        print('total script time:  {:.0f}h{:.1f}min'.format(delta_t//3600, (delta_t-delta_t//3600*3600)/60))
