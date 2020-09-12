@@ -228,7 +228,7 @@ def read_forecast_data(model, grid, date, var, **kwargs):
                 filename = '{}_{}_{}{:02}{:02}{:02}_{}.nc'.format(
                             model_grib_str, level_str, date['year'], date['month'], date['day'], date['hour'],
                             varname1_grib)
-        elif grid == 'latlon_0.25':
+        elif grid == 'latlon_0.25' or grid == 'latlon_0.1':
             filename = '{}_{}_{}{:02}{:02}{:02}_{:03d}h_{}.nc'.format(
                         model_grib_str, level_str, date['year'], date['month'], date['day'], date['hour'],
                         kwargs['fcst_hour'], varname1_grib)
@@ -266,7 +266,7 @@ def read_forecast_data(model, grid, date, var, **kwargs):
                 if grid == 'icosahedral':
                     data_var1 = ds[varname1_cf][dict(step = fcst_hour_index)].values
 
-                elif grid == 'latlon_0.25':
+                elif grid == 'latlon_0.25' or grid == 'latlon_0.1':
                     if model == 'icon-eu-eps':
                         if varname1_lvtype == 'sl':
                             if varname1_cf == '2t':
@@ -319,7 +319,7 @@ def read_forecast_data(model, grid, date, var, **kwargs):
                 filename = '{}_{}_{}{:02}{:02}{:02}_{}.nc'.format(
                             model_grib_str, level_str, date['year'], date['month'], date['day'], date['hour'],
                             varname2_grib)
-        elif grid == 'latlon_0.25':
+        elif grid == 'latlon_0.25' or grid == 'latlon_0.1':
             filename = '{}_{}_{}{:02}{:02}{:02}_{:03d}h_{}.nc'.format(
                         model_grib_str, level_str, date['year'], date['month'], date['day'], date['hour'],
                         kwargs['fcst_hour'], varname2_grib)
@@ -338,7 +338,7 @@ def read_forecast_data(model, grid, date, var, **kwargs):
             if grid == 'icosahedral':
                 data_var2 = ds[varname2_cf][dict(step = fcst_hour_index)].values
 
-            elif grid == 'latlon_0.25':
+            elif grid == 'latlon_0.25' or grid == 'latlon_0.1':
                 if model == 'icon-eu-eps':
                     if varname2_lvtype == 'sl':
                         if varname2_cf == '2t':
@@ -388,7 +388,7 @@ def read_forecast_data(model, grid, date, var, **kwargs):
                 filename = '{}_{}_{}{:02}{:02}{:02}_{}.nc'.format(
                             model_grib_str, level_str, date['year'], date['month'], date['day'], date['hour'],
                             varname3_grib)
-        elif grid == 'latlon_0.25':
+        elif grid == 'latlon_0.25' or grid == 'latlon_0.1':
             filename = '{}_{}_{}{:02}{:02}{:02}_{:03d}h_{}.nc'.format(
                         model_grib_str, level_str, date['year'], date['month'], date['day'], date['hour'],
                         kwargs['fcst_hour'], varname3_grib)
@@ -407,7 +407,7 @@ def read_forecast_data(model, grid, date, var, **kwargs):
             if grid == 'icosahedral':
                 data_var3 = ds[varname3_cf][dict(step = fcst_hour_index)].values
 
-            elif grid == 'latlon_0.25':
+            elif grid == 'latlon_0.25' or grid == 'latlon_0.1':
                 if model == 'icon-eu-eps':
                     if varname3_lvtype == 'sl':
                         if varname3_cf == '2t':
@@ -457,7 +457,7 @@ def read_forecast_data(model, grid, date, var, **kwargs):
                 filename = '{}_{}_{}{:02}{:02}{:02}_{}.nc'.format(
                             model_grib_str, level_str, date['year'], date['month'], date['day'], date['hour'],
                             varname4_grib)
-        elif grid == 'latlon_0.25':
+        elif grid == 'latlon_0.25' or grid == 'latlon_0.1':
             filename = '{}_{}_{}{:02}{:02}{:02}_{:03d}h_{}.nc'.format(
                         model_grib_str, level_str, date['year'], date['month'], date['day'], date['hour'],
                         kwargs['fcst_hour'], varname4_grib)
@@ -476,7 +476,7 @@ def read_forecast_data(model, grid, date, var, **kwargs):
             if grid == 'icosahedral':
                 data_var4 = ds[varname4_cf][dict(step = fcst_hour_index)].values
 
-            elif grid == 'latlon_0.25':
+            elif grid == 'latlon_0.25' or grid == 'latlon_0.1':
                 if model == 'icon-eu-eps':
                     if varname4_lvtype == 'sl':
                         if varname4_cf == '2t':
@@ -757,6 +757,8 @@ def read_grid_coordinates(model, grid):
             filename = 'icon_grid_0026_R03B07_G.nc'
         elif grid == 'latlon_0.25':
             filename = 'icon-global-det_latlon_0.25_grid_coordinates.nc'
+        elif grid == 'latlon_0.1':
+            filename = 'icon-global-det_latlon_0.1_grid_coordinates.nc'
 
     if grid == 'icosahedral':
         with xr.open_dataset(path['base'] + path['grid'] + filename) as ds:
@@ -785,7 +787,16 @@ def read_grid_coordinates(model, grid):
         clon_new = np.empty_like(clon)
         clon_new[719:] = clon[:721]
         clon_new[:719] = clon[721:]
+        return clat, clon_new
 
+    elif grid == 'latlon_0.1':
+        with xr.open_dataset(path['base'] + path['grid'] + filename) as ds:
+            clat = ds['lat'].values
+            clon = ds['lon'].values
+        clon = np.where(clon > 180, clon - 360, clon)
+        clon_new = np.empty_like(clon)
+        clon_new[1799:] = clon[:1801]
+        clon_new[:1799] = clon[1801:]
         return clat, clon_new
 
 ########################################################################

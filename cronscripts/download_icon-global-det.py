@@ -83,11 +83,11 @@ def main():
 
             if var in  vars_to_interpolate:
                 if var[1] == 'sl':
-                    latlon_filename = 'icon-global-det_latlon_0.25_single-level_{}{:02}{:02}{:02}_{:03}h_{}.nc'.format(
+                    latlon_filename = 'icon-global-det_latlon_0.1_single-level_{}{:02}{:02}{:02}_{:03}h_{}.nc'.format(
                                        date['year'], date['month'], date['day'], date['hour'], fcst_hour, var[0])
                 else:
                     level = var[1][:3]
-                    latlon_filename = 'icon-global-det_latlon_0.25_pressure-level_{}{:02}{:02}{:02}_{:03}h_{}_{}.nc'.format(
+                    latlon_filename = 'icon-global-det_latlon_0.1_pressure-level_{}{:02}{:02}{:02}_{:03}h_{}_{}.nc'.format(
                                        date['year'], date['month'], date['day'], date['hour'], fcst_hour, level, var[0])
                 interpolate_icon_grib_to_latlon(path, filename, latlon_filename, 'icon-global-det')
 

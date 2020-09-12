@@ -326,7 +326,7 @@ def cut_by_domain(cut_domain, grid, data_array1, clat, clon, vlat, vlon, margin_
 
         return data_array1_cut, clat_cut, clon_cut, vlat_cut, vlon_cut
 
-    elif grid == 'latlon_0.25':
+    elif grid == 'latlon_0.25' or grid == 'latlon_0.1':
         filter_lat_high = list(np.where(clat < lat_max)[0])
         filter_lat_low = list(np.where(clat > lat_min)[0])
         filter_lon_high = list(np.where(clon < lon_max)[0])
