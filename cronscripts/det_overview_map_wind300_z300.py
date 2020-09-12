@@ -27,7 +27,7 @@ def main():
     domains.append(get_domain('south_pole'))
 
     variable1 = dict(name='wind_300hPa', unit='km/h', grid='icosahedral')
-    variable2 = dict(name='gph_300hPa', unit='gpdm', grid='latlon_0.25')
+    variable2 = dict(name='gph_300hPa', unit='gpdm', grid='latlon_0.1')
     
     plot_type = 'map_deterministic_overview'
 

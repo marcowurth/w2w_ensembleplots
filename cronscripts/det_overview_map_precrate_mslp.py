@@ -16,9 +16,10 @@ def main():
     model = 'icon-global-det'
 
     run = calc_latest_run_time(model)
-    #run = dict(year = 2020, month = 8, day = 19, hour = 0)
+    #run = dict(year = 2020, month = 9, day = 12, hour = 0)
 
     domains = []
+    #domains.append(get_domain('north_atlantic_storm'))
     domains.append(get_domain('europe'))
     domains.append(get_domain('europe_and_north_atlantic'))
     domains.append(get_domain('usa'))
@@ -27,7 +28,7 @@ def main():
     domains.append(get_domain('south_pole'))
 
     variable1 = dict(name='prec_rate', unit='mm/h', grid='icosahedral')
-    variable2 = dict(name='mslp', unit='hPa', grid='latlon_0.25')
+    variable2 = dict(name='mslp', unit='hPa', grid='latlon_0.1')
 
     plot_type = 'map_deterministic_overview'
 

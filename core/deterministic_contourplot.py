@@ -95,8 +95,12 @@ def det_contourplot(domains, variable1, variable2, model, run, plot_type):
         if variable2['name'] != '':
             data_array2_non_cyclic = read_forecast_data(model, variable2['grid'], run, variable2['name'], fcst_hour=hour)
             data_array2 = np.empty_like(data_array2_non_cyclic)
-            data_array2[:, 719:] = data_array2_non_cyclic[:, :721]  # flip around the data in lon direction to match
-            data_array2[:, :719] = data_array2_non_cyclic[:, 721:]  # positions in the ll_lon array
+            if variable2['grid'] == 'latlon_0.1':
+                data_array2[:, 1799:] = data_array2_non_cyclic[:, :1801]  # flip around the data in lon direction to match
+                data_array2[:, :1799] = data_array2_non_cyclic[:, 1801:]  # positions in the ll_lon array
+            elif variable2['grid'] == 'latlon_0.25':
+                data_array2[:, 719:] = data_array2_non_cyclic[:, :721]  # flip around the data in lon direction to match
+                data_array2[:, :719] = data_array2_non_cyclic[:, 721:]  # positions in the ll_lon array
 
             ''' code for manual add_cyclic: add last lon row before the first lon
             ll_lon = np.empty((ll_lon_non_cyclic.shape[0]+1))
