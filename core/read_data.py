@@ -196,7 +196,7 @@ def read_forecast_data(model, grid, date, var, **kwargs):
         elif model == 'icon-global-eps':
             values_chunksize = 82000
     elif 'fcst_hour' in kwargs:
-        fcst_hours_list = get_fcst_hours_list(model)
+        fcst_hours_list = get_fcst_hours_list_var(model, varname1_grib)
         fcst_hour_index = fcst_hours_list.index(kwargs['fcst_hour'])
         if var == 'prec_6h':
             fcst_hour2 = kwargs['fcst_hour'] + 6
@@ -707,6 +707,32 @@ def get_fcst_hours_list(model):
         fcst_hours_list = list(range(0,78,1)) + list(range(78,120+1,3))
     elif model == 'icon-global-det':
         fcst_hours_list = list(range(0,78,1)) + list(range(78,180+1,3))
+    elif model == 'pamore_icon-global-eps':
+        fcst_hours_list = list(range(0,75,1)) + list(range(75,180+1,3))
+
+    return fcst_hours_list
+
+########################################################################
+########################################################################
+########################################################################
+
+def get_fcst_hours_list_var(model, var):
+    if model == 'icon-eu-eps':
+        fcst_hours_list = list(range(0,48,1)) + list(range(48,72,3)) + list(range(72,120+1,6))
+    elif model == 'icon-global-eps':
+        fcst_hours_list = list(range(0,48,1)) + list(range(48,72,3)) + list(range(72,120,6)) +list(range(120,180+1,12))
+    elif model == 'icon-global-eps_eu-extension':
+        fcst_hours_list = list(range(132,180+1,12))
+    elif model == 'icon-eu-det':
+        if var == 'synmsg_bt_cl_ir10.8':
+            fcst_hours_list = list(range(0,120+1,6))
+        else:
+            fcst_hours_list = list(range(0,78,1)) + list(range(78,120+1,3))
+    elif model == 'icon-global-det':
+        if var == 'tot_prec':
+            fcst_hours_list = list(range(0,78,1)) + list(range(78,180+1,3))
+        else:
+            fcst_hours_list = list(range(0,180+1,6))
     elif model == 'pamore_icon-global-eps':
         fcst_hours_list = list(range(0,75,1)) + list(range(75,180+1,3))
 
