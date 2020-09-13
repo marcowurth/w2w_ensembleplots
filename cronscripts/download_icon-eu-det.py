@@ -63,7 +63,7 @@ def main():
 
         # download all grib files from website
 
-        if var[0] == 'synmsg_bt_cl_ir10.8':
+        if var == 'synmsg_bt_cl_ir10.8':
             fcst_hours_list = fcst_hours_list_6h
         else:
             fcst_hours_list = fcst_hours_list_1h3h
