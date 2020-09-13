@@ -15,7 +15,7 @@ from w2w_ensembleplots.core.download_forecast import calc_latest_run_time
 
 def main():
 
-    max_days_to_keep_data = 3       # set this to required time (in days)
+    max_days_to_keep_data = 2       # set this to required time (in days)
 
 
     path = dict(base = '/')

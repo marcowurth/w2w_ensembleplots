@@ -17,7 +17,8 @@ def main():
 
     # make lists of forecast hours and variables #
 
-    fcst_hours_list = list(range(0,78,1)) + list(range(78,120+1,3))
+    fcst_hours_list_6h = list(range(0,120+1,6))
+    fcst_hours_list_1h3h = list(range(0,78,1)) + list(range(78,120+1,3))
 
 
     # get latest run time #
@@ -61,6 +62,11 @@ def main():
 
 
         # download all grib files from website
+
+        if var[0] == 'synmsg_bt_cl_ir10.8':
+            fcst_hours_list = fcst_hours_list_6h
+        else:
+            fcst_hours_list = fcst_hours_list_1h3h
 
         for fcst_hour in fcst_hours_list:
             filename = 'icon-eu_europe_regular-lat-lon_single-level_{}{:02}{:02}{:02}_{:03}_{}.grib2.bz2'.format(

@@ -17,7 +17,8 @@ def main():
 
     # make lists of forecast hours and variables #
 
-    fcst_hours_list = list(range(0,78,1)) + list(range(78,180+1,3))
+    fcst_hours_list_prec_rate = list(range(0,78,1)) + list(range(78,180+1,3))
+    fcst_hours_list_6h = list(range(0,180+1,6))
 
 
     # get latest run time #
@@ -40,7 +41,7 @@ def main():
     var_list = [['tot_prec','sl'],['pmsl','sl'],['relhum','850hPa'],['t','850hPa'],['fi','500hPa'],
                 ['fi','300hPa'],['u','300hPa'],['v','300hPa'],
                 ['t_2m','sl'],['u_10m','sl'],['v_10m','sl'],['clct','sl']]
-    vars_to_interpolate = [['pmsl','sl'],['t','850hPa'],['fi','500hPa'],['fi','300hPa'],['u','300hPa'],['v','300hPa']]
+    vars_to_interpolate = [['pmsl','sl'],['fi','500hPa'],['fi','300hPa']]
 
 
     # create paths if necessary #
@@ -65,6 +66,11 @@ def main():
 
 
         # download all grib files from website #
+
+        if var[0] == 'tot_prec':
+            fcst_hours_list = fcst_hours_list_prec_rate
+        else:
+            fcst_hours_list = fcst_hours_list_6h
 
         for fcst_hour in fcst_hours_list:
             if var[1] == 'sl':
