@@ -219,9 +219,9 @@ def double_contourplot(var1var2):
 
 
     # example plot_name: icon-global-det_2020070512_prec_rate_mslp_europe_000h.png
-    plot_name = '{}_{:4d}{:02d}{:02d}{:02d}_{}_{}_{}_{:03d}h'.format(
+    plot_name = '{}_{:4d}{:02d}{:02d}{:02d}_{}_{}_{:03d}h'.format(
                  model, run['year'], run['month'], run['day'], run['hour'],
-                 variable1['name'], variable2['name'], domain['name'], hour)
+                 var1var2, domain['name'], hour)
 
 
     # plot basic map with borders #
@@ -360,8 +360,8 @@ def double_contourplot(var1var2):
         mpres.mpOutlineBoundarySets     = 'national'
     mpres.mpGeophysicalLineColor        = 'black'
     mpres.mpNationalLineColor           = 'black'
-    mpres.mpGeophysicalLineThicknessF   = 2. * x_resolution / 1000
-    mpres.mpNationalLineThicknessF      = 2. * x_resolution / 1000
+    mpres.mpGeophysicalLineThicknessF   = 1.5 * x_resolution / 1000
+    mpres.mpNationalLineThicknessF      = 1.5 * x_resolution / 1000
 
     mpres.mpPerimOn                     = True
     mpres.mpPerimLineColor              = 'black'
@@ -405,19 +405,8 @@ def double_contourplot(var1var2):
     v1res.lbOrientation         = 'vertical'
     v1res.lbLabelOffsetF        = 0.04      # minor axis fraction: the distance between colorbar and numbers
     v1res.lbBoxMinorExtentF     = 0.20      # minor axis fraction: width of the color boxes when labelbar down
-    v1res.lbTopMarginF          = 0.2      # make a little more space at top for the unit label
+    v1res.lbTopMarginF          = 0.2       # make a little more space at top for the unit label
     v1res.lbRightMarginF        = 0.0
-    if variable1['name'] == 't_850hPa':
-        v1res.lbBottomMarginF   = -0.07
-    elif variable1['name'] == 'theta_e_850hPa':
-        v1res.lbBottomMarginF   = -0.07
-    elif variable1['name'] == 'wind_300hPa':
-        v1res.lbBottomMarginF   = -0.35
-    elif variable1['name'] == 'prec_rate':
-        v1res.lbBottomMarginF   = -0.2
-    elif variable1['name'] == 'synth_bt_ir10.8':
-        v1res.lbBottomMarginF   = 0.05
-    v1res.lbLeftMarginF         = -0.35
 
     v1res.cnLabelBarEndStyle    = 'ExcludeOuterBoxes'
     #if variable1['name'] == 'prec_rate' :
@@ -436,6 +425,37 @@ def double_contourplot(var1var2):
         v1res.lbLabelStride = 196/7
     else:
         v1res.lbLabelStride = 1
+
+    if variable1['name'] == 't_850hPa':
+        v1res.lbBottomMarginF   = -0.07
+    elif variable1['name'] == 'theta_e_850hPa':
+        v1res.lbBottomMarginF   = -0.07
+    elif variable1['name'] == 'wind_300hPa':
+        v1res.lbBottomMarginF   = -0.35
+    elif variable1['name'] == 'prec_rate':
+        v1res.lbBottomMarginF   = -0.2
+    elif variable1['name'] == 'synth_bt_ir10.8':
+        v1res.lbBottomMarginF   = 0.05
+    v1res.lbLeftMarginF         = -0.35
+    if domain['name'] == 'mediterranean':
+        mpres.vpWidthF      = 0.94
+        v1res.lbBottomMarginF += 0.15
+        #v1res.lbBoxMinorExtentF = 0.13
+        if variable1['name'] == 'prec_rate':
+            v1res.lbLabelFontHeightF = 0.007
+        elif variable1['name'] == 't_850hPa':
+            v1res.lbLabelFontHeightF = 0.005
+        elif variable1['name'] == 'theta_e_850hPa':
+            v1res.lbLabelFontHeightF = 0.005
+        elif variable1['name'] == 'wind_300hPa':
+            v1res.lbLabelFontHeightF = 0.005
+        elif variable1['name'] == 'synth_bt_ir10.8':
+            v1res.lbLabelFontHeightF = 0.005
+            v1res.lbTopMarginF = 0.35
+        v1res.lbBottomMarginF   = 0.05
+        v1res.pmLabelBarWidthF = 0.04
+        v1res.lbLeftMarginF = -0.5
+
 
     v1res.nglFrame = False
     v1res.nglDraw  = False
@@ -456,17 +476,29 @@ def double_contourplot(var1var2):
         v2res.cnLineLabelsOn = True
 
         v2res.cnLineLabelPlacementMode = 'Constant'
-        if plot_type == 'map_hurricane':
-            v2res.cnLineLabelFontHeightF = 0.008
-        elif plot_type == 'map_deterministic_overview':
-            v2res.cnLineLabelFontHeightF = 0.010
+        v2res.cnLineLabelFontHeightF = 0.010
         v2res.cnLineDashSegLenF = 0.25
         v2res.cnLabelDrawOrder = 'PostDraw' # necessary to make everything visible
         v2res.cnInfoLabelOn = False
 
+        '''v2res.cnLineLabelsOn = True
+        v2res.cnLabelDrawOrder = 'PostDraw'     # necessary to make everything visible
+        v2res.cnLineLabelPerimOn = False
+        v2res.cnLineLabelBackgroundColor = 'transparent'
+        v2res.cnLineLabelPlacementMode = 'Computed'
+        v2res.cnLineLabelDensityF = 0.2
+        v2res.cnLineLabelFontHeightF = 0.010
+        #v2res.cnLineDashSegLenF = 0.25
+
+        v2res.cnLowLabelsOn = True
+        #v2res.cnLowLabelPerimOn = False
+        v2res.cnLowLabelString = '$ZDV$hPa'
+        #v2res.cnLowLabelFontColor = 'black'
+        v2res.cnLowLabelBackgroundColor = 'white'''
+
         v2res.cnSmoothingOn = False
-        v2res.cnSmoothingDistanceF = 0.01
-        v2res.cnSmoothingTensionF = 0.1
+        #v2res.cnSmoothingDistanceF = 0.01
+        #v2res.cnSmoothingTensionF = 0.1
         if variable2['name'] == 'mslp':
             if plot_type == 'map_hurricane':
                 spcng = 5
@@ -502,35 +534,59 @@ def double_contourplot(var1var2):
         if variable2['name'] != '':
             v2res.cnLineThicknessF = 5.0
             v2res.cnLineLabelInterval = 1
+            v2res.cnLowLabelFontHeightF = 0.01
         text_y = 0.865
     elif domain['name'] == 'europe_and_north_atlantic':
         if variable2['name'] != '':
             v2res.cnLineThicknessF = 4.0
             v2res.cnLineLabelInterval = 2
+            v2res.cnLowLabelFontHeightF = 0.01
         text_y = 0.83
+    elif domain['name'] == 'mediterranean':
+        if variable2['name'] != '':
+            v2res.cnLineThicknessF = 4.0
+            v2res.cnLineLabelFontHeightF = 0.007
+            v2res.cnLineLabelInterval = 1
+            v2res.cnLowLabelFontHeightF = 0.01
+        text_y = 0.673
+        text_res_1.txFontHeightF = 0.01
+        mpres.mpGeophysicalLineThicknessF = 1. * x_resolution / 1000
+        mpres.mpNationalLineThicknessF    = 1. * x_resolution / 1000
+    elif domain['name'] == 'north_atlantic_storm':
+        if variable2['name'] != '':
+            v2res.cnLineThicknessF = 2.0
+            v2res.cnLineLabelInterval = 1
+            v2res.cnLowLabelFontHeightF = 0.03
+        text_y = 0.93
     elif domain['name'] == 'usa':
         v2res.cnLineThicknessF = 4.0
         v2res.cnLineLabelInterval = 1
+        v2res.cnLowLabelFontHeightF = 0.01
         text_y = 0.875
     elif domain['name'] == 'southern_south_america':
         v2res.cnLineThicknessF = 4.0
         v2res.cnLineLabelInterval = 2
+        v2res.cnLowLabelFontHeightF = 0.01
         text_y = 0.885
     elif domain['name'] == 'north_pole' or domain['name'] == 'south_pole':
         if variable2['name'] != '':
             v2res.cnLineThicknessF = 3.0
             v2res.cnLineLabelInterval = 4
+            v2res.cnLowLabelFontHeightF = 0.01
         text_y = 0.93
     elif domain['name'] == 'atlantic_hurricane_basin':
         v2res.cnLineThicknessF = 3.0
         v2res.cnLineLabelInterval = 2
+        v2res.cnLowLabelFontHeightF = 0.01
         text_y = 0.665
     elif domain['name'] == 'gulf_of_mexico':
         v2res.cnLineThicknessF = 3.0
         v2res.cnLineLabelInterval = 1
+        v2res.cnLowLabelFontHeightF = 0.02
         text_y = 0.78
     else:
         print('no domain specific settings defined for this domain:', domain['name'])
+        print('stop plotting here')
         exit()
 
 

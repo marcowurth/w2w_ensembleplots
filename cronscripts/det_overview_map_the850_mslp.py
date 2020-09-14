@@ -19,8 +19,10 @@ def main():
     #run = dict(year = 2020, month = 8, day = 26, hour = 0)
 
     domains = []
+    #domains.append(get_domain('north_atlantic_storm'))
     domains.append(get_domain('europe'))
     domains.append(get_domain('europe_and_north_atlantic'))
+    domains.append(get_domain('mediterranean'))
     domains.append(get_domain('usa'))
     domains.append(get_domain('southern_south_america'))
     domains.append(get_domain('north_pole'))

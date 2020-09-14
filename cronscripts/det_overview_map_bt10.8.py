@@ -23,6 +23,7 @@ def main():
     domains = []
     domains.append(get_domain('europe'))
     domains.append(get_domain('europe_and_north_atlantic'))
+    domains.append(get_domain('mediterranean'))
 
     variable1 = dict(name='synth_bt_ir10.8', unit='  ~S~o~N~C', grid='latlon_0.0625')
     variable2 = dict(name='')

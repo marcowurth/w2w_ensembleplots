@@ -11,6 +11,12 @@ def get_domain(domain_name):
     elif domain_name == 'europe_and_north_atlantic':
         domain =   dict(name = domain_name, projection = 'Hammer', limits_type = 'radius',
                         centerlat = 50, centerlon = -15, radius = 2400)
+    elif domain_name == 'mediterranean':
+        domain =   dict(name = domain_name, projection = 'CylindricalEquidistant', limits_type = 'deltalatlon',
+                        centerlat = 38.7, centerlon = 15, deltalat_deg = 8.5, deltalon_deg = 22)
+    elif domain_name == 'north_atlantic_storm':
+        domain =   dict(name = domain_name, projection = 'Hammer', limits_type = 'radius',
+                        centerlat = 41.9, centerlon = -46.1, radius = 300)
     elif domain_name == 'usa':
         domain =   dict(name = domain_name, projection = 'Hammer', limits_type = 'radius',
                         centerlat = 37, centerlon = -99, radius = 1900)
