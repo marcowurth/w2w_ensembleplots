@@ -39,8 +39,8 @@ def main():
     # list of dwd variable names #
 
     if date['hour'] == 0 or date['hour'] == 12:
-        var_list = ['synmsg_bt_cl_ir10.8','tot_prec','t_2m','u_10m','v_10m','pmsl','clct',
-                    'aswdir_s','aswdifd_s','vmax_10m']
+        var_list = ['synmsg_bt_cl_ir10.8','tot_prec','vmax_10m','t_2m','u_10m','v_10m','pmsl','clct',
+                    'aswdir_s','aswdifd_s']
     else:
         var_list = ['tot_prec','t_2m','u_10m','v_10m','pmsl','clct','aswdir_s','aswdifd_s','vmax_10m']
 
