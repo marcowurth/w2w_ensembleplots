@@ -19,10 +19,15 @@ from w2w_ensembleplots.core.gridpoint_order import cut_by_domain
 def det_contourplot(domains, variable1, variable2, model, run, plot_type):
 
     if plot_type == 'map_deterministic_overview':
-        if variable1['name'] == 'synth_bt_ir10.8':
+        if variable1['name'] == 'synth_bt_ir10.8'\
+         or variable1['name'] == 'prec_24h'\
+         or variable1['name'] == 'vmax_10m':
             hours = list(range(0, 120+1, 6))
+            #hours = list(range(0, 60+1, 1))
+            #hours = [0]
         else:
             hours = list(range(0, 180+1, 6))
+            #hours = [24]
     elif plot_type == 'map_hurricane':
         hours = list(range(0, 180+1, 6))
 
@@ -68,7 +73,9 @@ def det_contourplot(domains, variable1, variable2, model, run, plot_type):
 
     numpyarrays_filename = 'deterministic_contourplot_{}_ndarrays_outofloop.npz'.format(var1var2)
 
-    if variable1['name'] == 'synth_bt_ir10.8':
+    if variable1['name'] == 'synth_bt_ir10.8'\
+     or variable1['name'] == 'prec_24h'\
+     or variable1['name'] == 'vmax_10m':
         clat, clon = read_grid_coordinates(model, variable1['grid'])
 
         with open(path['base'] + path['temp'] + numpyarrays_filename, 'wb') as f:
@@ -178,7 +185,9 @@ def double_contourplot(var1var2):
     # load numpy arrays #
 
     numpyarrays_filename = 'deterministic_contourplot_{}_ndarrays_outofloop.npz'.format(var1var2)
-    if variable1['name'] == 'synth_bt_ir10.8':
+    if variable1['name'] == 'synth_bt_ir10.8'\
+     or variable1['name'] == 'prec_24h'\
+     or variable1['name'] == 'vmax_10m':
         with open(path['base'] + path['temp'] + numpyarrays_filename, 'rb') as f:
             with np.load(f) as loadedfile:
                 clat = loadedfile['clat']
@@ -208,7 +217,9 @@ def double_contourplot(var1var2):
     elif domain['limits_type'] == 'deltalatlon' or domain['limits_type'] == 'angle':
         margin_deg = 20
 
-    if variable1['name'] == 'synth_bt_ir10.8':
+    if variable1['name'] == 'synth_bt_ir10.8'\
+     or variable1['name'] == 'prec_24h'\
+     or variable1['name'] == 'vmax_10m':
         data_array1_cut, clat_cut, clon_cut, vlat_cut, vlon_cut = data_array1, clat, clon, None, None
     else:
         data_array1_cut, clat_cut, clon_cut, vlat_cut, vlon_cut = \
@@ -230,9 +241,13 @@ def double_contourplot(var1var2):
     if domain['limits_type'] == 'radius' or domain['limits_type'] == 'angle':
         x_resolution = 800
         y_resolution = 800
-    elif domain['limits_type'] == 'deltalatlon':
+    elif domain['limits_type'] == 'deltalatlon'\
+     and (domain['name'] == 'mediterranean' or domain['name'] == 'atlantic_hurricane_basin'):
         x_resolution = 1200
         y_resolution = 1200
+    else:
+        x_resolution = 800
+        y_resolution = 800
     wks_res.wkWidth  = x_resolution
     wks_res.wkHeight = y_resolution
 
@@ -251,28 +266,66 @@ def double_contourplot(var1var2):
     elif variable1['name'] == 'wind_300hPa':
         wks_res.wkColorMap = 'wh-bl-gr-ye-re'
         levels1 = np.arange(150,300,25)
+
     elif variable1['name'] == 'synth_bt_ir10.8':
         filename_colorpalette = 'rainbowIRsummer.txt'
         with open(path['base'] + path['colorpalette'] + filename_colorpalette, 'r') as f:
             lines = f.readlines()
-        print(len(lines))
         rgb_colors = []
         rgb_colors.append([1, 1, 1])
         rgb_colors.append([1, 1, 1])
-        print(len(rgb_colors))
         for i, line in enumerate(lines):
-            if i % 5 == 0:
+            if i % 14 == 0 and i > 70:
                 rgb_colors.append([float(line[:10]), float(line[11:21]), float(line[22:32])])
-        rgb_colors = rgb_colors[15:]
-        print(len(rgb_colors))
-        num_bw_colors = 58
+        num_bw_colors = 30
         for i in range(num_bw_colors+1):
             rgb_colors.append([1-i/num_bw_colors, 1-i/num_bw_colors, 1-i/num_bw_colors])
-        print(len(rgb_colors))
-
+        rgb_colors.append([0, 0, 0])
         wks_res.wkColorMap = np.array(rgb_colors)
-        levels1 = np.concatenate((np.linspace(-90, -20, 196), np.linspace(-20, 50, 60)[1:]))
-        print(levels1.shape)
+        levels1 = (list(range(-90,-20,1)) + list(range(-20,40+1,2)))
+
+    elif variable1['name'] == 'prec_24h':
+        filename_colorpalette = 'colorscale_prec24h.txt'
+        with open(path['base'] + path['colorpalette'] + filename_colorpalette, 'r') as f:
+            lines = f.readlines()
+        rgb_colors = []
+        rgb_colors.append([1, 1, 1])
+        rgb_colors.append([1, 1, 1])
+        rgb_colors.append([1, 1, 1])
+        for i, line in enumerate(lines):
+            rgb_colors.append([float(line[0:3])/255, float(line[4:7])/255, float(line[8:11])/255])
+        rgb_colors.append([1, 1, 1])
+        wks_res.wkColorMap = np.array(rgb_colors)
+        levels1 = ([0,1,2,5,10,15,20,30,40,50,60,80,100,120,150,200,250,300,350,400,450,500,999])
+
+    elif variable1['name'] == 'vmax_10m':
+        filename_colorpalette = 'colorscale_vmax.txt'
+        with open(path['base'] + path['colorpalette'] + filename_colorpalette, 'r') as f:
+            lines = f.readlines()
+        rgb_colors = []
+        rgb_colors.append([1, 1, 1])
+        rgb_colors.append([1, 1, 1])
+        rgb_colors.append([1, 1, 1])
+        rgb_colors.append([1, 1, 1])
+        for i, line in enumerate(lines):
+            rgb_colors.append([float(line[0:3])/255, float(line[4:7])/255, float(line[8:11])/255])
+        rgb_colors.append([0, 0, 1])
+        wks_res.wkColorMap = np.array(rgb_colors)
+        levels1 = (list(range(0,90+1,5)) + list(range(100,160+1,10)) + list(range(180,260+1,20)))
+
+    elif variable1['name'] == 'shear_200-850hPa':
+        filename_colorpalette = 'colorscale_shear_200-850hPa.txt'
+        with open(path['base'] + path['colorpalette'] + filename_colorpalette, 'r') as f:
+            lines = f.readlines()
+        rgb_colors = []
+        rgb_colors.append([1, 1, 1])
+        rgb_colors.append([1, 1, 1])
+        rgb_colors.append([1, 1, 1])
+        for i, line in enumerate(lines):
+            rgb_colors.append([float(line[0:3])/255, float(line[4:7])/255, float(line[8:11])/255])
+        rgb_colors.append([0, 0, 1])
+        wks_res.wkColorMap = np.array(rgb_colors)
+        levels1 = (list(np.arange(0,30,2.5)) + list(range(30,50+1,5)) + [99])
 
     wks_type = 'png'
     wks = Ngl.open_wks(wks_type, path['base'] + path['plots'] + plot_name, wks_res)
@@ -389,7 +442,9 @@ def double_contourplot(var1var2):
     v1res.cnLinesOn = False
     v1res.cnFillOn  = True
     v1res.cnLineLabelsOn = False
-    if variable1['name'] == 'synth_bt_ir10.8':
+    if variable1['name'] == 'synth_bt_ir10.8'\
+     or variable1['name'] == 'prec_24h'\
+     or variable1['name'] == 'vmax_10m':
         v1res.cnFillMode = 'RasterFill'
     else:
         v1res.cnFillMode = 'CellFill'
@@ -422,7 +477,7 @@ def double_contourplot(var1var2):
     #v1res.lbBoxEndCapStyle     = 'TriangleBothEnds'
     v1res.lbLabelAlignment      = 'ExternalEdges'
     if variable1['name'] == 'synth_bt_ir10.8':
-        v1res.lbLabelStride = 196/7
+        v1res.lbLabelStride = 10
     else:
         v1res.lbLabelStride = 1
 
@@ -434,7 +489,10 @@ def double_contourplot(var1var2):
         v1res.lbBottomMarginF   = -0.35
     elif variable1['name'] == 'prec_rate':
         v1res.lbBottomMarginF   = -0.2
-    elif variable1['name'] == 'synth_bt_ir10.8':
+    elif variable1['name'] == 'synth_bt_ir10.8'\
+     or variable1['name'] == 'prec_24h'\
+     or variable1['name'] == 'vmax_10m'\
+     or variable1['name'] == 'shear_200-850hPa':
         v1res.lbBottomMarginF   = 0.05
     v1res.lbLeftMarginF         = -0.35
     if domain['name'] == 'mediterranean':
@@ -447,9 +505,12 @@ def double_contourplot(var1var2):
             v1res.lbLabelFontHeightF = 0.005
         elif variable1['name'] == 'theta_e_850hPa':
             v1res.lbLabelFontHeightF = 0.005
-        elif variable1['name'] == 'wind_300hPa':
+        elif variable1['name'] == 'wind_300hPa'\
+         or variable1['name'] == 'shear_200-850hPa':
             v1res.lbLabelFontHeightF = 0.005
-        elif variable1['name'] == 'synth_bt_ir10.8':
+        elif variable1['name'] == 'synth_bt_ir10.8'\
+         or variable1['name'] == 'prec_24h'\
+         or variable1['name'] == 'vmax_10m':
             v1res.lbLabelFontHeightF = 0.005
             v1res.lbTopMarginF = 0.35
         v1res.lbBottomMarginF   = 0.05
@@ -552,6 +613,18 @@ def double_contourplot(var1var2):
         text_res_1.txFontHeightF = 0.01
         mpres.mpGeophysicalLineThicknessF = 1. * x_resolution / 1000
         mpres.mpNationalLineThicknessF    = 1. * x_resolution / 1000
+    elif domain['name'] == 'ionian_sea':
+        if variable2['name'] != '':
+            v2res.cnLineThicknessF = 5.0
+            v2res.cnLineLabelInterval = 1
+            v2res.cnLowLabelFontHeightF = 0.01
+        text_y = 0.82
+        if variable1['name'] != 'vmax_10m'\
+         and variable1['name'] != 'shear_200-850hPa':
+            mpres.mpGeophysicalLineThicknessF = 1. * x_resolution / 1000
+            mpres.mpNationalLineThicknessF    = 1. * x_resolution / 1000
+        if variable2['name'] == 'gph_300hPa':
+            v2res.cnLevelSpacingF = 2
     elif domain['name'] == 'north_atlantic_storm':
         if variable2['name'] != '':
             v2res.cnLineThicknessF = 2.0

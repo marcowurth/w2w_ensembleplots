@@ -17,6 +17,7 @@ def main():
 
     # make lists of forecast hours and variables #
 
+    #fcst_hours_list_6h = list(range(0,60+1,1))
     fcst_hours_list_6h = list(range(0,120+1,6))
     fcst_hours_list_1h3h = list(range(0,78,1)) + list(range(78,120+1,3))
 
@@ -41,6 +42,7 @@ def main():
     if date['hour'] == 0 or date['hour'] == 12:
         var_list = ['synmsg_bt_cl_ir10.8','tot_prec','vmax_10m','t_2m','u_10m','v_10m','pmsl','clct',
                     'aswdir_s','aswdifd_s']
+        #var_list = ['synmsg_bt_cl_ir10.8']
     else:
         var_list = ['tot_prec','t_2m','u_10m','v_10m','pmsl','clct','aswdir_s','aswdifd_s','vmax_10m']
 

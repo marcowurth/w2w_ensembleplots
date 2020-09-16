@@ -35,6 +35,11 @@ def read_forecast_data(model, grid, date, var, **kwargs):
         varname1_folder = 'tot_prec'
         varname1_grib = 'tot_prec'
         varname1_cf = 'tp'
+    elif var == 'prec_24h':
+        varname1_lvtype = 'sl'
+        varname1_folder = 'tot_prec'
+        varname1_grib = 'tot_prec'
+        varname1_cf = 'tp'
     elif var == 'prec_sum':
         varname1_lvtype = 'sl'
         varname1_folder = 'tot_prec'
@@ -162,6 +167,23 @@ def read_forecast_data(model, grid, date, var, **kwargs):
         varname4_folder = 'v_500hPa'
         varname4_grib = '500_v'
         varname4_cf = 'v'
+    elif var == 'shear_200-850hPa':
+        varname1_lvtype = 'pl'
+        varname1_folder = 'u_200hPa'
+        varname1_grib = '200_u'
+        varname1_cf = 'u'
+        varname2_lvtype = 'pl'
+        varname2_folder = 'v_200hPa'
+        varname2_grib = '200_v'
+        varname2_cf = 'v'
+        varname3_lvtype = 'pl'
+        varname3_folder = 'u_850hPa'
+        varname3_grib = '850_u'
+        varname3_cf = 'u'
+        varname4_lvtype = 'pl'
+        varname4_folder = 'v_850hPa'
+        varname4_grib = '850_v'
+        varname4_cf = 'v'
     elif var == 'lapse_rate_850hPa-500hPa':
         varname1_lvtype = 'pl'
         varname1_folder = 't_850hPa'
@@ -199,10 +221,15 @@ def read_forecast_data(model, grid, date, var, **kwargs):
         fcst_hours_list = get_fcst_hours_list_var(model, varname1_grib)
         fcst_hour_index = fcst_hours_list.index(kwargs['fcst_hour'])
         if var == 'prec_6h':
-            fcst_hour2 = kwargs['fcst_hour'] + 6
-            if fcst_hour2 > 180:
-                fcst_hour2 = 180
-            fcst_hour_index2 = fcst_hours_list.index(fcst_hour2)
+            fcst_hour_start = kwargs['fcst_hour'] - 6
+            if fcst_hour_start < 0:
+                fcst_hour_start = 0
+            fcst_hour_index_start = fcst_hours_list.index(fcst_hour_start)
+        if var == 'prec_24h':
+            fcst_hour_start = kwargs['fcst_hour'] - 24
+            if fcst_hour_start < 0:
+                fcst_hour_start = 0
+            fcst_hour_index_start = fcst_hours_list.index(fcst_hour_start)
 
     model_grib_str = model + '_' + grid
 
@@ -258,8 +285,13 @@ def read_forecast_data(model, grid, date, var, **kwargs):
                 data_var1 = np.where(data_var1 >= 0.0, data_var1, 0.0)
                 data_var1 = np.around(data_var1, 2)
             elif var == 'prec_6h':
-                data_var1 = (ds[varname1_cf][dict(step = fcst_hour_index2)].values \
-                            - ds[varname1_cf][dict(step = fcst_hour_index)].values) / 6
+                data_var1 = ds[varname1_cf][dict(step = fcst_hour_index)].values \
+                            - ds[varname1_cf][dict(step = fcst_hour_index_start)].values
+                data_var1 = np.where(data_var1 >= 0.0, data_var1, 0.0)
+                data_var1 = np.around(data_var1, 2)
+            elif var == 'prec_24h':
+                data_var1 = ds[varname1_cf][dict(step = fcst_hour_index)].values \
+                            - ds[varname1_cf][dict(step = fcst_hour_index_start)].values
                 data_var1 = np.where(data_var1 >= 0.0, data_var1, 0.0)
                 data_var1 = np.around(data_var1, 2)
             else:
@@ -534,6 +566,8 @@ def read_forecast_data(model, grid, date, var, **kwargs):
             data_final = data_var1
     elif var == 'prec_6h':     # in mm
         data_final = data_var1
+    elif var == 'prec_24h':     # in mm
+        data_final = data_var1
     elif var == 'prec_sum':     # in mm
         data_final = data_var1
     elif var == 'wind_mean_10m':    # in km/h
@@ -570,6 +604,8 @@ def read_forecast_data(model, grid, date, var, **kwargs):
         data_final = np.sqrt(data_var1**2 + data_var2**2) * 3.6
     elif var == 'shear_0-6km':  # in m/s
         data_final = np.sqrt((data_var3 - data_var1)**2 + (data_var4 - data_var2)**2)
+    elif var == 'shear_200-850hPa':  # in knots
+        data_final = np.sqrt((data_var1 - data_var3)**2 + (data_var2 - data_var4)**2) * 1.943844
     elif var == 'lapse_rate_850hPa-500hPa':     # in k/km
         data_final = 9806.65 * (data_var1 - data_var3) / (data_var4 - data_var2)
     elif var == 'synth_bt_ir10.8':     # deg C
@@ -726,6 +762,7 @@ def get_fcst_hours_list_var(model, var):
     elif model == 'icon-eu-det':
         if var == 'synmsg_bt_cl_ir10.8':
             fcst_hours_list = list(range(0,120+1,6))
+            #fcst_hours_list = list(range(0,60+1,1))
         else:
             fcst_hours_list = list(range(0,78,1)) + list(range(78,120+1,3))
     elif model == 'icon-global-det':

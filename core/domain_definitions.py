@@ -14,6 +14,9 @@ def get_domain(domain_name):
     elif domain_name == 'mediterranean':
         domain =   dict(name = domain_name, projection = 'CylindricalEquidistant', limits_type = 'deltalatlon',
                         centerlat = 38.7, centerlon = 15, deltalat_deg = 8.5, deltalon_deg = 22)
+    elif domain_name == 'ionian_sea':
+        domain =   dict(name = domain_name, projection = 'CylindricalEquidistant', limits_type = 'deltalatlon',
+                        centerlat = 36, centerlon = 18.5, deltalat_deg = 6, deltalon_deg = 8)
     elif domain_name == 'north_atlantic_storm':
         domain =   dict(name = domain_name, projection = 'Hammer', limits_type = 'radius',
                         centerlat = 41.9, centerlon = -46.1, radius = 300)

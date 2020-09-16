@@ -25,11 +25,11 @@ def main():
     domains.append(get_domain('mediterranean'))
     domains.append(get_domain('ionian_sea'))
     domains.append(get_domain('usa'))
-    domains.append(get_domain('southern_south_america'))
-    domains.append(get_domain('north_pole'))
-    domains.append(get_domain('south_pole'))
+    #domains.append(get_domain('southern_south_america'))
+    #domains.append(get_domain('north_pole'))
+    #domains.append(get_domain('south_pole'))
 
-    variable1 = dict(name='prec_rate', unit='mm', grid='icosahedral')
+    variable1 = dict(name='shear_200-850hPa', unit='kt', grid='icosahedral')
     variable2 = dict(name='mslp', unit='hPa', grid='latlon_0.1')
 
     plot_type = 'map_deterministic_overview'

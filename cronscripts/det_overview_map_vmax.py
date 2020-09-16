@@ -13,24 +13,21 @@ from w2w_ensembleplots.core.domain_definitions import get_domain
 
 def main():
 
-    model = 'icon-global-det'
+    model = 'icon-eu-det'
 
     run = calc_latest_run_time(model)
-    #run = dict(year = 2020, month = 9, day = 12, hour = 0)
+    if run['hour'] == 6 or run['hour'] == 18:
+        run['hour'] -= 6
+    #run = dict(year = 2020, month = 8, day = 19, hour = 0)
 
     domains = []
-    #domains.append(get_domain('north_atlantic_storm'))
     domains.append(get_domain('europe'))
     domains.append(get_domain('europe_and_north_atlantic'))
     domains.append(get_domain('mediterranean'))
     domains.append(get_domain('ionian_sea'))
-    domains.append(get_domain('usa'))
-    domains.append(get_domain('southern_south_america'))
-    domains.append(get_domain('north_pole'))
-    domains.append(get_domain('south_pole'))
 
-    variable1 = dict(name='prec_rate', unit='mm', grid='icosahedral')
-    variable2 = dict(name='mslp', unit='hPa', grid='latlon_0.1')
+    variable1 = dict(name='vmax_10m', unit='km/h', grid='latlon_0.0625')
+    variable2 = dict(name='')
 
     plot_type = 'map_deterministic_overview'
 
