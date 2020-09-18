@@ -12,7 +12,6 @@ current_path = sys.path[0]
 ex_op_str = current_path[current_path.index('progs')+6: current_path.index('w2w_ensembleplots')-1]
 sys.path.append('/progs/{}'.format(ex_op_str))
 from w2w_ensembleplots.core.read_data import read_forecast_data, read_grid_coordinates
-from w2w_ensembleplots.core.download_forecast import get_timeshift
 from w2w_ensembleplots.core.gridpoint_order import cut_by_domain
 
 
@@ -23,7 +22,7 @@ def det_contourplot(domains, variable1, variable2, model, run, plot_type):
          or variable1['name'] == 'prec_24h'\
          or variable1['name'] == 'vmax_10m':
             hours = list(range(0, 120+1, 6))
-            #hours = list(range(0, 60+1, 1))
+            #hours = list(range(0, 72+1, 1))
             #hours = [0]
         else:
             hours = list(range(0, 180+1, 6))
@@ -44,7 +43,7 @@ def det_contourplot(domains, variable1, variable2, model, run, plot_type):
 
     path = dict(base = '/',
                 temp = 'data/additional_data/temp/{}/'.format(ex_op_str),
-                cronscripts = 'progs/{}/w2w_ensembleplots/cronscripts/'.format(ex_op_str),
+                callfiles = 'progs/{}/w2w_ensembleplots/callfiles/'.format(ex_op_str),
                 colorpalette = 'data/additional_data/colorpalettes/')
 
     if plot_type == 'map_deterministic_overview':
@@ -71,7 +70,7 @@ def det_contourplot(domains, variable1, variable2, model, run, plot_type):
 
     # load icosahedral grid information and save as npz file #
 
-    numpyarrays_filename = 'deterministic_contourplot_{}_ndarrays_outofloop.npz'.format(var1var2)
+    numpyarrays_filename = 'deterministic_overview_maps_{}_ndarrays_outofloop.npz'.format(var1var2)
 
     if variable1['name'] == 'synth_bt_ir10.8'\
      or variable1['name'] == 'prec_24h'\
@@ -121,7 +120,7 @@ def det_contourplot(domains, variable1, variable2, model, run, plot_type):
 
         # save all numpy arrays to npz file #
 
-        numpyarrays_filename = 'deterministic_contourplot_{}_ndarrays_withinloop.npz'.format(var1var2)
+        numpyarrays_filename = 'deterministic_overview_maps_{}_ndarrays_withinloop.npz'.format(var1var2)
         with open(path['base'] + path['temp'] + numpyarrays_filename, 'wb') as f:
             if variable2['name'] != '':
                 np.savez(f, data_array1 = data_array1, data_array2 = data_array2)
@@ -134,15 +133,15 @@ def det_contourplot(domains, variable1, variable2, model, run, plot_type):
 
             # save all dictionaries and strings to a json file #
 
-            json_filename = 'deterministic_contourplot_{}_dicts_strings.json'.format(var1var2)
+            json_filename = 'deterministic_overview_maps_{}_dicts_strings.json'.format(var1var2)
             with open(path['base'] + path['temp'] + json_filename, 'w') as f:
                 json.dump([path, domain, variable1, variable2, model, run, plot_type, hour], f)
 
 
             # start new batch python script that will free its needed memory afterwards #
 
-            scriptname = 'callfile_deterministic_contourplot.py'
-            command = 'python {}{}{} '.format(path['base'], path['cronscripts'], scriptname)
+            scriptname = 'callfile_deterministic_overview_maps.py'
+            command = 'python {}{}{} '.format(path['base'], path['callfiles'], scriptname)
             arguments = var1var2
             os.system(command + arguments)
 
@@ -177,14 +176,14 @@ def double_contourplot(var1var2):
 
     # load all dictionaries and strings from json file #
 
-    json_filename = 'deterministic_contourplot_{}_dicts_strings.json'.format(var1var2)
+    json_filename = 'deterministic_overview_maps_{}_dicts_strings.json'.format(var1var2)
     with open(recoverpath['base'] + recoverpath['temp'] + json_filename, 'r') as f:
         path, domain, variable1, variable2, model, run, plot_type, hour = json.load(f)
 
 
     # load numpy arrays #
 
-    numpyarrays_filename = 'deterministic_contourplot_{}_ndarrays_outofloop.npz'.format(var1var2)
+    numpyarrays_filename = 'deterministic_overview_maps_{}_ndarrays_outofloop.npz'.format(var1var2)
     if variable1['name'] == 'synth_bt_ir10.8'\
      or variable1['name'] == 'prec_24h'\
      or variable1['name'] == 'vmax_10m':
@@ -202,7 +201,7 @@ def double_contourplot(var1var2):
                 ll_lat = loadedfile['ll_lat']
                 ll_lon = loadedfile['ll_lon']
 
-    numpyarrays_filename = 'deterministic_contourplot_{}_ndarrays_withinloop.npz'.format(var1var2)
+    numpyarrays_filename = 'deterministic_overview_maps_{}_ndarrays_withinloop.npz'.format(var1var2)
     with open(recoverpath['base'] + recoverpath['temp'] + numpyarrays_filename, 'rb') as f:
         with np.load(f) as loadedfile:
             data_array1 = loadedfile['data_array1']

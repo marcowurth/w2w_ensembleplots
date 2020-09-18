@@ -6,7 +6,7 @@ import sys
 current_path = sys.path[0]
 ex_op_str = current_path[current_path.index('progs')+6: current_path.index('w2w_ensembleplots')-1]
 sys.path.append('/progs/{}'.format(ex_op_str))
-from w2w_ensembleplots.core.deterministic_contourplot import det_contourplot
+from w2w_ensembleplots.core.deterministic_overview_maps import det_contourplot
 from w2w_ensembleplots.core.download_forecast import calc_latest_run_time
 from w2w_ensembleplots.core.domain_definitions import get_domain
 
