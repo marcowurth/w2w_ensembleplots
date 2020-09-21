@@ -15,6 +15,7 @@ def main():
 
     #grid = 'icosahedral'
     #grid = 'latlon_0.25'
+    #grid = 'latlon_0.2'
     grid = 'latlon_0.1'
     #grid = 'latlon_0.0625'
 
@@ -29,13 +30,13 @@ def main():
         print('vlat min,max:', vlat.min(), vlat.max())
         print('vlon min,max:', vlon.min(), vlon.max())
 
-    elif grid == 'latlon_0.25' or grid == 'latlon_0.1':
+    elif grid == 'latlon_0.2' or grid == 'latlon_0.1':
         clat, clon = read_grid_coordinates(model, grid)
         print(clat.shape, clon.shape)
         print(clat.min(), clat.max())
         print(clon.min(), clon.max())
         print(clat[::20])
-        print(clon[::0])
+        print(clon[::20])
 
     elif grid == 'latlon_0.0625':
         clat, clon = read_grid_coordinates(model, grid)

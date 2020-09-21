@@ -19,7 +19,8 @@ def main():
 
     # list of forecast hours #
 
-    fcst_hours_list = list(range(0,48,1)) + list(range(48,72,3)) + list(range(72,120+1,6))
+    fcst_hours_list_6h = list(range(0,120+1,6))
+    fcst_hours_list_1h3h = list(range(0,48,1)) + list(range(48,72,3)) + list(range(72,120+1,6))
 
 
     # get latest run time #
@@ -30,7 +31,7 @@ def main():
     # explicit download options #
 
    ###########################################################
-    #date = dict(year = 2020, month = 7, day = 16, hour = 12)
+    #date = dict(year = 2020, month = 9, day = 21, hour = 0)
    ###########################################################
 
     print('download run_{}{:02}{:02}{:02}'.format(
@@ -75,7 +76,7 @@ def main():
 
         # download all grib files from website #
 
-        for fcst_hour in fcst_hours_list:
+        for fcst_hour in fcst_hours_list_1h3h:
             if var[0] == 'vmax_10m' and fcst_hour == 0:
                 continue
             if var[1] == 'sl':
@@ -92,14 +93,15 @@ def main():
             if download(url, filename, path):
                 filename = unzip(path, filename)
 
-            if date['hour'] == 0 or date['hour'] == 12:
-                if var in  vars_to_interpolate:
+            if (date['hour'] == 0 or date['hour'] == 12)\
+             and var in vars_to_interpolate\
+             and fcst_hour in fcst_hours_list_6h:
                     if var[1] == 'sl':
-                        latlon_filename = 'icon-eu-eps_latlon_0.25_single-level_{}{:02}{:02}{:02}_{:03}h_{}.nc'.format(
+                        latlon_filename = 'icon-eu-eps_latlon_0.2_single-level_{}{:02}{:02}{:02}_{:03}h_{}.nc'.format(
                                            date['year'], date['month'], date['day'], date['hour'], fcst_hour, var[0])
                     else:
                         level = var[1][:3]
-                        latlon_filename = 'icon-eu-eps_latlon_0.25_pressure-level_{}{:02}{:02}{:02}_{:03}h_{}_{}.nc'.format(
+                        latlon_filename = 'icon-eu-eps_latlon_0.2_pressure-level_{}{:02}{:02}{:02}_{:03}h_{}_{}.nc'.format(
                                            date['year'], date['month'], date['day'], date['hour'], fcst_hour, level, var[0])
                     interpolate_icon_grib_to_latlon(path, filename, latlon_filename, 'icon-eu-eps')
 

@@ -50,12 +50,12 @@ def unzip(path, filename):
 ########################################################################
 
 def interpolate_icon_grib_to_latlon(path, grib_filename, latlon_filename, model):
-    if model == 'icon-global-det' or model == 'icon-global-eps':
+    if model == 'icon-global-det':
         targetgridfile = path['base'] + path['grid'] + 'target_grid_global_latlon_0.1.txt'
         weightsfile = path['base'] + path['grid'] + 'weights_dis_{}_icosahedral_to_latlon_0.1.nc'.format(model)
-    if model == 'icon-eu-det' or model == 'icon-eu-eps':
-        targetgridfile = path['base'] + path['grid'] + 'target_grid_eu_latlon_0.25.txt'
-        weightsfile = path['base'] + path['grid'] + 'weights_dis_{}_icosahedral_to_latlon_0.25.nc'.format(model)
+    if model == 'icon-eu-eps':
+        targetgridfile = path['base'] + path['grid'] + 'target_grid_eu_latlon_0.2.txt'
+        weightsfile = path['base'] + path['grid'] + 'weights_dis_{}_icosahedral_to_latlon_0.2.nc'.format(model)
 
     cdo_module = cdo.Cdo()
     cdo_module.remap(targetgridfile + ',' + weightsfile,
