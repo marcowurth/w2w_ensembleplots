@@ -24,7 +24,6 @@ def main():
     domains.append(get_domain('europe'))
     domains.append(get_domain('europe_and_north_atlantic'))
     domains.append(get_domain('mediterranean'))
-    domains.append(get_domain('ionian_sea'))
 
     variable1 = dict(name='vmax_10m', unit='km/h', grid='latlon_0.0625')
     variable2 = dict(name='')

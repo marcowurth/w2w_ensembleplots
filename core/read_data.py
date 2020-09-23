@@ -74,6 +74,11 @@ def read_forecast_data(model, grid, date, var, **kwargs):
             varname1_folder = 'pmsl'
             varname1_grib = 'pmsl'
             varname1_cf = 'prmsl'
+    elif var == 'cape_ml':
+        varname1_lvtype = 'sl'
+        varname1_folder = 'cape_ml'
+        varname1_grib = 'cape_ml'
+        varname1_cf = 'CAPE_ML'
     elif var == 'clct':
         varname1_lvtype = 'sl'
         varname1_folder = 'clct'
@@ -167,6 +172,9 @@ def read_forecast_data(model, grid, date, var, **kwargs):
         varname4_folder = 'v_500hPa'
         varname4_grib = '500_v'
         varname4_cf = 'v'
+        if grid == 'latlon_0.1':
+            varname1_cf = '10u'
+            varname2_cf = '10v'
     elif var == 'shear_200-850hPa':
         varname1_lvtype = 'pl'
         varname1_folder = 'u_200hPa'
@@ -320,7 +328,10 @@ def read_forecast_data(model, grid, date, var, **kwargs):
 
                     elif model == 'icon-global-det':
                         if varname1_lvtype == 'sl':
-                            data_var1 = ds[varname1_cf][dict(time = 0)].values
+                            if varname1_cf == '10u':
+                                data_var1 = ds[varname1_cf][dict(time = 0, height = 0)].values
+                            else:
+                                data_var1 = ds[varname1_cf][dict(time = 0)].values
                         elif varname1_lvtype == 'pl':
                             data_var1 = ds[varname1_cf][dict(time = 0, plev = 0)].values
 
@@ -392,7 +403,10 @@ def read_forecast_data(model, grid, date, var, **kwargs):
 
                 elif model == 'icon-global-det':
                     if varname2_lvtype == 'sl':
-                        data_var2 = ds[varname2_cf][dict(time = 0)].values
+                        if varname2_cf == '10v':
+                            data_var2 = ds[varname2_cf][dict(time = 0, height = 0)].values
+                        else:
+                            data_var2 = ds[varname2_cf][dict(time = 0)].values
                     elif varname2_lvtype == 'pl':
                         data_var2 = ds[varname2_cf][dict(time = 0, plev = 0)].values
         ds.close()
@@ -578,6 +592,8 @@ def read_forecast_data(model, grid, date, var, **kwargs):
             data_final = data_var1 * 1e-2 * np.exp(9.80665 * data_var_inv / (287.05 * data_var2))
         elif model == 'icon-eu-det' or model == 'icon-global-det':
             data_final = data_var1 * 1e-2
+    elif var == 'cape_ml':      # in J/kg
+        data_final = data_var1
     elif var == 'clct':         # in %
         data_final = data_var1
     elif var == 'direct_rad':

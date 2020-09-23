@@ -17,18 +17,13 @@ from w2w_ensembleplots.core.gridpoint_order import cut_by_domain
 
 def det_contourplot(domains, variable1, variable2, model, run, plot_type):
 
-    if plot_type == 'map_deterministic_overview':
-        if variable1['name'] == 'synth_bt_ir10.8'\
-         or variable1['name'] == 'prec_24h'\
-         or variable1['name'] == 'vmax_10m':
-            hours = list(range(0, 120+1, 6))
-            #hours = list(range(0, 72+1, 1))
-            #hours = [0]
-        else:
-            hours = list(range(0, 180+1, 6))
-            #hours = [24]
-    elif plot_type == 'map_hurricane':
+    if model == 'icon-global-det':
         hours = list(range(0, 180+1, 6))
+        #hours = [84]
+    elif model == 'icon-eu-det':
+        hours = list(range(0, 120+1, 6))
+        #hours = list(range(0, 72+1, 1))
+        #hours = [24]
 
     if variable2['name'] == '':
         var1var2 = variable1['name']
@@ -72,20 +67,22 @@ def det_contourplot(domains, variable1, variable2, model, run, plot_type):
 
     numpyarrays_filename = 'deterministic_overview_maps_{}_ndarrays_outofloop.npz'.format(var1var2)
 
-    if variable1['name'] == 'synth_bt_ir10.8'\
-     or variable1['name'] == 'prec_24h'\
-     or variable1['name'] == 'vmax_10m':
+    if model == 'icon-eu-det':
         clat, clon = read_grid_coordinates(model, variable1['grid'])
-
         with open(path['base'] + path['temp'] + numpyarrays_filename, 'wb') as f:
             np.savez(f, clat = clat, clon = clon)
 
-    else:
+    elif model == 'icon-global-det':
         clat, clon, vlat, vlon = read_grid_coordinates(model, variable1['grid'])
-        ll_lat, ll_lon = read_grid_coordinates(model, variable2['grid'])
 
-        with open(path['base'] + path['temp'] + numpyarrays_filename, 'wb') as f:
-            np.savez(f, clat = clat, clon = clon, vlat = vlat, vlon = vlon, ll_lat = ll_lat, ll_lon = ll_lon)
+        if variable2['name'] == '':
+            with open(path['base'] + path['temp'] + numpyarrays_filename, 'wb') as f:
+                np.savez(f, clat = clat, clon = clon, vlat = vlat, vlon = vlon)
+
+        else:
+            ll_lat, ll_lon = read_grid_coordinates(model, variable2['grid'])
+            with open(path['base'] + path['temp'] + numpyarrays_filename, 'wb') as f:
+                np.savez(f, clat = clat, clon = clon, vlat = vlat, vlon = vlon, ll_lat = ll_lat, ll_lon = ll_lon)
 
 
     # start plotting loop #
@@ -122,10 +119,10 @@ def det_contourplot(domains, variable1, variable2, model, run, plot_type):
 
         numpyarrays_filename = 'deterministic_overview_maps_{}_ndarrays_withinloop.npz'.format(var1var2)
         with open(path['base'] + path['temp'] + numpyarrays_filename, 'wb') as f:
-            if variable2['name'] != '':
-                np.savez(f, data_array1 = data_array1, data_array2 = data_array2)
-            else:
+            if variable2['name'] == '':
                 np.savez(f, data_array1 = data_array1)
+            else:
+                np.savez(f, data_array1 = data_array1, data_array2 = data_array2)
 
 
         for domain in domains:
@@ -135,7 +132,7 @@ def det_contourplot(domains, variable1, variable2, model, run, plot_type):
 
             json_filename = 'deterministic_overview_maps_{}_dicts_strings.json'.format(var1var2)
             with open(path['base'] + path['temp'] + json_filename, 'w') as f:
-                json.dump([path, domain, variable1, variable2, model, run, plot_type, hour], f)
+                json.dump([path, domain, variable1, variable2, model, run, hour], f)
 
 
             # start new batch python script that will free its needed memory afterwards #
@@ -178,28 +175,36 @@ def double_contourplot(var1var2):
 
     json_filename = 'deterministic_overview_maps_{}_dicts_strings.json'.format(var1var2)
     with open(recoverpath['base'] + recoverpath['temp'] + json_filename, 'r') as f:
-        path, domain, variable1, variable2, model, run, plot_type, hour = json.load(f)
+        path, domain, variable1, variable2, model, run, hour = json.load(f)
 
 
     # load numpy arrays #
 
     numpyarrays_filename = 'deterministic_overview_maps_{}_ndarrays_outofloop.npz'.format(var1var2)
-    if variable1['name'] == 'synth_bt_ir10.8'\
-     or variable1['name'] == 'prec_24h'\
-     or variable1['name'] == 'vmax_10m':
+
+    if model == 'icon-eu-det':
         with open(path['base'] + path['temp'] + numpyarrays_filename, 'rb') as f:
             with np.load(f) as loadedfile:
                 clat = loadedfile['clat']
                 clon = loadedfile['clon']
-    else:
-        with open(path['base'] + path['temp'] + numpyarrays_filename, 'rb') as f:
-            with np.load(f) as loadedfile:
-                clat = loadedfile['clat']
-                clon = loadedfile['clon']
-                vlat = loadedfile['vlat']
-                vlon = loadedfile['vlon']
-                ll_lat = loadedfile['ll_lat']
-                ll_lon = loadedfile['ll_lon']
+
+    elif model == 'icon-global-det':
+        if variable2['name'] == '':
+            with open(path['base'] + path['temp'] + numpyarrays_filename, 'rb') as f:
+                with np.load(f) as loadedfile:
+                    clat = loadedfile['clat']
+                    clon = loadedfile['clon']
+                    vlat = loadedfile['vlat']
+                    vlon = loadedfile['vlon']
+        else:
+            with open(path['base'] + path['temp'] + numpyarrays_filename, 'rb') as f:
+                with np.load(f) as loadedfile:
+                    clat = loadedfile['clat']
+                    clon = loadedfile['clon']
+                    vlat = loadedfile['vlat']
+                    vlon = loadedfile['vlon']
+                    ll_lat = loadedfile['ll_lat']
+                    ll_lon = loadedfile['ll_lon']
 
     numpyarrays_filename = 'deterministic_overview_maps_{}_ndarrays_withinloop.npz'.format(var1var2)
     with open(recoverpath['base'] + recoverpath['temp'] + numpyarrays_filename, 'rb') as f:
@@ -216,16 +221,15 @@ def double_contourplot(var1var2):
     elif domain['limits_type'] == 'deltalatlon' or domain['limits_type'] == 'angle':
         margin_deg = 20
 
-    if variable1['name'] == 'synth_bt_ir10.8'\
-     or variable1['name'] == 'prec_24h'\
-     or variable1['name'] == 'vmax_10m':
+    if model == 'icon-eu-det':
         data_array1_cut, clat_cut, clon_cut, vlat_cut, vlon_cut = data_array1, clat, clon, None, None
-    else:
+    elif model == 'icon-global-det':
         data_array1_cut, clat_cut, clon_cut, vlat_cut, vlon_cut = \
           cut_by_domain(domain, variable1['grid'], data_array1, clat, clon, vlat, vlon, margin_deg)
-        data_array2_cut, ll_lat_cut, ll_lon_cut = \
-          cut_by_domain(domain, variable2['grid'], data_array2, ll_lat, ll_lon, None, None, margin_deg)
-        #data_array2_cut, ll_lat_cut, ll_lon_cut = data_array2, ll_lat, ll_lon
+        if variable2['name'] != '':
+            data_array2_cut, ll_lat_cut, ll_lon_cut = \
+              cut_by_domain(domain, variable2['grid'], data_array2, ll_lat, ll_lon, None, None, margin_deg)
+            #data_array2_cut, ll_lat_cut, ll_lon_cut = data_array2, ll_lat, ll_lon
 
 
     # example plot_name: icon-global-det_2020070512_prec_rate_mslp_europe_000h.png
@@ -237,18 +241,8 @@ def double_contourplot(var1var2):
     # plot basic map with borders #
 
     wks_res = Ngl.Resources()
-    if domain['limits_type'] == 'radius' or domain['limits_type'] == 'angle':
-        x_resolution = 800
-        y_resolution = 800
-    elif domain['limits_type'] == 'deltalatlon'\
-     and (domain['name'] == 'mediterranean' or domain['name'] == 'atlantic_hurricane_basin'):
-        x_resolution = 1200
-        y_resolution = 1200
-    else:
-        x_resolution = 800
-        y_resolution = 800
-    wks_res.wkWidth  = x_resolution
-    wks_res.wkHeight = y_resolution
+    wks_res.wkWidth  = domain['plot_width']
+    wks_res.wkHeight = domain['plot_width']     # the whitespace above and below the plot will be cut afterwards
 
     if variable1['name'] == 'prec_rate':
         wks_res.wkColorMap = 'precip3_16lev'
@@ -265,6 +259,9 @@ def double_contourplot(var1var2):
     elif variable1['name'] == 'wind_300hPa':
         wks_res.wkColorMap = 'wh-bl-gr-ye-re'
         levels1 = np.arange(150,300,25)
+    elif variable1['name'] == 'cape_ml':
+        wks_res.wkColorMap = 'WhiteBlueGreenYellowRed'
+        levels1 = np.arange(0, 2000+1, 100)
 
     elif variable1['name'] == 'synth_bt_ir10.8':
         filename_colorpalette = 'rainbowIRsummer.txt'
@@ -283,7 +280,7 @@ def double_contourplot(var1var2):
         wks_res.wkColorMap = np.array(rgb_colors)
         levels1 = (list(range(-90,-20,1)) + list(range(-20,40+1,2)))
 
-    elif variable1['name'] == 'prec_24h':
+    elif variable1['name'] == 'prec_24h' or variable1['name'] == 'prec_sum':
         filename_colorpalette = 'colorscale_prec24h.txt'
         with open(path['base'] + path['colorpalette'] + filename_colorpalette, 'r') as f:
             lines = f.readlines()
@@ -374,12 +371,6 @@ def double_contourplot(var1var2):
         mpres.mpTopAngleF    = domain['angle']
         mpres.mpBottomAngleF = domain['angle']
 
-    #print('domain center point lat:', domain['centerlat'])
-    #print('lat_min:', cutout_plot['lat_min'])
-    #print('lat_max:', cutout_plot['lat_max'])
-    #print('lon_min:', cutout_plot['lon_min'])
-    #print('lon_max:', cutout_plot['lon_max'])
-
     mpres.nglMaximize   = False
     mpres.vpXF          = 0.001
     mpres.vpYF          = 1.00
@@ -395,29 +386,26 @@ def double_contourplot(var1var2):
     else:
         mpres.mpFillColors = ['transparent', 'transparent', 'transparent', 'transparent']
 
-    #Ngl.set_values(wks,mpres)
-    mpres.mpFillOn       = True
-    #resources.cnFillDrawOrder       = 'Predraw'     # draw contours first
-    mpres.mpGridAndLimbOn            = False
-    mpres.mpGreatCircleLinesOn  = False
+    mpres.mpFillOn = True
+    mpres.mpGridAndLimbOn = False
+    mpres.mpGreatCircleLinesOn = False
 
-    #mpres.mpOutlineDrawOrder       = 'PreDraw'
     mpres.mpDataBaseVersion         = 'MediumRes'
     mpres.mpDataSetName             = 'Earth..4'
     if domain['name'] == 'usa':
         mpres.mpOutlineBoundarySets      = 'GeophysicalAndUSStates'
         mpres.mpProvincialLineColor      = 'black'
-        mpres.mpProvincialLineThicknessF = 2. * x_resolution / 1000
+        mpres.mpProvincialLineThicknessF = 2. * domain['plot_width'] / 1000
     else:
         mpres.mpOutlineBoundarySets     = 'national'
     mpres.mpGeophysicalLineColor        = 'black'
     mpres.mpNationalLineColor           = 'black'
-    mpres.mpGeophysicalLineThicknessF   = 1.5 * x_resolution / 1000
-    mpres.mpNationalLineThicknessF      = 1.5 * x_resolution / 1000
+    mpres.mpGeophysicalLineThicknessF   = 1.5 * domain['plot_width'] / 1000
+    mpres.mpNationalLineThicknessF      = 1.5 * domain['plot_width'] / 1000
 
     mpres.mpPerimOn                     = True
     mpres.mpPerimLineColor              = 'black'
-    mpres.mpPerimLineThicknessF         = 8.0 * x_resolution / 1000
+    mpres.mpPerimLineThicknessF         = 8.0 * domain['plot_width'] / 1000
     mpres.tmXBOn = False
     mpres.tmXTOn = False
     mpres.tmYLOn = False
@@ -425,7 +413,6 @@ def double_contourplot(var1var2):
 
     mpres.nglDraw        =  False              #-- don't draw plot
     mpres.nglFrame       =  False              #-- don't advance frame
-
 
 
     # settings for variable1 / shading #
@@ -441,18 +428,16 @@ def double_contourplot(var1var2):
     v1res.cnLinesOn = False
     v1res.cnFillOn  = True
     v1res.cnLineLabelsOn = False
-    if variable1['name'] == 'synth_bt_ir10.8'\
-     or variable1['name'] == 'prec_24h'\
-     or variable1['name'] == 'vmax_10m':
+    if model == 'icon-eu-det':
         v1res.cnFillMode = 'RasterFill'
-    else:
+    elif model == 'icon-global-det':
         v1res.cnFillMode = 'CellFill'
         v1res.sfXCellBounds = vlon_cut
         v1res.sfYCellBounds = vlat_cut
     #v1res.cnFillOpacityF        = 0.5
     #v1res.cnFillDrawOrder       = 'Predraw'
     v1res.cnLevelSelectionMode = 'ExplicitLevels' 
-    v1res.cnLevels      = levels1
+    v1res.cnLevels = levels1
 
     v1res.lbLabelBarOn          = True
     v1res.lbAutoManage          = False
@@ -477,6 +462,8 @@ def double_contourplot(var1var2):
     v1res.lbLabelAlignment      = 'ExternalEdges'
     if variable1['name'] == 'synth_bt_ir10.8':
         v1res.lbLabelStride = 10
+    elif variable1['name'] == 'cape_ml':
+        v1res.lbLabelStride = 5
     else:
         v1res.lbLabelStride = 1
 
@@ -489,7 +476,9 @@ def double_contourplot(var1var2):
     elif variable1['name'] == 'prec_rate':
         v1res.lbBottomMarginF   = -0.2
     elif variable1['name'] == 'synth_bt_ir10.8'\
+     or variable1['name'] == 'cape_ml'\
      or variable1['name'] == 'prec_24h'\
+     or variable1['name'] == 'prec_sum'\
      or variable1['name'] == 'vmax_10m'\
      or variable1['name'] == 'shear_200-850hPa':
         v1res.lbBottomMarginF   = 0.05
@@ -509,13 +498,13 @@ def double_contourplot(var1var2):
             v1res.lbLabelFontHeightF = 0.005
         elif variable1['name'] == 'synth_bt_ir10.8'\
          or variable1['name'] == 'prec_24h'\
+         or variable1['name'] == 'prec_sum'\
          or variable1['name'] == 'vmax_10m':
             v1res.lbLabelFontHeightF = 0.005
             v1res.lbTopMarginF = 0.35
         v1res.lbBottomMarginF   = 0.05
         v1res.pmLabelBarWidthF = 0.04
         v1res.lbLeftMarginF = -0.5
-
 
     v1res.nglFrame = False
     v1res.nglDraw  = False
@@ -560,19 +549,21 @@ def double_contourplot(var1var2):
         #v2res.cnSmoothingDistanceF = 0.01
         #v2res.cnSmoothingTensionF = 0.1
         if variable2['name'] == 'mslp':
-            if plot_type == 'map_hurricane':
-                spcng = 5
-            elif plot_type == 'map_deterministic_overview':
-                spcng = 5
-        #levesl2 = np.arange(850,1100,5)
+            spcng = 5
         elif variable2['name'] == 'gph_500hPa':
             spcng = 4
         elif variable2['name'] == 'gph_300hPa':
             spcng = 4
-        v2res.cnLevelSelectionMode = 'ManualLevels' 
-        v2res.cnLevelSpacingF      =  spcng
-        #v2res.cnLevels = levels2
-        #v2res.cnRasterSmoothingOn = True
+
+        if variable2['name'] == 'shear_0-6km':
+            v2res.cnLevelSelectionMode = 'ExplicitLevels'
+            v2res.cnLevels = [10, 20]
+            #v2res.cnSmoothingOn = True
+            #v2res.cnSmoothingDistanceF = 0.03
+            #v2res.cnSmoothingTensionF = 0.01
+        else:
+            v2res.cnLevelSelectionMode = 'ManualLevels'
+            v2res.cnLevelSpacingF      =  spcng
 
         v2res.nglFrame = False
         v2res.nglDraw  = False
@@ -610,8 +601,8 @@ def double_contourplot(var1var2):
             v2res.cnLowLabelFontHeightF = 0.01
         text_y = 0.673
         text_res_1.txFontHeightF = 0.01
-        mpres.mpGeophysicalLineThicknessF = 1. * x_resolution / 1000
-        mpres.mpNationalLineThicknessF    = 1. * x_resolution / 1000
+        mpres.mpGeophysicalLineThicknessF = 1. * domain['plot_width'] / 1000
+        mpres.mpNationalLineThicknessF    = 1. * domain['plot_width'] / 1000
     elif domain['name'] == 'ionian_sea':
         if variable2['name'] != '':
             v2res.cnLineThicknessF = 5.0
@@ -620,8 +611,8 @@ def double_contourplot(var1var2):
         text_y = 0.82
         if variable1['name'] != 'vmax_10m'\
          and variable1['name'] != 'shear_200-850hPa':
-            mpres.mpGeophysicalLineThicknessF = 1. * x_resolution / 1000
-            mpres.mpNationalLineThicknessF    = 1. * x_resolution / 1000
+            mpres.mpGeophysicalLineThicknessF = 1. * domain['plot_width'] / 1000
+            mpres.mpNationalLineThicknessF    = 1. * domain['plot_width'] / 1000
         if variable2['name'] == 'gph_300hPa':
             v2res.cnLevelSpacingF = 2
     elif domain['name'] == 'north_atlantic_storm':
@@ -631,14 +622,18 @@ def double_contourplot(var1var2):
             v2res.cnLowLabelFontHeightF = 0.03
         text_y = 0.93
     elif domain['name'] == 'usa':
-        v2res.cnLineThicknessF = 4.0
-        v2res.cnLineLabelInterval = 1
-        v2res.cnLowLabelFontHeightF = 0.01
+        if variable2['name'] != '':
+            v2res.cnLineThicknessF = 4.0
+            v2res.cnLineLabelInterval = 1
+            v2res.cnLowLabelFontHeightF = 0.01
         text_y = 0.875
     elif domain['name'] == 'southern_south_america':
-        v2res.cnLineThicknessF = 4.0
-        v2res.cnLineLabelInterval = 2
-        v2res.cnLowLabelFontHeightF = 0.01
+        if variable2['name'] != '':
+            v2res.cnLineThicknessF = 4.0
+            v2res.cnLineLabelInterval = 2
+            v2res.cnLowLabelFontHeightF = 0.01
+            if variable2['name'] == 'shear_0-6km':
+                v2res.cnLineLabelInterval = 1
         text_y = 0.885
     elif domain['name'] == 'north_pole' or domain['name'] == 'south_pole':
         if variable2['name'] != '':
@@ -647,14 +642,16 @@ def double_contourplot(var1var2):
             v2res.cnLowLabelFontHeightF = 0.01
         text_y = 0.93
     elif domain['name'] == 'atlantic_hurricane_basin':
-        v2res.cnLineThicknessF = 3.0
-        v2res.cnLineLabelInterval = 2
-        v2res.cnLowLabelFontHeightF = 0.01
+        if variable2['name'] != '':
+            v2res.cnLineThicknessF = 3.0
+            v2res.cnLineLabelInterval = 2
+            v2res.cnLowLabelFontHeightF = 0.01
         text_y = 0.665
     elif domain['name'] == 'gulf_of_mexico':
-        v2res.cnLineThicknessF = 3.0
-        v2res.cnLineLabelInterval = 1
-        v2res.cnLowLabelFontHeightF = 0.02
+        if variable2['name'] != '':
+            v2res.cnLineThicknessF = 3.0
+            v2res.cnLineLabelInterval = 1
+            v2res.cnLowLabelFontHeightF = 0.02
         text_y = 0.78
     else:
         print('no domain specific settings defined for this domain:', domain['name'])
@@ -674,7 +671,7 @@ def double_contourplot(var1var2):
         Ngl.overlay(basic_map, contourlines_plot)
 
     Ngl.draw(basic_map)
-    text_plot = Ngl.text_ndc(wks, text_str, text_x, text_y, text_res_1)
+    Ngl.text_ndc(wks, text_str, text_x, text_y, text_res_1)
     Ngl.frame(wks)
     Ngl.delete_wks(wks)
 

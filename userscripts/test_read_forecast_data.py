@@ -8,40 +8,42 @@ from w2w_ensembleplots.core.read_data import read_forecast_data
 
 def main():
 
-    date = dict(year = 2020, month = 8, day = 31, hour = 12)
+    date = dict(year = 2020, month = 9, day = 22, hour = 12)
 
     #model = 'icon-eu-eps'
     #var_list = ['t_2m','prec_rate','prec_sum','wind_mean_10m','mslp','clct','direct_rad','diffuse_rad','vmax_10m',\
     #            'tqv','gph_500hPa','gph_300hPa','t_850hPa','wind_850hPa','wind_300hPa',\
     #            'shear_0-6km','lapse_rate_850hPa-500hPa']
-    #var_list = ['t_850hPa','gph_500hPa','mslp']
+    #var_list = ['gph_500hPa']
 
-    model = 'icon-eu-det'
+    #model = 'icon-eu-det'
     #var_list = ['t_2m','prec_rate','prec_sum','wind_mean_10m','mslp','clct','direct_rad','diffuse_rad','vmax_10m']
-    var_list = ['t_2m','synth_bt_ir10.8']
+    #var_list = ['synth_bt_ir10.8']
+    #var_list = ['vmax_10m']
 
     #model = 'icon-global-eps'
     #var_list = ['t_2m','prec_rate','prec_sum','wind_mean_10m','clct']
-    #var_list = ['prec_rate']
+    #var_list = ['prec_24h']
 
-    #model = 'icon-global-det'
+    model = 'icon-global-det'
     #var_list = ['t_2m','prec_rate','prec_sum','wind_mean_10m','clct','mslp','t_850hPa',\
     #            'gph_500hPa','gph_300hPa','wind_300hPa','theta_e_850hPa']
-    #var_list = ['prec_rate']
+    var_list = ['shear_0-6km']
     #var_list = ['mslp','t_850hPa','gph_500hPa','gph_300hPa','wind_300hPa']
 
-    #grid = 'icosahedral'
-    #grid = 'latlon_0.25'
-    grid = 'latlon_0.0625'  # dwd provides icon-eu-det fields only on this grid
+    grid = 'icosahedral'
+    #grid = 'latlon_0.2'
+    #grid = 'latlon_0.1'
+    #grid = 'latlon_0.0625'  # dwd provides icon-eu-det fields only on this grid
 
     #point = dict(lat = 49.014, lon =  8.404)
     #point = dict(name = 'Mainz')
 
-    fcst_hour = 1   # in hours
+    fcst_hour = 180   # in hours
 
     #for fcst_hour in range(0, 180+1, 12):
     for var in var_list:
-        print(var)
+        #print(var)
         #data = read_forecast_data(model, grid, date, var, point=point)
         data = read_forecast_data(model, grid, date, var, fcst_hour=fcst_hour)
         print(data)

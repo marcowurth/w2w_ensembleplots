@@ -29,7 +29,7 @@ def main():
     # explicit download options #
 
    ###########################################################
-    #date = dict(year = 2020, month = 5, day = 14, hour = 12)
+    #date = dict(year = 2020, month = 9, day = 22, hour = 0)
    ###########################################################
 
     print('download run_{}{:02}{:02}{:02}'.format(
@@ -39,9 +39,11 @@ def main():
     # list of dwd variable names #
 
     var_list = [['tot_prec','sl'],['pmsl','sl'],['relhum','850hPa'],['t','850hPa'],['fi','500hPa'],
-                ['fi','300hPa'],['u','300hPa'],['v','300hPa'],['u','200hPa'],['v','200hPa'],['u','850hPa'],['v','850hPa'],
-                ['t_2m','sl'],['u_10m','sl'],['v_10m','sl'],['clct','sl']]
-    vars_to_interpolate = [['pmsl','sl'],['fi','500hPa'],['fi','300hPa']]
+                ['fi','300hPa'],['u','300hPa'],['v','300hPa'],['u','200hPa'],['v','200hPa'],
+                ['u','850hPa'],['v','850hPa'],['cape_ml','sl'],
+                ['u','500hPa'],['v','500hPa'],['u_10m','sl'],['v_10m','sl']]
+    vars_to_interpolate = [['pmsl','sl'],['fi','500hPa'],['fi','300hPa'],['u_10m','sl'],['v_10m','sl'],
+                           ['u','500hPa'],['v','500hPa']]
 
 
     # create paths if necessary #
