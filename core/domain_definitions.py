@@ -17,7 +17,14 @@
 
 def get_domain(domain_name):
 
-    if domain_name == 'europe':
+    if domain_name == 'EU-Nest':
+        domain =   dict(name = domain_name, plot_width = 900, projection = 'Hammer', limits_type = 'radius',
+                        centerlat = 50, centerlon = 13, radius = 2200)
+    elif domain_name == 'EU-Nest_latlon':
+        domain =   dict(name = domain_name, plot_width = 1200, projection = 'CylindricalEquidistant',
+                        limits_type = 'deltalatlon',
+                        centerlat = 50, centerlon = 19.5, deltalat_deg = 20.5, deltalon_deg = 43)
+    elif domain_name == 'europe':
         domain =   dict(name = domain_name, plot_width = 800, projection = 'Hammer', limits_type = 'radius',
                         centerlat = 48, centerlon = 9, radius = 1400)
     elif domain_name == 'europe_and_north_atlantic':
@@ -40,6 +47,12 @@ def get_domain(domain_name):
     elif domain_name == 'southern_south_america':
         domain =   dict(name = domain_name, plot_width = 800, projection = 'Hammer', limits_type = 'radius',
                         centerlat = -32, centerlon = -66, radius = 1900)
+    elif domain_name == 'north_argentina':
+        domain =   dict(name = domain_name, plot_width = 800, projection = 'Hammer', limits_type = 'radius',
+                        centerlat = -28.0, centerlon = -56.5, radius = 800)
+    elif domain_name == 'central_argentina':
+        domain =   dict(name = domain_name, plot_width = 800, projection = 'Hammer', limits_type = 'radius',
+                        centerlat = -34.6, centerlon = -64.4, radius = 800)
     elif domain_name == 'northern_pacific':
         domain =   dict(name = domain_name, plot_width = 800, projection = 'Hammer', limits_type = 'radius',
                         centerlat = 48, centerlon = -171, radius = 1400)

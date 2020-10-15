@@ -26,4 +26,7 @@ PATH=/home/iconeps/miniconda3/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/s
 15   5,17          * * *   python /progs/operational/w2w_ensembleplots/cronscripts/det_overview_map_t850_z500.py > /data/logs/scripts/det_overview_map_t850_z500.log 2> /data/logs/errors/det_overview_map_t850_z500.log
 25   5,17          * * *   python /progs/operational/w2w_ensembleplots/cronscripts/det_overview_map_capeml_shear0-6km.py > /data/logs/scripts/det_overview_map_capeml_shear0-6km.log 2> /data/logs/errors/det_overview_map_capeml_shear0-6km.log
 30   5,17          * * *   python /progs/operational/w2w_ensembleplots/cronscripts/det_overview_map_wind300_z300.py > /data/logs/scripts/det_overview_map_wind300_z300.log 2> /data/logs/errors/det_overview_map_wind300_z300.log
+35   6,18          * * *   python /progs/operational/w2w_ensembleplots/cronscripts/ens_spread_map_mslp.py > /data/logs/scripts/ens_spread_map_mslp.log 2> /data/logs/errors/ens_spread_map_mslp.log
+25   7,19          * * *   python /progs/operational/w2w_ensembleplots/cronscripts/ens_spread_map_z500.py > /data/logs/scripts/ens_spread_map_z500.log 2> /data/logs/errors/ens_spread_map_z500.log
+50   7,19          * * *   python /progs/operational/w2w_ensembleplots/cronscripts/ens_spread_map_t850.py > /data/logs/scripts/ens_spread_map_t850.log 2> /data/logs/errors/ens_spread_map_t850.log
 #-----------------------------------------------------------------
