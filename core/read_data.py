@@ -789,6 +789,7 @@ def get_fcst_hours_list_var_grid(model, var, grid):
             fcst_hours_list = list(range(0,78,1)) + list(range(78,180+1,3))
         else:
             fcst_hours_list = list(range(0,180+1,6))
+            #fcst_hours_list = list(range(0,78+1,1))
     elif model == 'pamore_icon-global-eps':
         fcst_hours_list = list(range(0,75,1)) + list(range(75,180+1,3))
 

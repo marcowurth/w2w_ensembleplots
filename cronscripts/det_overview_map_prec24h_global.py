@@ -16,7 +16,7 @@ def main():
     model = 'icon-global-det'
 
     run = calc_latest_run_time(model)
-    #run = dict(year = 2020, month = 9, day = 22, hour = 0)
+    #run = dict(year = 2020, month = 10, day = 15, hour = 0)
 
     domains = []
     domains.append(get_domain('europe_and_north_atlantic'))
@@ -25,7 +25,7 @@ def main():
     domains.append(get_domain('north_pole'))
     domains.append(get_domain('south_pole'))
 
-    variable1 = dict(name='prec_24h', unit='mm', grid='icosahedral')
+    variable1 = dict(name='prec_24h_global', unit='mm', grid='icosahedral')
     variable2 = dict(name='')
 
     plot_type = 'map_deterministic_overview'

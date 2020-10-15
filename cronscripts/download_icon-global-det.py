@@ -19,6 +19,7 @@ def main():
 
     fcst_hours_list_prec_rate = list(range(0,78,1)) + list(range(78,180+1,3))
     fcst_hours_list_6h = list(range(0,180+1,6))
+    fcst_hours_list_1h = list(range(0,78+1,1))
 
 
     # get latest run time #
@@ -29,7 +30,7 @@ def main():
     # explicit download options #
 
    ###########################################################
-    #date = dict(year = 2020, month = 9, day = 22, hour = 0)
+    #date = dict(year = 2020, month = 9, day = 25, hour = 0)
    ###########################################################
 
     print('download run_{}{:02}{:02}{:02}'.format(

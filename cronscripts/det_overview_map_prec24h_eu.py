@@ -18,13 +18,13 @@ def main():
     run = calc_latest_run_time(model)
     if run['hour'] == 6 or run['hour'] == 18:
         run['hour'] -= 6
-    #run = dict(year = 2020, month = 9, day = 16, hour = 0)
+    #run = dict(year = 2020, month = 10, day = 15, hour = 0)
 
     domains = []
     domains.append(get_domain('europe'))
     domains.append(get_domain('mediterranean'))
 
-    variable1 = dict(name='prec_24h', unit='mm', grid='latlon_0.0625')
+    variable1 = dict(name='prec_24h_eu', unit='mm', grid='latlon_0.0625')
     variable2 = dict(name='')
 
     plot_type = 'map_deterministic_overview'

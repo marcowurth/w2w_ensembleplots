@@ -5,6 +5,7 @@ import json
 
 import numpy as np
 import Ngl
+import Nio
 from PIL import Image
 
 import sys
@@ -17,9 +18,13 @@ from w2w_ensembleplots.core.gridpoint_order import cut_by_domain
 
 def det_contourplot(domains, variable1, variable2, model, run, plot_type):
 
+    transfer_to_webserver = True
+    #transfer_to_webserver = False
+
     if model == 'icon-global-det':
         hours = list(range(0, 180+1, 6))
-        #hours = [84]
+        #hours = list(range(1, 48+1, 1))
+        #hours = [66]
     elif model == 'icon-eu-det':
         hours = list(range(0, 120+1, 6))
         #hours = list(range(0, 72+1, 1))
@@ -39,7 +44,8 @@ def det_contourplot(domains, variable1, variable2, model, run, plot_type):
     path = dict(base = '/',
                 temp = 'data/additional_data/temp/{}/'.format(ex_op_str),
                 callfiles = 'progs/{}/w2w_ensembleplots/callfiles/'.format(ex_op_str),
-                colorpalette = 'data/additional_data/colorpalettes/')
+                colorpalette = 'data/additional_data/colorpalettes/',
+                shapefiles = 'data/additional_data/shapefiles/')
 
     if plot_type == 'map_deterministic_overview':
         path['plots'] = 'data/plots/{}/deterministic_overview_maps/'.format(ex_op_str)
@@ -94,7 +100,11 @@ def det_contourplot(domains, variable1, variable2, model, run, plot_type):
     for hour in hours:
         print('forecast hour:', hour)
 
-        data_array1 = read_forecast_data(model, variable1['grid'], run, variable1['name'], fcst_hour=hour)
+        if variable1['name'] == 'prec_24h_eu' or variable1['name'] == 'prec_24h_global':
+            varname = 'prec_24h'
+        else:
+            varname = variable1['name']
+        data_array1 = read_forecast_data(model, variable1['grid'], run, varname, fcst_hour=hour)
         if variable2['name'] != '':
             data_array2_non_cyclic = read_forecast_data(model, variable2['grid'], run, variable2['name'], fcst_hour=hour)
             data_array2 = np.empty_like(data_array2_non_cyclic)
@@ -145,20 +155,21 @@ def det_contourplot(domains, variable1, variable2, model, run, plot_type):
 
     # copy all plots and .txt-file to imk-tss-web server #
 
-    if plot_type == 'map_deterministic_overview':
-        subfolder_name = 'deterministic_overview_maps'
-    elif plot_type == 'map_hurricane':
-        subfolder_name = 'deterministic_hurricane_maps'
+    if transfer_to_webserver:
+        if plot_type == 'map_deterministic_overview':
+            subfolder_name = 'deterministic_overview_maps'
+        elif plot_type == 'map_hurricane':
+            subfolder_name = 'deterministic_hurricane_maps'
 
-    path_webserver = '/home/iconeps/Data3/plots/icon/{}/{}'.format(subfolder_name, var1var2)
-    os.system('scp ' + path['base'] + path['plots'] + '*.png '\
-              + 'iconeps@imk-tss-web.imk-tro.kit.edu:' + path_webserver)
+        path_webserver = '/home/iconeps/Data3/plots/icon/{}/{}'.format(subfolder_name, var1var2)
+        os.system('scp ' + path['base'] + path['plots'] + '*.png '\
+                  + 'iconeps@imk-tss-web.imk-tro.kit.edu:' + path_webserver)
 
-    if variable1['name'] == 'wind_300hPa':
-        path_webserver = '/home/iconeps/Data3/plots/icon/{}'.format(subfolder_name)
-        path_latest_run_files = 'data/plots/{}/{}/'.format(ex_op_str, subfolder_name)
-        os.system('scp ' + path['base'] + path_latest_run_files + filename_latest_run\
-                  + ' iconeps@imk-tss-web.imk-tro.kit.edu:' + path_webserver)
+        if variable1['name'] == 'wind_300hPa':
+            path_webserver = '/home/iconeps/Data3/plots/icon/{}'.format(subfolder_name)
+            path_latest_run_files = 'data/plots/{}/{}/'.format(ex_op_str, subfolder_name)
+            os.system('scp ' + path['base'] + path_latest_run_files + filename_latest_run\
+                      + ' iconeps@imk-tss-web.imk-tro.kit.edu:' + path_webserver)
 
     return
 
@@ -245,8 +256,9 @@ def double_contourplot(var1var2):
     wks_res.wkHeight = domain['plot_width']     # the whitespace above and below the plot will be cut afterwards
 
     if variable1['name'] == 'prec_rate':
-        wks_res.wkColorMap = 'precip3_16lev'
-        levels1 = ([0.1,0.2,0.5,1,2,5,10,20,50])
+        #wks_res.wkColorMap = 'precip3_16lev'
+        wks_res.wkColorMap = 'WhiteBlueGreenYellowRed'
+        levels1 = ([0.1,0.3,0.5,0.8,1,2,3,4,5,6,8,10,15,20])
     if variable1['name'] == 'prec_6h':
         wks_res.wkColorMap = 'precip3_16lev'
         levels1 = ([0.1,0.2,0.5,1,2,5,10,20,50])
@@ -280,7 +292,9 @@ def double_contourplot(var1var2):
         wks_res.wkColorMap = np.array(rgb_colors)
         levels1 = (list(range(-90,-20,1)) + list(range(-20,40+1,2)))
 
-    elif variable1['name'] == 'prec_24h' or variable1['name'] == 'prec_sum':
+    elif variable1['name'] == 'prec_24h_eu'\
+     or variable1['name'] == 'prec_24h_global'\
+     or variable1['name'] == 'prec_sum':
         filename_colorpalette = 'colorscale_prec24h.txt'
         with open(path['base'] + path['colorpalette'] + filename_colorpalette, 'r') as f:
             lines = f.readlines()
@@ -473,11 +487,11 @@ def double_contourplot(var1var2):
         v1res.lbBottomMarginF   = -0.07
     elif variable1['name'] == 'wind_300hPa':
         v1res.lbBottomMarginF   = -0.35
-    elif variable1['name'] == 'prec_rate':
-        v1res.lbBottomMarginF   = -0.2
     elif variable1['name'] == 'synth_bt_ir10.8'\
      or variable1['name'] == 'cape_ml'\
-     or variable1['name'] == 'prec_24h'\
+     or variable1['name'] == 'prec_rate'\
+     or variable1['name'] == 'prec_24h_eu'\
+     or variable1['name'] == 'prec_24h_global'\
      or variable1['name'] == 'prec_sum'\
      or variable1['name'] == 'vmax_10m'\
      or variable1['name'] == 'shear_200-850hPa':
@@ -497,7 +511,7 @@ def double_contourplot(var1var2):
          or variable1['name'] == 'shear_200-850hPa':
             v1res.lbLabelFontHeightF = 0.005
         elif variable1['name'] == 'synth_bt_ir10.8'\
-         or variable1['name'] == 'prec_24h'\
+         or variable1['name'] == 'prec_24h_eu'\
          or variable1['name'] == 'prec_sum'\
          or variable1['name'] == 'vmax_10m':
             v1res.lbLabelFontHeightF = 0.005
@@ -508,7 +522,6 @@ def double_contourplot(var1var2):
 
     v1res.nglFrame = False
     v1res.nglDraw  = False
-
 
 
     # settings for variable2 / contourlines #
@@ -557,7 +570,7 @@ def double_contourplot(var1var2):
 
         if variable2['name'] == 'shear_0-6km':
             v2res.cnLevelSelectionMode = 'ExplicitLevels'
-            v2res.cnLevels = [10, 20]
+            v2res.cnLevels = [10, 20, 30]
             #v2res.cnSmoothingOn = True
             #v2res.cnSmoothingDistanceF = 0.03
             #v2res.cnSmoothingTensionF = 0.01
@@ -576,7 +589,6 @@ def double_contourplot(var1var2):
     text_res_1.txFontColor      = 'black'
     text_res_1.txFontHeightF = 0.013
     text_x = 0.965
-
 
 
     # set domain specific resource settings #
@@ -635,6 +647,22 @@ def double_contourplot(var1var2):
             if variable2['name'] == 'shear_0-6km':
                 v2res.cnLineLabelInterval = 1
         text_y = 0.885
+    elif domain['name'] == 'north_argentina':
+        if variable2['name'] != '':
+            v2res.cnLineThicknessF = 4.0
+            v2res.cnLineLabelInterval = 2
+            v2res.cnLowLabelFontHeightF = 0.01
+            if variable2['name'] == 'shear_0-6km':
+                v2res.cnLineLabelInterval = 1
+        text_y = 0.90
+    elif domain['name'] == 'central_argentina':
+        if variable2['name'] != '':
+            v2res.cnLineThicknessF = 4.0
+            v2res.cnLineLabelInterval = 2
+            v2res.cnLowLabelFontHeightF = 0.01
+            if variable2['name'] == 'shear_0-6km':
+                v2res.cnLineLabelInterval = 1
+        text_y = 0.885
     elif domain['name'] == 'north_pole' or domain['name'] == 'south_pole':
         if variable2['name'] != '':
             v2res.cnLineThicknessF = 3.0
@@ -659,9 +687,51 @@ def double_contourplot(var1var2):
         exit()
 
 
+    basic_map = Ngl.map(wks, mpres)
+
+    # plot subnational borders for some domains #
+
+    if (domain['name'] == 'southern_south_america'\
+         or domain['name'] == 'central_argentina'\
+         or domain['name'] == 'north_argentina')\
+     and (variable1['name'] == 'cape_ml'\
+         or variable1['name'] == 'prec_rate'\
+         or variable1['name'] == 'prec_24h_eu'\
+         or variable1['name'] == 'prec_24h_global'\
+         or variable1['name'] == 'prec_sum'):
+        shp_filenames = []
+        #shp_filenames.append(['gadm36_DEU_0.shp', 3.0])
+        #shp_filenames.append(['gadm36_DEU_1.shp', 3.0])
+        #shp_filenames.append(['gadm36_AUT_0.shp', 3.0])
+        #shp_filenames.append(['gadm36_CHE_0.shp', 3.0])
+        #shp_filenames.append(['gadm36_ITA_0.shp', 3.0])
+        #shp_filenames.append(['gadm36_GRC_0.shp', 3.0])
+        #shp_filenames.append(['gadm36_CZE_0.shp', 3.0])
+        #shp_filenames.append(['gadm36_DEU_2.shp', 3.0])
+        #shp_filenames.append(['gadm36_ESP_0.shp', 3.0])
+        #shp_filenames.append(['gadm36_PRT_0.shp', 3.0])
+        #shp_filenames.append(['gadm36_FRA_0.shp', 3.0])
+        #shp_filenames.append(['gadm36_ARG_2.shp', 0.5])
+        #shp_filenames.append(['gadm36_URY_0.shp', 3.0])
+        shp_filenames.append(['gadm36_ARG_1.shp', 0.2])
+        shp_filenames.append(['gadm36_BRA_1.shp', 0.2])
+        shp_filenames.append(['gadm36_CHL_1.shp', 0.2])
+
+        for shp_filename, lineThickness in shp_filenames:
+            shpf = Nio.open_file(path['base'] + path['shapefiles'] + shp_filename, 'r')
+            shpf_lon = np.ravel(shpf.variables['x'][:])
+            shpf_lat = np.ravel(shpf.variables['y'][:])
+            shpf_segments = shpf.variables['segments'][:, 0]
+
+            plres = Ngl.Resources()
+            plres.gsLineColor = 'black'
+            plres.gsLineThicknessF = lineThickness
+            plres.gsSegments = shpf_segments
+            Ngl.add_polyline(wks, basic_map, shpf_lon, shpf_lat, plres)
+
+
     # put everything together # 
 
-    basic_map = Ngl.map(wks, mpres)
     contourshades_plot = Ngl.contour(wks, data_array1_cut, v1res)
     if variable2['name'] != '':
         contourlines_plot = Ngl.contour(wks, data_array2_cut, v2res)
@@ -672,6 +742,7 @@ def double_contourplot(var1var2):
 
     Ngl.draw(basic_map)
     Ngl.text_ndc(wks, text_str, text_x, text_y, text_res_1)
+
     Ngl.frame(wks)
     Ngl.delete_wks(wks)
 
