@@ -177,7 +177,7 @@ def ens_spread_map(var1var2):
         levels1 = np.arange(0, 12.1, 1)
 
     if variable1['name'] == 'mslp' :
-        filename_colorpalette = 'colormap_WhiteBeigeGreenBlue_16.txt'
+        filename_colorpalette = 'colormap_WhiteBeigeGreenBlue_12.txt'
         with open(path['base'] + path['colorpalette'] + filename_colorpalette, 'r') as f:
             lines = f.readlines()
         rgb_colors = []
@@ -188,7 +188,7 @@ def ens_spread_map(var1var2):
             rgb_colors.append([float(line[0:3])/255, float(line[4:7])/255, float(line[8:11])/255])
         rgb_colors.append(rgb_colors[-1])
         wks_res.wkColorMap = np.array(rgb_colors)
-        levels1 = np.arange(0, 8.1, 0.5)
+        levels1 = np.arange(0, 12.1, 1)
 
     if variable1['name'] == 't_850hPa' :
         filename_colorpalette = 'colormap_WhiteBeigeGreenBlue_20.txt'
@@ -252,7 +252,7 @@ def ens_spread_map(var1var2):
         mpres.mpBottomAngleF = domain['angle']
 
     mpres.nglMaximize   = False
-    mpres.vpXF          = 0.00
+    mpres.vpXF          = 0.001
     mpres.vpYF          = 1.00
     mpres.vpWidthF      = 0.88
     mpres.vpHeightF     = 1.00
@@ -272,7 +272,7 @@ def ens_spread_map(var1var2):
 
     mpres.mpPerimOn                     = True
     mpres.mpPerimLineColor              = 'black'
-    mpres.mpPerimLineThicknessF         = 8.0 * domain['plot_width'] / 1000
+    mpres.mpPerimLineThicknessF         = 6.0 * domain['plot_width'] / 1000
     mpres.tmXBOn = False
     mpres.tmXTOn = False
     mpres.tmYLOn = False
@@ -327,18 +327,17 @@ def ens_spread_map(var1var2):
     #v1res.lbBoxEndCapStyle     = 'TriangleBothEnds'
     v1res.lbLabelAlignment      = 'ExternalEdges'
     if variable2['name'] == 'mslp':
-        v1res.lbLabelStride         = 2
+        v1res.lbLabelStride = 1
     elif variable2['name'] == 'gph_500hPa':
-        v1res.lbLabelStride         = 1
+        v1res.lbLabelStride = 1
     elif variable2['name'] == 't_850hPa':
-        v1res.lbLabelStride         = 5
+        v1res.lbLabelStride = 5
 
     v1res.nglFrame = False
     v1res.nglDraw  = False
 
 
-
-    # settings for variable2 / contourlines #
+    # settings for variable2 / thin contourlines #
 
     v2res = Ngl.Resources()
     v2res.sfDataArray       = data_array2
@@ -378,6 +377,8 @@ def ens_spread_map(var1var2):
     v2res.nglDraw  = False
 
 
+    # settings for variable2 / thick contourlines #
+
     v3res = Ngl.Resources()
     v3res.sfDataArray       = data_array2
     v3res.sfXArray          = ll_lon
@@ -415,7 +416,6 @@ def ens_spread_map(var1var2):
         v3res.cnLineLabelFontHeightF = 0.009
         v3res.cnLineDashSegLenF = 0.18
 
-
     v3res.nglFrame = False
     v3res.nglDraw  = False
 
@@ -427,7 +427,7 @@ def ens_spread_map(var1var2):
     text_res_1.txFontColor      = 'black'
     text_res_1.txFontHeightF = 0.013
     #text_x = 0.965
-    text_x = 0.975
+    text_x = 0.972
     text_y = 0.837 #0.865
 
 
