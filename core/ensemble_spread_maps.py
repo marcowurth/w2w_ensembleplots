@@ -17,7 +17,7 @@ from w2w_ensembleplots.core.read_data import read_forecast_data, read_grid_coord
 def ens_spread_contourplot(domains, variable1, variable2, model, run):
 
     hours = list(range(0, 120+1, 6))
-    #hours = list(range(0, 0+1, 6))
+    #hours = [120]
 
     var1var2 = variable1['name'] + '_mean_spread'
 
