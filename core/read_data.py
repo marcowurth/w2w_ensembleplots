@@ -214,6 +214,13 @@ def read_forecast_data(model, grid, date, var, **kwargs):
         varname1_folder = 'synmsg_bt_cl_ir10.8'
         varname1_grib = 'synmsg_bt_cl_ir10.8'
         varname1_cf = 'clbt'
+    elif var == 'orography':
+        if model == 'icon-eu-eps':
+            varname1_grib = None
+            if grid == 'latlon_0.2':
+                filename_inv = 'icon-eu-eps_latlon_0.2_time-invariant_hsurf.nc'
+            else:
+                filename_inv = 'icon-eu-eps_europe_icosahedral_time-invariant_2018121312_hsurf.grib2'
 
 
     path = dict(base = '/')
@@ -624,8 +631,10 @@ def read_forecast_data(model, grid, date, var, **kwargs):
         data_final = np.sqrt((data_var1 - data_var3)**2 + (data_var2 - data_var4)**2) * 1.943844
     elif var == 'lapse_rate_850hPa-500hPa':     # in k/km
         data_final = 9806.65 * (data_var1 - data_var3) / (data_var4 - data_var2)
-    elif var == 'synth_bt_ir10.8':     # deg C
+    elif var == 'synth_bt_ir10.8':      # deg C
         data_final = data_var1 - 273.15
+    elif var == 'orography':            # m
+        data_final = data_var_inv
 
     print(var + ', shape:', data_final.shape)
     return data_final

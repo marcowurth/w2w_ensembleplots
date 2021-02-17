@@ -17,7 +17,7 @@ from w2w_ensembleplots.core.read_data import read_forecast_data, read_grid_coord
 def ens_spread_contourplot(domains, variable1, variable2, model, run):
 
     hours = list(range(0, 120+1, 6))
-    #hours = [120]
+    #hours = [0]
 
     var1var2 = variable1['name'] + '_mean_spread'
 
@@ -71,6 +71,21 @@ def ens_spread_contourplot(domains, variable1, variable2, model, run):
         data_array2 = read_forecast_data(model, variable2['grid'], run, variable2['name'], fcst_hour=hour)
         data_array1 = np.std(data_array1, axis=0)
         data_array2 = np.mean(data_array2, axis=0)
+
+
+        # mask the too high areas > plotted grey + without lines #
+
+        if variable1['name'] == 'gph_500hPa':
+            lines_max_oro = 5000    # metres
+        elif variable1['name'] == 'mslp':
+            lines_max_oro = 600
+        elif variable1['name'] == 't_850hPa':
+            lines_max_oro = 1400
+
+        data_oro_icosahedral = read_forecast_data(model, variable1['grid'], run, 'orography', fcst_hour=hour)
+        data_oro_latlon = read_forecast_data(model, variable2['grid'], run, 'orography', fcst_hour=hour)
+        data_array1 = np.where(data_oro_icosahedral > lines_max_oro, np.ones_like(data_array1)*9999, data_array1)
+        data_array2 = np.where(data_oro_latlon > lines_max_oro, np.ones_like(data_array2)*9999, data_array2)
 
 
         # save all numpy arrays to npz file #
@@ -158,51 +173,29 @@ def ens_spread_map(var1var2):
 
     # plot basic map with borders #
 
-    wks_res             = Ngl.Resources()
+    wks_res          = Ngl.Resources()
     wks_res.wkWidth  = domain['plot_width']
     wks_res.wkHeight = domain['plot_width']     # the whitespace above and below the plot will be cut afterwards
 
+    filename_colorpalette = 'colormap_WhiteBeigeGreenBlue_12.txt'
+    with open(path['base'] + path['colorpalette'] + filename_colorpalette, 'r') as f:
+        lines = f.readlines()
+    rgb_colors = []
+    rgb_colors.append([1, 1, 1])
+    rgb_colors.append([0, 0, 0])
+    rgb_colors.append([.5, .5, .5])
+    for line in lines:
+        rgb_colors.append([float(line[0:3])/255, float(line[4:7])/255, float(line[8:11])/255])
+    rgb_colors.append(rgb_colors[-1])
+    wks_res.wkColorMap = np.array(rgb_colors)
+
     if variable1['name'] == 'gph_500hPa' :
-        filename_colorpalette = 'colormap_WhiteBeigeGreenBlue_12.txt'
-        with open(path['base'] + path['colorpalette'] + filename_colorpalette, 'r') as f:
-            lines = f.readlines()
-        rgb_colors = []
-        rgb_colors.append([1, 1, 1])
-        rgb_colors.append([0, 0, 0])
-        rgb_colors.append([.5, .5, .5])
-        for line in lines:
-            rgb_colors.append([float(line[0:3])/255, float(line[4:7])/255, float(line[8:11])/255])
-        rgb_colors.append(rgb_colors[-1])
-        wks_res.wkColorMap = np.array(rgb_colors)
         levels1 = np.arange(0, 12.1, 1)
-
-    if variable1['name'] == 'mslp' :
-        filename_colorpalette = 'colormap_WhiteBeigeGreenBlue_12.txt'
-        with open(path['base'] + path['colorpalette'] + filename_colorpalette, 'r') as f:
-            lines = f.readlines()
-        rgb_colors = []
-        rgb_colors.append([1, 1, 1])
-        rgb_colors.append([0, 0, 0])
-        rgb_colors.append([.5, .5, .5])
-        for line in lines:
-            rgb_colors.append([float(line[0:3])/255, float(line[4:7])/255, float(line[8:11])/255])
-        rgb_colors.append(rgb_colors[-1])
-        wks_res.wkColorMap = np.array(rgb_colors)
+    elif variable1['name'] == 'mslp' :
         levels1 = np.arange(0, 12.1, 1)
+    elif variable1['name'] == 't_850hPa' :
+        levels1 = np.arange(0, 6.1, 0.5)
 
-    if variable1['name'] == 't_850hPa' :
-        filename_colorpalette = 'colormap_WhiteBeigeGreenBlue_20.txt'
-        with open(path['base'] + path['colorpalette'] + filename_colorpalette, 'r') as f:
-            lines = f.readlines()
-        rgb_colors = []
-        rgb_colors.append([1, 1, 1])
-        rgb_colors.append([0, 0, 0])
-        rgb_colors.append([.5, .5, .5])
-        for line in lines:
-            rgb_colors.append([float(line[0:3])/255, float(line[4:7])/255, float(line[8:11])/255])
-        rgb_colors.append(rgb_colors[-1])
-        wks_res.wkColorMap = np.array(rgb_colors)
-        levels1 = np.arange(0, 4.1, 0.2)
 
     wks_type = 'png'
     wks = Ngl.open_wks(wks_type, path['base'] + path['plots'] + plot_name, wks_res)
@@ -278,27 +271,28 @@ def ens_spread_map(var1var2):
     mpres.tmYLOn = False
     mpres.tmYROn = False
 
-    mpres.nglDraw        =  False              #-- don't draw plot
-    mpres.nglFrame       =  False              #-- don't advance frame
+    mpres.nglDraw        =  False              # don't draw plot
+    mpres.nglFrame       =  False              # don't advance frame
 
 
     # settings for variable1 / shading #
 
     v1res = Ngl.Resources()
-    v1res.sfDataArray       = data_array1     ##### here the std field must be
+    v1res.sfDataArray       = data_array1
     v1res.sfXArray          = clon             
     v1res.sfYArray          = clat
     v1res.sfXCellBounds     = vlon
     v1res.sfYCellBounds     = vlat
     v1res.sfMissingValueV   = 9999
+    v1res.cnMissingValFillColor = 'Gray80'
 
-    v1res.cnLinesOn             = False   # Turn off contour lines.
-    v1res.cnFillOn              = True
-    v1res.cnFillMode            = 'CellFill'
-    #v1res.cnFillOpacityF        = 0.5   
-    #v1res.cnFillDrawOrder       = 'Predraw'
+    v1res.cnLinesOn         = False   # Turn off contour lines.
+    v1res.cnFillOn          = True
+    v1res.cnFillMode        = 'CellFill'
+    #v1res.cnFillOpacityF    = 0.5   
+    #v1res.cnFillDrawOrder   = 'Predraw'
     v1res.cnLevelSelectionMode = 'ExplicitLevels' 
-    v1res.cnLevels      = levels1
+    v1res.cnLevels          = levels1
 
 
     # set resources for a nice label bar #
@@ -331,7 +325,7 @@ def ens_spread_map(var1var2):
     elif variable2['name'] == 'gph_500hPa':
         v1res.lbLabelStride = 1
     elif variable2['name'] == 't_850hPa':
-        v1res.lbLabelStride = 5
+        v1res.lbLabelStride = 2
 
     v1res.nglFrame = False
     v1res.nglDraw  = False
