@@ -10,11 +10,11 @@ def main():
 
     date = dict(year = 2020, month = 10, day = 16, hour = 0)
 
-    model = 'icon-eu-eps'
+    #model = 'icon-eu-eps'
     #var_list = ['t_2m','prec_rate','prec_sum','wind_mean_10m','mslp','clct','direct_rad','diffuse_rad','vmax_10m',\
     #            'tqv','gph_500hPa','gph_300hPa','t_850hPa','wind_850hPa','wind_300hPa',\
     #            'shear_0-6km','lapse_rate_850hPa-500hPa']
-    var_list = ['orography']
+    #var_list = ['orography']
 
     #model = 'icon-eu-det'
     #var_list = ['t_2m','prec_rate','prec_sum','wind_mean_10m','mslp','clct','direct_rad','diffuse_rad','vmax_10m']
@@ -25,15 +25,15 @@ def main():
     #var_list = ['t_2m','prec_rate','prec_sum','wind_mean_10m','clct']
     #var_list = ['prec_24h']
 
-    #model = 'icon-global-det'
+    model = 'icon-global-det'
     #var_list = ['t_2m','prec_rate','prec_sum','wind_mean_10m','clct','mslp','t_850hPa',\
     #            'gph_500hPa','gph_300hPa','wind_300hPa','theta_e_850hPa']
     #var_list = ['shear_0-6km']
-    #var_list = ['mslp','t_850hPa','gph_500hPa','gph_300hPa','wind_300hPa']
+    var_list = ['orography']
 
     #grid = 'icosahedral'
-    grid = 'latlon_0.2'
-    #grid = 'latlon_0.1'
+    #grid = 'latlon_0.2'
+    grid = 'latlon_0.1'
     #grid = 'latlon_0.0625'  # dwd provides icon-eu-det fields only on this grid
 
     #point = dict(lat = 49.014, lon =  8.404)
@@ -47,7 +47,7 @@ def main():
         #data = read_forecast_data(model, grid, date, var, point=point)
         data = read_forecast_data(model, grid, date, var, fcst_hour=fcst_hour)
         print(data)
-        #print(max(data.ravel()))
+        print(round(max(data.ravel())), 'm')
 
     return
 

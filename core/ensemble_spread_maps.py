@@ -84,8 +84,8 @@ def ens_spread_contourplot(domains, variable1, variable2, model, run):
 
         data_oro_icosahedral = read_forecast_data(model, variable1['grid'], run, 'orography', fcst_hour=hour)
         data_oro_latlon = read_forecast_data(model, variable2['grid'], run, 'orography', fcst_hour=hour)
-        data_array1 = np.where(data_oro_icosahedral > lines_max_oro, np.ones_like(data_array1)*9999, data_array1)
-        data_array2 = np.where(data_oro_latlon > lines_max_oro, np.ones_like(data_array2)*9999, data_array2)
+        data_array1 = np.where(data_oro_icosahedral > lines_max_oro, np.ones_like(data_array1) * 9999, data_array1)
+        data_array2 = np.where(data_oro_latlon > lines_max_oro, np.ones_like(data_array2) * 9999, data_array2)
 
 
         # save all numpy arrays to npz file #

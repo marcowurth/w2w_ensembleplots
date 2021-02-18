@@ -68,7 +68,7 @@ def read_forecast_data(model, grid, date, var, **kwargs):
                 filename_inv = 'icon-eu-eps_latlon_0.2_time-invariant_hsurf.nc'
             else:
                 varname2_cf = 't2m'
-                filename_inv = 'icon-eu-eps_europe_icosahedral_time-invariant_2018121312_hsurf.grib2'
+                filename_inv = 'icon-eu-eps_europe_icosahedral_time-invariant_2021021700_hsurf.grib2'
         elif model == 'icon-eu-det' or model == 'icon-global-det':
             varname1_lvtype = 'sl'
             varname1_folder = 'pmsl'
@@ -215,12 +215,17 @@ def read_forecast_data(model, grid, date, var, **kwargs):
         varname1_grib = 'synmsg_bt_cl_ir10.8'
         varname1_cf = 'clbt'
     elif var == 'orography':
+        varname1_grib = None
         if model == 'icon-eu-eps':
-            varname1_grib = None
             if grid == 'latlon_0.2':
                 filename_inv = 'icon-eu-eps_latlon_0.2_time-invariant_hsurf.nc'
             else:
-                filename_inv = 'icon-eu-eps_europe_icosahedral_time-invariant_2018121312_hsurf.grib2'
+                filename_inv = 'icon-eu-eps_europe_icosahedral_time-invariant_2021021700_hsurf.grib2'
+        elif model == 'icon-global-det':
+            if grid == 'latlon_0.1':
+                filename_inv = 'icon-global-det_latlon_0.1_time-invariant_hsurf.nc'
+            else:
+                filename_inv = 'icon_global_icosahedral_time-invariant_2021021700_HSURF.grib2'
 
 
     path = dict(base = '/')
@@ -560,7 +565,8 @@ def read_forecast_data(model, grid, date, var, **kwargs):
 
     if 'filename_inv' in locals():
         path['subdir'] = 'data/model_data/{}/invariant/'.format(model)
-        if grid == 'latlon_0.2':
+        if grid == 'latlon_0.2'\
+         or grid == 'latlon_0.1':
             ds = xr.open_dataset(path['base'] + path['subdir'] + filename_inv)
             data_var_inv = ds['HSURF'][dict(time = 0)].values
             ds.close()
