@@ -355,6 +355,8 @@ def ens_spread_map(var1var2):
     if variable2['name'] == 'mslp':
         v2res.cnLevelSpacingF = 2
         v2res.cnLineLabelFontHeightF = 0.008
+        v2res.cnLineDashSegLenF = 0.18
+        v2res.cnLineLabelInterval = 2
     elif variable2['name'] == 'gph_500hPa':
         v2res.cnLevelSpacingF = 4
         v2res.cnLineLabelFontHeightF = 0.008
@@ -400,6 +402,8 @@ def ens_spread_map(var1var2):
     if variable2['name'] == 'mslp':
         v3res.cnLevelSpacingF = 10
         v3res.cnLineLabelFontHeightF = 0.008
+        v3res.cnLineDashSegLenF = 0.18
+        v3res.cnLineLabelInterval = 2
     elif variable2['name'] == 'gph_500hPa':
         v3res.cnLevelSpacingF = 16
         v3res.cnLineLabelFontHeightF = 0.008
