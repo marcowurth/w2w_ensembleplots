@@ -6,6 +6,7 @@ import json
 import numpy as np
 import Ngl
 import Nio
+import palettable
 from PIL import Image
 
 import sys
@@ -14,6 +15,7 @@ ex_op_str = current_path[current_path.index('progs')+6: current_path.index('w2w_
 sys.path.append('/progs/{}'.format(ex_op_str))
 from w2w_ensembleplots.core.read_data import read_forecast_data, read_grid_coordinates
 from w2w_ensembleplots.core.gridpoint_order import cut_by_domain
+#from w2w_ensembleplots.core.calc_icon_pv import calc_pv_on_theta, calc_theta_on_pv
 
 
 def det_contourplot(domains, variable1, variable2, model, run, plot_type):
@@ -255,25 +257,40 @@ def double_contourplot(var1var2):
     wks_res.wkWidth  = domain['plot_width']
     wks_res.wkHeight = domain['plot_width']     # the whitespace above and below the plot will be cut afterwards
 
-    if variable1['name'] == 'prec_rate':
-        #wks_res.wkColorMap = 'precip3_16lev'
-        wks_res.wkColorMap = 'WhiteBlueGreenYellowRed'
-        levels1 = ([0.1,0.3,0.5,0.8,1,2,3,4,5,6,8,10,15,20])
-    if variable1['name'] == 'prec_6h':
-        wks_res.wkColorMap = 'precip3_16lev'
-        levels1 = ([0.1,0.2,0.5,1,2,5,10,20,50])
+    if variable1['name'] == 'prec_rate'\
+     or variable1['name'] == 'prec_6h':
+        filename_colorpalette = 'colorscale_prec_rate.txt'
+        with open(path['base'] + path['colorpalette'] + filename_colorpalette, 'r') as f:
+            lines = f.readlines()
+        rgb_colors = []
+        rgb_colors.append([0, 0, 0])    # color not seen, needed for pyngl
+        rgb_colors.append([0, 0, 0])    # color not seen, needed for pyngl
+        rgb_colors.append([0, 0, 0])    # placeholder for color for under the lowest value
+        rgb_colors.append([1, 1, 1])    # first color
+        for i, line in enumerate(lines):
+            rgb_colors.append([float(line[0:3])/255, float(line[4:7])/255, float(line[8:11])/255])
+        rgb_colors[2] = rgb_colors[3]       # copy lowest loaded color to color for under the lowest value
+        rgb_colors.append(rgb_colors[-1])   # add highest loaded color to color for over the highest value
+        wks_res.wkColorMap = np.array(rgb_colors)
+        levels1 = ([0,0.1,0.2,0.3,0.5,1,2,3,5,10,20,50,100])
+        lbStride_value = 1
+
     elif variable1['name'] == 't_850hPa':
         wks_res.wkColorMap = 'BkBlAqGrYeOrReViWh200'
         levels1 = np.arange(-40, 40, 4)
+        lbStride_value = 1
     elif variable1['name'] == 'theta_e_850hPa':
         wks_res.wkColorMap = 'BkBlAqGrYeOrReViWh200'
         levels1 = np.arange(-20, 80+1, 5)
+        lbStride_value = 1
     elif variable1['name'] == 'wind_300hPa':
         wks_res.wkColorMap = 'wh-bl-gr-ye-re'
         levels1 = np.arange(150,300,25)
+        lbStride_value = 1
     elif variable1['name'] == 'cape_ml':
         wks_res.wkColorMap = 'WhiteBlueGreenYellowRed'
         levels1 = np.arange(0, 2000+1, 100)
+        lbStride_value = 5
 
     elif variable1['name'] == 'synth_bt_ir10.8':
         filename_colorpalette = 'rainbowIRsummer.txt'
@@ -291,6 +308,7 @@ def double_contourplot(var1var2):
         rgb_colors.append([0, 0, 0])
         wks_res.wkColorMap = np.array(rgb_colors)
         levels1 = (list(range(-90,-20,1)) + list(range(-20,40+1,2)))
+        lbStride_value = 10
 
     elif variable1['name'] == 'prec_24h_eu'\
      or variable1['name'] == 'prec_24h_global'\
@@ -307,6 +325,7 @@ def double_contourplot(var1var2):
         rgb_colors.append([1, 1, 1])
         wks_res.wkColorMap = np.array(rgb_colors)
         levels1 = ([0,1,2,5,10,15,20,30,40,50,60,80,100,120,150,200,250,300,350,400,450,500,999])
+        lbStride_value = 1
 
     elif variable1['name'] == 'vmax_10m':
         filename_colorpalette = 'colorscale_vmax.txt'
@@ -322,6 +341,7 @@ def double_contourplot(var1var2):
         rgb_colors.append([0, 0, 1])
         wks_res.wkColorMap = np.array(rgb_colors)
         levels1 = (list(range(0,90+1,5)) + list(range(100,160+1,10)) + list(range(180,260+1,20)))
+        lbStride_value = 1
 
     elif variable1['name'] == 'shear_200-850hPa':
         filename_colorpalette = 'colorscale_shear_200-850hPa.txt'
@@ -336,6 +356,40 @@ def double_contourplot(var1var2):
         rgb_colors.append([0, 0, 1])
         wks_res.wkColorMap = np.array(rgb_colors)
         levels1 = (list(np.arange(0,30,2.5)) + list(range(30,50+1,5)) + [99])
+        lbStride_value = 1
+
+    elif variable1['name'][:2] == 'pv'\
+     and variable1['name'][-1:] == 'K':
+        filename_colorpalette = 'colorscale_ipv_eth.txt'
+        with open(path['base'] + path['colorpalette'] + filename_colorpalette, 'r') as f:
+            lines = f.readlines()
+        rgb_colors = []
+        rgb_colors.append([0, 0, 0])    # color not seen, needed for pyngl
+        rgb_colors.append([0, 0, 0])    # color not seen, needed for pyngl
+        rgb_colors.append([0, 0, 0])    # placeholder for color for under the lowest value
+        for i, line in enumerate(lines):
+            rgb_colors.append([float(line[0:3])/255, float(line[4:7])/255, float(line[8:11])/255])
+        rgb_colors[2] = rgb_colors[3]       # copy lowest loaded color to color for under the lowest value
+        rgb_colors.append(rgb_colors[-1])   # add highest loaded color to color for over the highest value
+        wks_res.wkColorMap = np.array(rgb_colors)
+        levels1 = ([-1,-0.5,0.2,0.7,1,1.5,2,3,4,5,6,7,8,9,10])
+        lbStride_value = 1
+
+    elif variable1['name'][:5] == 'theta'\
+     and variable1['name'][-3:] == 'PVU':
+        rgb_colors = []
+        rgb_colors.append([0, 0, 0])    # color not seen, needed for pyngl
+        rgb_colors.append([0, 0, 0])    # color not seen, needed for pyngl
+        rgb_colors.append([0, 0, 0])    # placeholder for color for under the lowest value
+        for i in range(30):              # load colors from palettable
+            rgb_colors.append(list(palettable.colorbrewer.diverging.RdYlBu_10.get_mpl_colormap(N=30)(i)[:3]))
+        rgb_colors[2] = rgb_colors[3]       # copy lowest loaded color to color for under the lowest value
+        rgb_colors.append(rgb_colors[-1])   # add highest loaded color to color for over the highest value
+        wks_res.wkColorMap = np.array(rgb_colors)
+        levels1 = np.arange(270, 420+1, 5)
+        #levels1 = np.arange(300, 360+1, 20)
+        lbStride_value = 2
+
 
     wks_type = 'png'
     wks = Ngl.open_wks(wks_type, path['base'] + path['plots'] + plot_name, wks_res)
@@ -474,12 +528,8 @@ def double_contourplot(var1var2):
     v1res.lbBoxLineThicknessF   = 4
     #v1res.lbBoxEndCapStyle     = 'TriangleBothEnds'
     v1res.lbLabelAlignment      = 'ExternalEdges'
-    if variable1['name'] == 'synth_bt_ir10.8':
-        v1res.lbLabelStride = 10
-    elif variable1['name'] == 'cape_ml':
-        v1res.lbLabelStride = 5
-    else:
-        v1res.lbLabelStride = 1
+    v1res.lbLabelStride         = lbStride_value
+
 
     if variable1['name'] == 't_850hPa':
         v1res.lbBottomMarginF   = -0.07
