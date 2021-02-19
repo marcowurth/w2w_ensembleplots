@@ -24,12 +24,10 @@ def main():
     domains.append(get_domain('europe'))
     domains.append(get_domain('mediterranean'))
 
-    variable1 = dict(name='prec_24h_eu', unit='mm', grid='latlon_0.0625')
+    variable1 = dict(name='prec_24h_eu', unit='mm', grid='latlon_0.0625', load_global_field=True)
     variable2 = dict(name='')
 
-    plot_type = 'map_deterministic_overview'
-
-    det_contourplot(domains, variable1, variable2, model, run, plot_type)
+    det_contourplot(domains, variable1, variable2, model, run)
 
     return
 

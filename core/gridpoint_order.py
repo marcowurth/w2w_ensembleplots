@@ -240,7 +240,7 @@ def grid_order_contourplot(model, grid, first_varying_var, cut_domain):
 
 
 
-def cut_by_domain(cut_domain, grid, data_array1, clat, clon, vlat, vlon, margin_deg):
+def cut_by_domain(cut_domain, grid, data_array_dims , data_array_list, clat, clon, vlat, vlon, margin_deg):
 
     if cut_domain['limits_type'] == 'deltalatlon':
         lat_min = cut_domain['centerlat'] - cut_domain['deltalat_deg'] - margin_deg
@@ -312,19 +312,22 @@ def cut_by_domain(cut_domain, grid, data_array1, clat, clon, vlat, vlon, margin_
         #print('filter_total shape:', filter_total_array.shape)
         #print('filter_total min,max:', filter_total_array.min(), filter_total_array.max())
 
-        data_array1_cut = data_array1[filter_total]
+        data_array_list_cut = []
+        for data_array in data_array_list:
+            data_array_list_cut.append(data_array[filter_total])
         clat_cut = clat[filter_total]
         clon_cut = clon[filter_total]
         vlat_cut = vlat[filter_total]
         vlon_cut = vlon[filter_total]
-        del data_array1, clat, clon, vlat, vlon, filter_lat_high, filter_lat_low
+        del data_array_list, clat, clon, vlat, vlon, filter_lat_high, filter_lat_low
         if lon_min < -180 or lon_max > 180:
             del filter_lon1_high, filter_lon1_low, filter_lon2_high, filter_lon2_low
             del filter_total1, filter_total2, filter_total
         else:
             del filter_lon_high, filter_lon_low, filter_total
 
-        return data_array1_cut, clat_cut, clon_cut, vlat_cut, vlon_cut
+        return data_array_list_cut, clat_cut, clon_cut, vlat_cut, vlon_cut
+
 
     elif grid == 'latlon_0.25' or grid == 'latlon_0.1':
         filter_lat_high = list(np.where(clat < lat_max)[0])
@@ -336,13 +339,18 @@ def cut_by_domain(cut_domain, grid, data_array1, clat, clon, vlat, vlon, margin_
         filter_total_lat.sort()
         filter_total_lon.sort()
 
-        data_array1_cut = data_array1[filter_total_lat, :][:, filter_total_lon]
+        data_array_list_cut = []
+        for data_array in data_array_list:
+            if data_array_dims == '2d':
+                data_array_list_cut.append(data_array[filter_total_lat, :][:, filter_total_lon])
+            elif data_array_dims == '3d':
+                data_array_list_cut.append(data_array[:, filter_total_lat, :][:, :, filter_total_lon])
         clat_cut = clat[filter_total_lat]
         clon_cut = clon[filter_total_lon]
-        del data_array1, clat, clon, filter_lat_high, filter_lat_low, filter_lon_high, filter_lon_low
+        del data_array_list, clat, clon, filter_lat_high, filter_lat_low, filter_lon_high, filter_lon_low
         del filter_total_lat, filter_total_lon
 
-        return data_array1_cut, clat_cut, clon_cut
+        return data_array_list_cut, clat_cut, clon_cut
 
     else:
         print('grid "{}" not supported!'.format(grid))

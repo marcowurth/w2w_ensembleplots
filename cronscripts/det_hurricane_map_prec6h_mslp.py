@@ -6,7 +6,7 @@ import sys
 current_path = sys.path[0]
 ex_op_str = current_path[current_path.index('progs')+6: current_path.index('w2w_ensembleplots')-1]
 sys.path.append('/progs/{}'.format(ex_op_str))
-from w2w_ensembleplots.core.deterministic_overview_maps import det_contourplot
+from w2w_ensembleplots.core.deterministic_contourplot import det_contourplot
 from w2w_ensembleplots.core.download_forecast import calc_latest_run_time
 from w2w_ensembleplots.core.domain_definitions import get_domain
 
@@ -16,19 +16,13 @@ def main():
     model = 'icon-global-det'
 
     run = calc_latest_run_time(model)
-    #run = dict(year = 2020, month = 9, day = 10, hour = 0)
+    #run = dict(year = 2020, month = 6, day = 21, hour = 12)
 
     domains = []
-    domains.append(get_domain('europe'))
-    domains.append(get_domain('europe_and_north_atlantic'))
-    domains.append(get_domain('mediterranean'))
-    domains.append(get_domain('usa'))
-    domains.append(get_domain('southern_south_america'))
-    domains.append(get_domain('north_pole'))
-    domains.append(get_domain('south_pole'))
+    domains.append(get_domain('gulf_of_mexico'))
 
-    variable1 = dict(name='t_850hPa', unit='  ~S~o~N~C', grid='icosahedral', load_global_field=True)
-    variable2 = dict(name='gph_500hPa', unit='gpdm', grid='latlon_0.1', load_global_field=True)
+    variable1 = dict(name='prec_6h', unit='mm', grid='icosahedral', load_global_field=True)
+    variable2 = dict(name='mslp', unit='hPa', grid='latlon_0.25', load_global_field=True)
 
     det_contourplot(domains, variable1, variable2, model, run)
 

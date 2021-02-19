@@ -25,12 +25,10 @@ def main():
     domains.append(get_domain('europe_and_north_atlantic'))
     domains.append(get_domain('mediterranean'))
 
-    variable1 = dict(name='vmax_10m', unit='km/h', grid='latlon_0.0625')
+    variable1 = dict(name='vmax_10m', unit='km/h', grid='latlon_0.0625', load_global_field=True)
     variable2 = dict(name='')
 
-    plot_type = 'map_deterministic_overview'
-
-    det_contourplot(domains, variable1, variable2, model, run, plot_type)
+    det_contourplot(domains, variable1, variable2, model, run)
 
     return
 

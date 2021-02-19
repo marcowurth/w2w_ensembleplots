@@ -27,12 +27,10 @@ def main():
     domains.append(get_domain('north_pole'))
     domains.append(get_domain('south_pole'))
 
-    variable1 = dict(name='theta_e_850hPa', unit='  ~S~o~N~C', grid='icosahedral')
-    variable2 = dict(name='mslp', unit='hPa', grid='latlon_0.1')
+    variable1 = dict(name='theta_e_850hPa', unit='  ~S~o~N~C', grid='icosahedral', load_global_field=True)
+    variable2 = dict(name='mslp', unit='hPa', grid='latlon_0.1', load_global_field=True)
 
-    plot_type = 'map_deterministic_overview'
-
-    det_contourplot(domains, variable1, variable2, model, run, plot_type)
+    det_contourplot(domains, variable1, variable2, model, run)
 
     return
 

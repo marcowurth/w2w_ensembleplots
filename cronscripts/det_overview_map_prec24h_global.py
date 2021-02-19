@@ -25,12 +25,10 @@ def main():
     domains.append(get_domain('north_pole'))
     domains.append(get_domain('south_pole'))
 
-    variable1 = dict(name='prec_24h_global', unit='mm', grid='icosahedral')
+    variable1 = dict(name='prec_24h_global', unit='mm', grid='icosahedral', load_global_field=True)
     variable2 = dict(name='')
 
-    plot_type = 'map_deterministic_overview'
-
-    det_contourplot(domains, variable1, variable2, model, run, plot_type)
+    det_contourplot(domains, variable1, variable2, model, run)
 
     return
 

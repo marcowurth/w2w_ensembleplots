@@ -18,7 +18,7 @@ from w2w_ensembleplots.core.gridpoint_order import cut_by_domain
 #from w2w_ensembleplots.core.calc_icon_pv import calc_pv_on_theta, calc_theta_on_pv
 
 
-def det_contourplot(domains, variable1, variable2, model, run, plot_type):
+def det_contourplot(domains, variable1, variable2, model, run):
 
     transfer_to_webserver = True
     #transfer_to_webserver = False
@@ -26,7 +26,7 @@ def det_contourplot(domains, variable1, variable2, model, run, plot_type):
     if model == 'icon-global-det':
         hours = list(range(0, 180+1, 6))
         #hours = list(range(1, 48+1, 1))
-        #hours = [66]
+        #hours = [120]
     elif model == 'icon-eu-det':
         hours = list(range(0, 120+1, 6))
         #hours = list(range(0, 72+1, 1))
@@ -49,12 +49,8 @@ def det_contourplot(domains, variable1, variable2, model, run, plot_type):
                 colorpalette = 'data/additional_data/colorpalettes/',
                 shapefiles = 'data/additional_data/shapefiles/')
 
-    if plot_type == 'map_deterministic_overview':
-        path['plots'] = 'data/plots/{}/deterministic_overview_maps/'.format(ex_op_str)
-        filename_latest_run = 'latest_run_det_overview_map.txt'
-    elif plot_type == 'map_hurricane':
-        path['plots'] = 'data/plots/{}/deterministic_hurricane_maps/'.format(ex_op_str)
-        filename_latest_run = 'latest_run_det_hurricane_map_{}.txt'.format(var1var2)
+    path['plots'] = 'data/plots/{}/deterministic_overview_maps/'.format(ex_op_str)
+    filename_latest_run = 'latest_run_det_overview_map.txt'
 
     subfolder = 'run_{:4d}{:02d}{:02d}{:02d}'.format(run['year'], run['month'], run['day'], run['hour'])
 
@@ -75,22 +71,22 @@ def det_contourplot(domains, variable1, variable2, model, run, plot_type):
 
     numpyarrays_filename = 'deterministic_overview_maps_{}_ndarrays_outofloop.npz'.format(var1var2)
 
-    if model == 'icon-eu-det':
-        clat, clon = read_grid_coordinates(model, variable1['grid'])
-        with open(path['base'] + path['temp'] + numpyarrays_filename, 'wb') as f:
-            np.savez(f, clat = clat, clon = clon)
-
-    elif model == 'icon-global-det':
-        clat, clon, vlat, vlon = read_grid_coordinates(model, variable1['grid'])
-
-        if variable2['name'] == '':
+    if variable1['load_global_field']:
+        if model == 'icon-eu-det':
+            clat, clon = read_grid_coordinates(model, variable1['grid'])
             with open(path['base'] + path['temp'] + numpyarrays_filename, 'wb') as f:
-                np.savez(f, clat = clat, clon = clon, vlat = vlat, vlon = vlon)
+                np.savez(f, clat = clat, clon = clon)
 
-        else:
-            ll_lat, ll_lon = read_grid_coordinates(model, variable2['grid'])
-            with open(path['base'] + path['temp'] + numpyarrays_filename, 'wb') as f:
-                np.savez(f, clat = clat, clon = clon, vlat = vlat, vlon = vlon, ll_lat = ll_lat, ll_lon = ll_lon)
+        elif model == 'icon-global-det':   
+            clat, clon, vlat, vlon = read_grid_coordinates(model, variable1['grid']) 
+
+            if variable2['name'] == '':
+                with open(path['base'] + path['temp'] + numpyarrays_filename, 'wb') as f:
+                    np.savez(f, clat = clat, clon = clon, vlat = vlat, vlon = vlon)
+            else:
+                ll_lat, ll_lon = read_grid_coordinates(model, variable2['grid'])
+                with open(path['base'] + path['temp'] + numpyarrays_filename, 'wb') as f:
+                    np.savez(f, clat = clat, clon = clon, vlat = vlat, vlon = vlon, ll_lat = ll_lat, ll_lon = ll_lon)
 
 
     # start plotting loop #
@@ -106,39 +102,81 @@ def det_contourplot(domains, variable1, variable2, model, run, plot_type):
             varname = 'prec_24h'
         else:
             varname = variable1['name']
-        data_array1 = read_forecast_data(model, variable1['grid'], run, varname, fcst_hour=hour)
-        if variable2['name'] != '':
-            data_array2_non_cyclic = read_forecast_data(model, variable2['grid'], run, variable2['name'], fcst_hour=hour)
-            data_array2 = np.empty_like(data_array2_non_cyclic)
-            if variable2['grid'] == 'latlon_0.1':
-                data_array2[:, 1799:] = data_array2_non_cyclic[:, :1801]  # flip around the data in lon direction to match
-                data_array2[:, :1799] = data_array2_non_cyclic[:, 1801:]  # positions in the ll_lon array
-            elif variable2['grid'] == 'latlon_0.25':
-                data_array2[:, 719:] = data_array2_non_cyclic[:, :721]  # flip around the data in lon direction to match
-                data_array2[:, :719] = data_array2_non_cyclic[:, 721:]  # positions in the ll_lon array
 
-            ''' code for manual add_cyclic: add last lon row before the first lon
-            ll_lon = np.empty((ll_lon_non_cyclic.shape[0]+1))
-            ll_lon[1:] = ll_lon_non_cyclic[:]
-            ll_lon[0] = -180.0
-            data_array2 = np.empty((data_array2_non_cyclic.shape[0], data_array2_non_cyclic.shape[1]+1))
-            data_array2[:, 720:] = data_array2_non_cyclic[:, :721]
-            data_array2[:, 1:720] = data_array2_non_cyclic[:, 721:]
-            data_array2[:, 0] = data_array2_non_cyclic[:, -1]'''
+        if variable1['load_global_field']:
+            data_array1 = read_forecast_data(model, variable1['grid'], run, varname, fcst_hour=hour)
+
+            if variable2['name'] != '':
+                data_array2_non_cyclic \
+                 = read_forecast_data(model, variable2['grid'], run, variable2['name'], fcst_hour=hour)
+
+                if variable2['name'] == 'mslp':
+                    lines_max_oro = 600
+                    data_oro_latlon = read_forecast_data(model, variable2['grid'], run, 'orography', fcst_hour=hour)
+                    data_array2_non_cyclic = np.where(data_oro_latlon > lines_max_oro,
+                                                      np.ones_like(data_array2_non_cyclic) * 9999,
+                                                      data_array2_non_cyclic)
+                elif variable2['name'] == 'shear_0-6km':
+                    lines_max_oro = 1000
+                    data_oro_latlon = read_forecast_data(model, variable2['grid'], run, 'orography', fcst_hour=hour)
+                    data_array2_non_cyclic = np.where(data_oro_latlon > lines_max_oro,
+                                                      np.ones_like(data_array2_non_cyclic) * 9999,
+                                                      data_array2_non_cyclic)
+
+                data_array2 = np.empty_like(data_array2_non_cyclic)
+                if variable2['grid'] == 'latlon_0.1':
+                    data_array2[:, 1799:] = data_array2_non_cyclic[:, :1801]  # flip around the data in lon direction to match
+                    data_array2[:, :1799] = data_array2_non_cyclic[:, 1801:]  # positions in the ll_lon array
+                elif variable2['grid'] == 'latlon_0.25':
+                    data_array2[:, 719:] = data_array2_non_cyclic[:, :721]  # flip around the data in lon direction to match
+                    data_array2[:, :719] = data_array2_non_cyclic[:, 721:]  # positions in the ll_lon array
+
+                ''' code for manual add_cyclic: add last lon row before the first lon
+                ll_lon = np.empty((ll_lon_non_cyclic.shape[0]+1))
+                ll_lon[1:] = ll_lon_non_cyclic[:]
+                ll_lon[0] = -180.0
+                data_array2 = np.empty((data_array2_non_cyclic.shape[0], data_array2_non_cyclic.shape[1]+1))
+                data_array2[:, 720:] = data_array2_non_cyclic[:, :721]
+                data_array2[:, 1:720] = data_array2_non_cyclic[:, 721:]
+                data_array2[:, 0] = data_array2_non_cyclic[:, -1]'''
 
 
-        # save all numpy arrays to npz file #
+        # for non-pv vars: save all global/eu numpy arrays to npz file #
 
-        numpyarrays_filename = 'deterministic_overview_maps_{}_ndarrays_withinloop.npz'.format(var1var2)
-        with open(path['base'] + path['temp'] + numpyarrays_filename, 'wb') as f:
-            if variable2['name'] == '':
-                np.savez(f, data_array1 = data_array1)
-            else:
-                np.savez(f, data_array1 = data_array1, data_array2 = data_array2)
+        if variable1['load_global_field']:
+            numpyarrays_filename = 'deterministic_overview_maps_{}_ndarrays_withinloop.npz'.format(var1var2)
+            with open(path['base'] + path['temp'] + numpyarrays_filename, 'wb') as f:
+                if variable2['name'] == '':
+                    np.savez(f, data_array1 = data_array1)
+                else:
+                    np.savez(f, data_array1 = data_array1, data_array2 = data_array2)
 
 
         for domain in domains:
             print('domain:', domain['name'])
+
+            # for pv vars: read and save all domain-cut numpy arrays to npz file #
+
+            '''if not variable1['load_global_field']:
+                if variable1['name'][:2] == 'pv':
+                    iso_theta_value = float(variable1['name'][3:6])
+                    print(iso_theta_value, 'K')
+                    data_array1, ll_lat, ll_lon \
+                     = calc_pv_on_theta(model, domain, variable1['grid'], run, hour, iso_theta_value)
+
+                numpyarrays_filename = 'deterministic_overview_maps_{}_ndarrays_outofloop.npz'.format(var1var2)
+                with open(path['base'] + path['temp'] + numpyarrays_filename, 'wb') as f:
+                    np.savez(f, ll_lat = ll_lat, ll_lon = ll_lon)
+
+                numpyarrays_filename = 'deterministic_overview_maps_{}_ndarrays_withinloop.npz'.format(var1var2)
+                with open(path['base'] + path['temp'] + numpyarrays_filename, 'wb') as f:
+                    if variable2['name'] == '':
+                        np.savez(f, data_array1 = data_array1)
+                    else:
+                        print('variable2 not implemented yet for variable1==pv...')
+                        exit()
+                        #np.savez(f, data_array1 = data_array1, data_array2 = data_array2)'''
+
 
             # save all dictionaries and strings to a json file #
 
@@ -158,11 +196,7 @@ def det_contourplot(domains, variable1, variable2, model, run, plot_type):
     # copy all plots and .txt-file to imk-tss-web server #
 
     if transfer_to_webserver:
-        if plot_type == 'map_deterministic_overview':
-            subfolder_name = 'deterministic_overview_maps'
-        elif plot_type == 'map_hurricane':
-            subfolder_name = 'deterministic_hurricane_maps'
-
+        subfolder_name = 'deterministic_overview_maps'
         path_webserver = '/home/iconeps/Data3/plots/icon/{}/{}'.format(subfolder_name, var1var2)
         os.system('scp ' + path['base'] + path['plots'] + '*.png '\
                   + 'iconeps@imk-tss-web.imk-tro.kit.edu:' + path_webserver)
@@ -193,56 +227,77 @@ def double_contourplot(var1var2):
 
     # load numpy arrays #
 
-    numpyarrays_filename = 'deterministic_overview_maps_{}_ndarrays_outofloop.npz'.format(var1var2)
+    if variable1['load_global_field']:
+        numpyarrays_filename = 'deterministic_overview_maps_{}_ndarrays_outofloop.npz'.format(var1var2)
 
-    if model == 'icon-eu-det':
-        with open(path['base'] + path['temp'] + numpyarrays_filename, 'rb') as f:
+        if model == 'icon-eu-det':
+            with open(path['base'] + path['temp'] + numpyarrays_filename, 'rb') as f:
+                with np.load(f) as loadedfile:
+                    clat = loadedfile['clat']
+                    clon = loadedfile['clon']
+
+        elif model == 'icon-global-det':
+            if not variable1['load_global_field']:
+                with open(path['base'] + path['temp'] + numpyarrays_filename, 'rb') as f:
+                    with np.load(f) as loadedfile:
+                        ll_lat = loadedfile['ll_lat']
+                        ll_lon = loadedfile['ll_lon']
+            elif variable2['name'] == '':
+                with open(path['base'] + path['temp'] + numpyarrays_filename, 'rb') as f:
+                    with np.load(f) as loadedfile:
+                        clat = loadedfile['clat']
+                        clon = loadedfile['clon']
+                        vlat = loadedfile['vlat']
+                        vlon = loadedfile['vlon']
+            else:
+                with open(path['base'] + path['temp'] + numpyarrays_filename, 'rb') as f:
+                    with np.load(f) as loadedfile:
+                        clat = loadedfile['clat']
+                        clon = loadedfile['clon']
+                        vlat = loadedfile['vlat']
+                        vlon = loadedfile['vlon']
+                        ll_lat = loadedfile['ll_lat']
+                        ll_lon = loadedfile['ll_lon']
+
+        numpyarrays_filename = 'deterministic_overview_maps_{}_ndarrays_withinloop.npz'.format(var1var2)
+        with open(recoverpath['base'] + recoverpath['temp'] + numpyarrays_filename, 'rb') as f:
             with np.load(f) as loadedfile:
-                clat = loadedfile['clat']
-                clon = loadedfile['clon']
+                data_array1 = loadedfile['data_array1']
+                if variable2['name'] != '':
+                    data_array2 = loadedfile['data_array2']
 
-    elif model == 'icon-global-det':
-        if variable2['name'] == '':
-            with open(path['base'] + path['temp'] + numpyarrays_filename, 'rb') as f:
-                with np.load(f) as loadedfile:
-                    clat = loadedfile['clat']
-                    clon = loadedfile['clon']
-                    vlat = loadedfile['vlat']
-                    vlon = loadedfile['vlon']
-        else:
-            with open(path['base'] + path['temp'] + numpyarrays_filename, 'rb') as f:
-                with np.load(f) as loadedfile:
-                    clat = loadedfile['clat']
-                    clon = loadedfile['clon']
-                    vlat = loadedfile['vlat']
-                    vlon = loadedfile['vlon']
-                    ll_lat = loadedfile['ll_lat']
-                    ll_lon = loadedfile['ll_lon']
+        print('loaded all vars')
 
-    numpyarrays_filename = 'deterministic_overview_maps_{}_ndarrays_withinloop.npz'.format(var1var2)
-    with open(recoverpath['base'] + recoverpath['temp'] + numpyarrays_filename, 'rb') as f:
-        with np.load(f) as loadedfile:
-            data_array1 = loadedfile['data_array1']
+
+        if domain['limits_type'] == 'radius':
+            margin_deg = 20
+        elif domain['limits_type'] == 'deltalatlon' or domain['limits_type'] == 'angle':
+            margin_deg = 20
+
+        if model == 'icon-eu-det':
+            data_array1_cut, clat_cut, clon_cut, vlat_cut, vlon_cut = data_array1, clat, clon, None, None
+        elif model == 'icon-global-det':
+            data_array_dims = '2d'
+            [data_array1_cut], clat_cut, clon_cut, vlat_cut, vlon_cut = \
+              cut_by_domain(domain, variable1['grid'], data_array_dims,
+                            [data_array1], clat, clon, vlat, vlon, margin_deg)
             if variable2['name'] != '':
-                data_array2 = loadedfile['data_array2']
-
-    #print('loaded all vars')
-
-
-    if domain['limits_type'] == 'radius':
-        margin_deg = 20
-    elif domain['limits_type'] == 'deltalatlon' or domain['limits_type'] == 'angle':
-        margin_deg = 20
-
-    if model == 'icon-eu-det':
-        data_array1_cut, clat_cut, clon_cut, vlat_cut, vlon_cut = data_array1, clat, clon, None, None
-    elif model == 'icon-global-det':
-        data_array1_cut, clat_cut, clon_cut, vlat_cut, vlon_cut = \
-          cut_by_domain(domain, variable1['grid'], data_array1, clat, clon, vlat, vlon, margin_deg)
-        if variable2['name'] != '':
-            data_array2_cut, ll_lat_cut, ll_lon_cut = \
-              cut_by_domain(domain, variable2['grid'], data_array2, ll_lat, ll_lon, None, None, margin_deg)
-            #data_array2_cut, ll_lat_cut, ll_lon_cut = data_array2, ll_lat, ll_lon
+                [data_array2_cut], ll_lat_cut, ll_lon_cut = \
+                  cut_by_domain(domain, variable2['grid'], data_array_dims,
+                                [data_array2], ll_lat, ll_lon, None, None, margin_deg)
+                #data_array2_cut, ll_lat_cut, ll_lon_cut = data_array2, ll_lat, ll_lon
+    else:
+        # if load_global_field == False
+        if variable1['name'][:2] == 'pv'\
+         and variable1['name'][-1:] == 'K':
+            iso_theta_value = float(variable1['name'][3:6])
+            data_array1_cut, clat_cut, clon_cut \
+             = calc_pv_on_theta(model, domain, variable1['grid'], run, hour, iso_theta_value)
+        elif variable1['name'][:5] == 'theta'\
+         and variable1['name'][-3:] == 'PVU':
+            iso_pv_value = float(variable1['name'][6:9])
+            data_array1_cut, clat_cut, clon_cut \
+             = calc_theta_on_pv(model, domain, variable1['grid'], run, hour, iso_pv_value)
 
 
     # example plot_name: icon-global-det_2020070512_prec_rate_mslp_europe_000h.png
@@ -272,7 +327,7 @@ def double_contourplot(var1var2):
         rgb_colors[2] = rgb_colors[3]       # copy lowest loaded color to color for under the lowest value
         rgb_colors.append(rgb_colors[-1])   # add highest loaded color to color for over the highest value
         wks_res.wkColorMap = np.array(rgb_colors)
-        levels1 = ([0,0.1,0.2,0.3,0.5,1,2,3,5,10,20,50,100])
+        levels1 = ([0,0.1,0.2,0.3,0.5,1,2,3,5,10,20,30,50])
         lbStride_value = 1
 
     elif variable1['name'] == 't_850hPa':
@@ -288,9 +343,18 @@ def double_contourplot(var1var2):
         levels1 = np.arange(150,300,25)
         lbStride_value = 1
     elif variable1['name'] == 'cape_ml':
-        wks_res.wkColorMap = 'WhiteBlueGreenYellowRed'
-        levels1 = np.arange(0, 2000+1, 100)
-        lbStride_value = 5
+        rgb_colors = []
+        rgb_colors.append([0, 0, 0])    # color not seen, needed for pyngl
+        rgb_colors.append([0, 0, 0])    # color not seen, needed for pyngl
+        rgb_colors.append([0, 0, 0])    # placeholder for color for under the lowest value
+        for i in range(9):              # load colors from palettable
+            rgb_colors.append(list(palettable.cmocean.sequential.Thermal_9.get_mpl_colormap(N=9)(i)[:3]))
+        rgb_colors[2] = rgb_colors[3]       # copy lowest loaded color to color for under the lowest value
+        rgb_colors.append(rgb_colors[-1])   # add highest loaded color to color for over the highest value
+        wks_res.wkColorMap = np.array(rgb_colors)
+        levels1 = np.arange(0, 3000+1, 100)
+        levels1 = ([0,10,20,50,100,200,500,1000,2000,5000])
+        lbStride_value = 1
 
     elif variable1['name'] == 'synth_bt_ir10.8':
         filename_colorpalette = 'rainbowIRsummer.txt'
@@ -324,7 +388,7 @@ def double_contourplot(var1var2):
             rgb_colors.append([float(line[0:3])/255, float(line[4:7])/255, float(line[8:11])/255])
         rgb_colors.append([1, 1, 1])
         wks_res.wkColorMap = np.array(rgb_colors)
-        levels1 = ([0,1,2,5,10,15,20,30,40,50,60,80,100,120,150,200,250,300,350,400,450,500,999])
+        levels1 = ([0,1,2,5,10,15,20,30,40,50,60,80,100,120,150,200,250,300,350,400,450,500,1000])
         lbStride_value = 1
 
     elif variable1['name'] == 'vmax_10m':
@@ -460,12 +524,7 @@ def double_contourplot(var1var2):
 
     mpres.mpDataBaseVersion         = 'MediumRes'
     mpres.mpDataSetName             = 'Earth..4'
-    if domain['name'] == 'usa':
-        mpres.mpOutlineBoundarySets      = 'GeophysicalAndUSStates'
-        mpres.mpProvincialLineColor      = 'black'
-        mpres.mpProvincialLineThicknessF = 2. * domain['plot_width'] / 1000
-    else:
-        mpres.mpOutlineBoundarySets     = 'national'
+    mpres.mpOutlineBoundarySets     = 'national'
     mpres.mpGeophysicalLineColor        = 'black'
     mpres.mpNationalLineColor           = 'black'
     mpres.mpGeophysicalLineThicknessF   = 1.5 * domain['plot_width'] / 1000
@@ -486,6 +545,8 @@ def double_contourplot(var1var2):
     # settings for variable1 / shading #
 
     v1res = Ngl.Resources()
+    v1res.nglFrame = False
+    v1res.nglDraw  = False
     v1res.sfDataArray       = data_array1_cut
     v1res.sfXArray          = clon_cut
     v1res.sfYArray          = clat_cut
@@ -496,7 +557,9 @@ def double_contourplot(var1var2):
     v1res.cnLinesOn = False
     v1res.cnFillOn  = True
     v1res.cnLineLabelsOn = False
-    if model == 'icon-eu-det':
+    if not variable1['load_global_field']:
+        v1res.cnFillMode = 'RasterFill'
+    elif model == 'icon-eu-det':
         v1res.cnFillMode = 'RasterFill'
     elif model == 'icon-global-det':
         v1res.cnFillMode = 'CellFill'
@@ -544,10 +607,14 @@ def double_contourplot(var1var2):
      or variable1['name'] == 'prec_24h_global'\
      or variable1['name'] == 'prec_sum'\
      or variable1['name'] == 'vmax_10m'\
-     or variable1['name'] == 'shear_200-850hPa':
+     or variable1['name'] == 'shear_200-850hPa'\
+     or variable1['name'][:2] == 'pv':
         v1res.lbBottomMarginF   = 0.05
+
     v1res.lbLeftMarginF         = -0.35
+
     if domain['name'] == 'mediterranean':
+        # very wide domain
         mpres.vpWidthF      = 0.94
         v1res.lbBottomMarginF += 0.15
         #v1res.lbBoxMinorExtentF = 0.13
@@ -563,6 +630,7 @@ def double_contourplot(var1var2):
         elif variable1['name'] == 'synth_bt_ir10.8'\
          or variable1['name'] == 'prec_24h_eu'\
          or variable1['name'] == 'prec_sum'\
+         or variable1['name'] == 'cape_ml'\
          or variable1['name'] == 'vmax_10m':
             v1res.lbLabelFontHeightF = 0.005
             v1res.lbTopMarginF = 0.35
@@ -570,225 +638,165 @@ def double_contourplot(var1var2):
         v1res.pmLabelBarWidthF = 0.04
         v1res.lbLeftMarginF = -0.5
 
-    v1res.nglFrame = False
-    v1res.nglDraw  = False
-
 
     # settings for variable2 / contourlines #
 
     if variable2['name'] != '':
         v2res = Ngl.Resources()
+        v2res.nglFrame = False
+        v2res.nglDraw  = False
         v2res.sfDataArray       = data_array2_cut
         v2res.sfXArray          = ll_lon_cut #ll_lon_cyclic
         v2res.sfYArray          = ll_lat_cut
         v2res.sfMissingValueV   = 9999  
         #v2res.trGridType        = 'TriangularMesh'
-        v2res.cnFillOn       = False
-        v2res.cnLinesOn      = True
-        v2res.cnLineLabelsOn = True
-
+        v2res.cnFillOn          = False
+        v2res.cnLinesOn         = True
+        v2res.cnLineLabelsOn    = True
         v2res.cnLineLabelPlacementMode = 'Constant'
-        v2res.cnLineLabelFontHeightF = 0.010
-        v2res.cnLineDashSegLenF = 0.25
-        v2res.cnLabelDrawOrder = 'PostDraw' # necessary to make everything visible
+        v2res.cnLabelDrawOrder = 'PostDraw'
         v2res.cnInfoLabelOn = False
-
-        '''v2res.cnLineLabelsOn = True
-        v2res.cnLabelDrawOrder = 'PostDraw'     # necessary to make everything visible
-        v2res.cnLineLabelPerimOn = False
-        v2res.cnLineLabelBackgroundColor = 'transparent'
-        v2res.cnLineLabelPlacementMode = 'Computed'
-        v2res.cnLineLabelDensityF = 0.2
-        v2res.cnLineLabelFontHeightF = 0.010
-        #v2res.cnLineDashSegLenF = 0.25
-
-        v2res.cnLowLabelsOn = True
-        #v2res.cnLowLabelPerimOn = False
-        v2res.cnLowLabelString = '$ZDV$hPa'
-        #v2res.cnLowLabelFontColor = 'black'
-        v2res.cnLowLabelBackgroundColor = 'white'''
-
         v2res.cnSmoothingOn = False
-        #v2res.cnSmoothingDistanceF = 0.01
-        #v2res.cnSmoothingTensionF = 0.1
+        v2res.cnLevelSelectionMode = 'ExplicitLevels'
+        v2res.cnLineThicknessF = 3.0 * domain['plot_width'] / 1000
+        v2res.cnLineLabelFontHeightF = 0.008
+        v2res.cnLineDashSegLenF = 0.25
+
+        v3res = Ngl.Resources()
+        v3res.nglFrame = False
+        v3res.nglDraw  = False
+        v3res.sfDataArray       = data_array2_cut
+        v3res.sfXArray          = ll_lon_cut #ll_lon_cyclic
+        v3res.sfYArray          = ll_lat_cut
+        v3res.sfMissingValueV   = 9999  
+        #v3res.trGridType        = 'TriangularMesh'
+        v3res.cnFillOn          = False
+        v3res.cnLinesOn         = True
+        v3res.cnLineLabelsOn    = True
+        v3res.cnLineLabelPlacementMode = 'Constant'
+        v3res.cnLabelDrawOrder = 'PostDraw'
+        v3res.cnInfoLabelOn = False
+        v3res.cnSmoothingOn = False
+        v3res.cnLevelSelectionMode = 'ExplicitLevels'
+        v3res.cnLineThicknessF = 5.0 * domain['plot_width'] / 1000
+        v3res.cnLineLabelFontHeightF = 0.008
+        v3res.cnLineDashSegLenF = 0.25
+
         if variable2['name'] == 'mslp':
-            spcng = 5
+            v2res.cnLevels = np.arange(900, 1100, 2)
+            v2res.cnLineLabelInterval = 2
+            v3res.cnLevels = np.arange(900, 1100, 10)
+            v3res.cnLineLabelInterval = 2
+
         elif variable2['name'] == 'gph_500hPa':
-            spcng = 4
+            v2res.cnLevels = np.arange(472, 633, 4)
+            v2res.cnLineLabelInterval = 1
+            v3res.cnLevels = np.arange(472, 633, 16)
+            v3res.cnLineLabelInterval = 1
+
         elif variable2['name'] == 'gph_300hPa':
-            spcng = 4
+            v2res.cnLevels = np.arange(780, 1000, 6)
+            v2res.cnLineLabelInterval = 1
+            v3res.cnLevels = np.arange(780, 1000, 24)
+            v3res.cnLineLabelInterval = 1
 
-        if variable2['name'] == 'shear_0-6km':
-            v2res.cnLevelSelectionMode = 'ExplicitLevels'
-            v2res.cnLevels = [10, 20, 30]
-            #v2res.cnSmoothingOn = True
-            #v2res.cnSmoothingDistanceF = 0.03
-            #v2res.cnSmoothingTensionF = 0.01
-        else:
-            v2res.cnLevelSelectionMode = 'ManualLevels'
-            v2res.cnLevelSpacingF      =  spcng
+        elif variable2['name'] == 'shear_0-6km':
+            v2res.cnLevels = [15, 25, 35]
+            v2res.cnLineLabelInterval = 1
+            v3res.cnLevels = [10, 20, 30]
+            v3res.cnLineLabelInterval = 1
 
-        v2res.nglFrame = False
-        v2res.nglDraw  = False
+
+    ''' these are settings for some experiment with lows/highs min/max pressure labels:
+    v2res.cnLineLabelsOn = True
+    v2res.cnLabelDrawOrder = 'PostDraw'
+    v2res.cnLineLabelPerimOn = False
+    v2res.cnLineLabelBackgroundColor = 'transparent'
+    v2res.cnLineLabelPlacementMode = 'Computed'
+    v2res.cnLineLabelDensityF = 0.2
+    v2res.cnLineLabelFontHeightF = 0.010
+    #v2res.cnLineDashSegLenF = 0.25
+
+    v2res.cnLowLabelsOn = True
+    #v2res.cnLowLabelPerimOn = False
+    v2res.cnLowLabelString = '$ZDV$hPa'
+    #v2res.cnLowLabelFontColor = 'black'
+    v2res.cnLowLabelBackgroundColor = 'white'''
 
 
     # settings for unit text #
 
-    text_str = variable1['unit']
+    if variable1['name'][:2] == 'pv'\
+    and (domain['name'] == 'southern_south_america'\
+          or domain['name'] == 'south_pole'):
+        text_str = variable1['unit'] + ' * -1'
+    else:
+        text_str = variable1['unit']
     text_res_1 = Ngl.Resources()
     text_res_1.txFontColor      = 'black'
     text_res_1.txFontHeightF = 0.013
     text_x = 0.965
+    text_y = domain['text_y']
 
 
-    # set domain specific resource settings #
+    # override settings for specific cases #
 
-    if domain['name'] == 'europe':
-        if variable2['name'] != '':
-            v2res.cnLineThicknessF = 5.0
-            v2res.cnLineLabelInterval = 1
-            v2res.cnLowLabelFontHeightF = 0.01
-        text_y = 0.865
-    elif domain['name'] == 'europe_and_north_atlantic':
-        if variable2['name'] != '':
-            v2res.cnLineThicknessF = 4.0
-            v2res.cnLineLabelInterval = 2
-            v2res.cnLowLabelFontHeightF = 0.01
-        text_y = 0.83
-    elif domain['name'] == 'mediterranean':
-        if variable2['name'] != '':
-            v2res.cnLineThicknessF = 4.0
-            v2res.cnLineLabelFontHeightF = 0.007
-            v2res.cnLineLabelInterval = 1
-            v2res.cnLowLabelFontHeightF = 0.01
-        text_y = 0.673
-        text_res_1.txFontHeightF = 0.01
-        mpres.mpGeophysicalLineThicknessF = 1. * domain['plot_width'] / 1000
-        mpres.mpNationalLineThicknessF    = 1. * domain['plot_width'] / 1000
-    elif domain['name'] == 'ionian_sea':
-        if variable2['name'] != '':
-            v2res.cnLineThicknessF = 5.0
-            v2res.cnLineLabelInterval = 1
-            v2res.cnLowLabelFontHeightF = 0.01
-        text_y = 0.82
-        if variable1['name'] != 'vmax_10m'\
-         and variable1['name'] != 'shear_200-850hPa':
-            mpres.mpGeophysicalLineThicknessF = 1. * domain['plot_width'] / 1000
-            mpres.mpNationalLineThicknessF    = 1. * domain['plot_width'] / 1000
-        if variable2['name'] == 'gph_300hPa':
-            v2res.cnLevelSpacingF = 2
-    elif domain['name'] == 'north_atlantic_storm':
-        if variable2['name'] != '':
-            v2res.cnLineThicknessF = 2.0
-            v2res.cnLineLabelInterval = 1
-            v2res.cnLowLabelFontHeightF = 0.03
-        text_y = 0.93
-    elif domain['name'] == 'usa':
-        if variable2['name'] != '':
-            v2res.cnLineThicknessF = 4.0
-            v2res.cnLineLabelInterval = 1
-            v2res.cnLowLabelFontHeightF = 0.01
-        text_y = 0.875
-    elif domain['name'] == 'southern_south_america':
-        if variable2['name'] != '':
-            v2res.cnLineThicknessF = 4.0
-            v2res.cnLineLabelInterval = 2
-            v2res.cnLowLabelFontHeightF = 0.01
-            if variable2['name'] == 'shear_0-6km':
-                v2res.cnLineLabelInterval = 1
-        text_y = 0.885
-    elif domain['name'] == 'north_argentina':
-        if variable2['name'] != '':
-            v2res.cnLineThicknessF = 4.0
-            v2res.cnLineLabelInterval = 2
-            v2res.cnLowLabelFontHeightF = 0.01
-            if variable2['name'] == 'shear_0-6km':
-                v2res.cnLineLabelInterval = 1
-        text_y = 0.90
-    elif domain['name'] == 'central_argentina':
-        if variable2['name'] != '':
-            v2res.cnLineThicknessF = 4.0
-            v2res.cnLineLabelInterval = 2
-            v2res.cnLowLabelFontHeightF = 0.01
-            if variable2['name'] == 'shear_0-6km':
-                v2res.cnLineLabelInterval = 1
-        text_y = 0.885
+    if domain['name'] == 'mediterranean':
+        text_res_1.txFontHeightF = 0.010
+        text_x = 0.980
+        mpres.mpGeophysicalLineThicknessF = 1.0 * domain['plot_width'] / 1000
+        mpres.mpNationalLineThicknessF    = 1.0 * domain['plot_width'] / 1000
+
     elif domain['name'] == 'north_pole' or domain['name'] == 'south_pole':
-        if variable2['name'] != '':
-            v2res.cnLineThicknessF = 3.0
-            v2res.cnLineLabelInterval = 4
-            v2res.cnLowLabelFontHeightF = 0.01
-        text_y = 0.93
-    elif domain['name'] == 'atlantic_hurricane_basin':
-        if variable2['name'] != '':
-            v2res.cnLineThicknessF = 3.0
-            v2res.cnLineLabelInterval = 2
-            v2res.cnLowLabelFontHeightF = 0.01
-        text_y = 0.665
-    elif domain['name'] == 'gulf_of_mexico':
-        if variable2['name'] != '':
-            v2res.cnLineThicknessF = 3.0
-            v2res.cnLineLabelInterval = 1
-            v2res.cnLowLabelFontHeightF = 0.02
-        text_y = 0.78
-    else:
-        print('no domain specific settings defined for this domain:', domain['name'])
-        print('stop plotting here')
-        exit()
+        if variable2['name'] == 'mslp':
+            v2res.cnLevels = np.arange(900, 1100, 4)
+            v3res.cnLevels = np.arange(900, 1100, 20)
+        elif variable2['name'] == 'gph_500hPa':
+            v2res.cnLevels = np.arange(472, 633, 8)
+            v3res.cnLevels = np.arange(472, 633, 32)
+        elif variable2['name'] == 'gph_300hPa':
+            v2res.cnLevels = np.arange(780, 1000, 12)
+            v3res.cnLevels = np.arange(780, 1000, 48)
 
 
     basic_map = Ngl.map(wks, mpres)
 
     # plot subnational borders for some domains #
 
-    if (domain['name'] == 'southern_south_america'\
-         or domain['name'] == 'central_argentina'\
-         or domain['name'] == 'north_argentina')\
-     and (variable1['name'] == 'cape_ml'\
-         or variable1['name'] == 'prec_rate'\
-         or variable1['name'] == 'prec_24h_eu'\
-         or variable1['name'] == 'prec_24h_global'\
-         or variable1['name'] == 'prec_sum'):
-        shp_filenames = []
-        #shp_filenames.append(['gadm36_DEU_0.shp', 3.0])
-        #shp_filenames.append(['gadm36_DEU_1.shp', 3.0])
-        #shp_filenames.append(['gadm36_AUT_0.shp', 3.0])
-        #shp_filenames.append(['gadm36_CHE_0.shp', 3.0])
-        #shp_filenames.append(['gadm36_ITA_0.shp', 3.0])
-        #shp_filenames.append(['gadm36_GRC_0.shp', 3.0])
-        #shp_filenames.append(['gadm36_CZE_0.shp', 3.0])
-        #shp_filenames.append(['gadm36_DEU_2.shp', 3.0])
-        #shp_filenames.append(['gadm36_ESP_0.shp', 3.0])
-        #shp_filenames.append(['gadm36_PRT_0.shp', 3.0])
-        #shp_filenames.append(['gadm36_FRA_0.shp', 3.0])
-        #shp_filenames.append(['gadm36_ARG_2.shp', 0.5])
-        #shp_filenames.append(['gadm36_URY_0.shp', 3.0])
+    shp_filenames = []
+    if domain['name'] == 'southern_south_america':
         shp_filenames.append(['gadm36_ARG_1.shp', 0.2])
         shp_filenames.append(['gadm36_BRA_1.shp', 0.2])
         shp_filenames.append(['gadm36_CHL_1.shp', 0.2])
+    elif domain['name'] == 'usa':
+        shp_filenames.append(['gadm36_USA_1.shp', 0.2])
+        shp_filenames.append(['gadm36_CAN_1.shp', 0.2])
+        shp_filenames.append(['gadm36_MEX_1.shp', 0.2])
 
-        for shp_filename, lineThickness in shp_filenames:
-            shpf = Nio.open_file(path['base'] + path['shapefiles'] + shp_filename, 'r')
-            shpf_lon = np.ravel(shpf.variables['x'][:])
-            shpf_lat = np.ravel(shpf.variables['y'][:])
-            shpf_segments = shpf.variables['segments'][:, 0]
+    for shp_filename, lineThickness in shp_filenames:
+        shpf = Nio.open_file(path['base'] + path['shapefiles'] + shp_filename, 'r')
+        shpf_lon = np.ravel(shpf.variables['x'][:])
+        shpf_lat = np.ravel(shpf.variables['y'][:])
+        shpf_segments = shpf.variables['segments'][:, 0]
 
-            plres = Ngl.Resources()
-            plres.gsLineColor = 'black'
-            plres.gsLineThicknessF = lineThickness
-            plres.gsSegments = shpf_segments
-            Ngl.add_polyline(wks, basic_map, shpf_lon, shpf_lat, plres)
+        plres = Ngl.Resources()
+        plres.gsLineColor = 'black'
+        plres.gsLineThicknessF = lineThickness
+        plres.gsSegments = shpf_segments
+        Ngl.add_polyline(wks, basic_map, shpf_lon, shpf_lat, plres)
 
 
     # put everything together # 
 
     contourshades_plot = Ngl.contour(wks, data_array1_cut, v1res)
     if variable2['name'] != '':
-        contourlines_plot = Ngl.contour(wks, data_array2_cut, v2res)
+        contourlines_minor_plot = Ngl.contour(wks, data_array2_cut, v2res)
+        contourlines_major_plot = Ngl.contour(wks, data_array2_cut, v3res)
 
     Ngl.overlay(basic_map, contourshades_plot)
     if variable2['name'] != '':
-        Ngl.overlay(basic_map, contourlines_plot)
+        Ngl.overlay(basic_map, contourlines_minor_plot)
+        Ngl.overlay(basic_map, contourlines_major_plot)
 
     Ngl.draw(basic_map)
     Ngl.text_ndc(wks, text_str, text_x, text_y, text_res_1)

@@ -82,7 +82,7 @@ def calc_mfl(qv, u, v):
 
 def calc_vint(var, p):
     ''' Compute vertical integral '''
-    ''' '''
+
     ''' var: Arbitrary input variable '''
     ''' p: pressure in Pa '''
 
@@ -101,9 +101,37 @@ def calc_mr_from_rh(rh, temp, p):
     ''' p: Input pressure in hPa '''
     ''' Formula from Hobbs 1977, p. 74 '''
     return 1e-2 * rh * calc_mrs(temp, p)
-    
+
 def calc_qv_from_mr(mr):
    ''' Compute specific humidity from mixing ratio '''
    ''' mr is mixing ratio '''
    ''' Formula from Salby 1996, p. 118 '''
    return mr / (1 + mr)
+
+def calc_tv(temp, qv):
+    #temp in K
+    #qv in ?
+    tv=temp*(calc_mr(qv)+epsil)/epsil*(1+calc_mr(qv))
+
+    return tv
+
+def calc_rho(temp, pres, qv):
+    #temp in K
+    #p in hPa
+    p=pres*100
+    rho=p/(calc_tv(temp, qv)*Rd)
+
+    return rho
+
+
+def calc_theta(temp, p):
+    #compute potential temperature
+    theta = temp * np.power(p/1000, 0.286)
+
+    return theta
+
+def calc_vorticity(u, v):
+    return vorticity
+
+def calc_potential_vorticity():
+    return PV
