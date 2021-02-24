@@ -106,12 +106,26 @@ def det_contourplot(domains, variable1, variable2, model, run):
         if variable1['load_global_field']:
             data_array1 = read_forecast_data(model, variable1['grid'], run, varname, fcst_hour=hour)
 
+            if variable1['name'] == 't_850hPa'\
+             or variable1['name'] == 'theta_e_850hPa':
+                contours_max_oro = 1400
+                data_oro_icosahedral = read_forecast_data(model, variable1['grid'], run, 'orography', fcst_hour=hour)
+                data_array1 = np.where(data_oro_icosahedral > contours_max_oro,
+                                       np.ones_like(data_array1) * 9999, data_array1)
+
+
             if variable2['name'] != '':
                 data_array2_non_cyclic \
                  = read_forecast_data(model, variable2['grid'], run, variable2['name'], fcst_hour=hour)
 
                 if variable2['name'] == 'mslp':
-                    lines_max_oro = 600
+                    lines_max_oro = 1000
+                    data_oro_latlon = read_forecast_data(model, variable2['grid'], run, 'orography', fcst_hour=hour)
+                    data_array2_non_cyclic = np.where(data_oro_latlon > lines_max_oro,
+                                                      np.ones_like(data_array2_non_cyclic) * 9999,
+                                                      data_array2_non_cyclic)
+                elif variable2['name'] == 'gph_850hPa':
+                    lines_max_oro = 1400
                     data_oro_latlon = read_forecast_data(model, variable2['grid'], run, 'orography', fcst_hour=hour)
                     data_array2_non_cyclic = np.where(data_oro_latlon > lines_max_oro,
                                                       np.ones_like(data_array2_non_cyclic) * 9999,
@@ -125,11 +139,11 @@ def det_contourplot(domains, variable1, variable2, model, run):
 
                 data_array2 = np.empty_like(data_array2_non_cyclic)
                 if variable2['grid'] == 'latlon_0.1':
-                    data_array2[:, 1799:] = data_array2_non_cyclic[:, :1801]  # flip around the data in lon direction to match
-                    data_array2[:, :1799] = data_array2_non_cyclic[:, 1801:]  # positions in the ll_lon array
+                    data_array2[:, 1799:] = data_array2_non_cyclic[:, :1801]  # flip around the data in lon direction
+                    data_array2[:, :1799] = data_array2_non_cyclic[:, 1801:]  # to match positions in the ll_lon array
                 elif variable2['grid'] == 'latlon_0.25':
-                    data_array2[:, 719:] = data_array2_non_cyclic[:, :721]  # flip around the data in lon direction to match
-                    data_array2[:, :719] = data_array2_non_cyclic[:, 721:]  # positions in the ll_lon array
+                    data_array2[:, 719:] = data_array2_non_cyclic[:, :721]  # flip around the data in lon direction
+                    data_array2[:, :719] = data_array2_non_cyclic[:, 721:]  # to match positions in the ll_lon array
 
                 ''' code for manual add_cyclic: add last lon row before the first lon
                 ll_lon = np.empty((ll_lon_non_cyclic.shape[0]+1))
@@ -331,30 +345,78 @@ def double_contourplot(var1var2):
         lbStride_value = 1
 
     elif variable1['name'] == 't_850hPa':
-        wks_res.wkColorMap = 'BkBlAqGrYeOrReViWh200'
-        levels1 = np.arange(-40, 40, 4)
-        lbStride_value = 1
+        rgb_colors = []
+        rgb_colors.append([0, 0, 0])    # color not seen, needed for pyngl
+        rgb_colors.append([0, 0, 0])    # color not seen, needed for pyngl
+        rgb_colors.append([0, 0, 0])    # placeholder for color for under the lowest value
+        for i in range(6,15):           # load colors from palettable
+            rgb_colors.append(list(palettable.scientific.sequential.Acton_10.get_mpl_colormap(N=15)(i)[:3]))
+        for i in range(4,13):           # load colors from palettable
+            rgb_colors.append(list(palettable.colorbrewer.sequential.Purples_9.get_mpl_colormap(N=16)(i)[:3]))
+        for i in range(26):             # load colors from palettable
+            rgb_colors.append(list(palettable.colorbrewer.diverging.Spectral_10.get_mpl_colormap(N=26).reversed()(i)[:3]))
+        for i in range(1,11):           # load colors from palettable
+            rgb_colors.append(list(palettable.cartocolors.sequential.Burg_7.get_mpl_colormap(N=11).reversed()(i)[:3]))
+        for i in range(2,2+6):          # load colors from palettable
+            rgb_colors.append(list(palettable.scientific.sequential.Turku_10.get_mpl_colormap(N=13).reversed()(i)[:3]))
+        rgb_colors[2] = rgb_colors[3]       # copy lowest loaded color to color for under the lowest value
+        rgb_colors.append(rgb_colors[-1])   # add highest loaded color to color for over the highest value
+        rgb_colors[33] = list(np.array([243, 255, 129])/255)
+        rgb_colors[34] = list(np.array([247, 237, 128])/255)
+        wks_res.wkColorMap = np.array(rgb_colors)
+        levels1 = np.arange(-30, 30+1, 1)
+        lbStride_value = 5
+
     elif variable1['name'] == 'theta_e_850hPa':
-        wks_res.wkColorMap = 'BkBlAqGrYeOrReViWh200'
-        levels1 = np.arange(-20, 80+1, 5)
-        lbStride_value = 1
+        rgb_colors = []
+        rgb_colors.append([0, 0, 0])    # color not seen, needed for pyngl
+        rgb_colors.append([0, 0, 0])    # color not seen, needed for pyngl
+        rgb_colors.append([0, 0, 0])    # placeholder for color for under the lowest value
+        for i in range(5,10):           # load colors from palettable
+            rgb_colors.append(list(palettable.scientific.sequential.Acton_10.get_mpl_colormap(N=10)(i)[:3]))
+        for i in range(4,13):           # load colors from palettable
+            rgb_colors.append(list(palettable.colorbrewer.sequential.Purples_9.get_mpl_colormap(N=16)(i)[:3]))
+        for i in range(26):             # load colors from palettable
+            rgb_colors.append(list(palettable.colorbrewer.diverging.Spectral_10.get_mpl_colormap(N=26).reversed()(i)[:3]))
+        for i in range(1,11):           # load colors from palettable
+            rgb_colors.append(list(palettable.cartocolors.sequential.Burg_7.get_mpl_colormap(N=11).reversed()(i)[:3]))
+        for i in range(2,2+5):          # load colors from palettable
+            rgb_colors.append(list(palettable.scientific.sequential.Turku_10.get_mpl_colormap(N=12).reversed()(i)[:3]))
+        rgb_colors[2] = rgb_colors[3]       # copy lowest loaded color to color for under the lowest value
+        rgb_colors.append(rgb_colors[-1])   # add highest loaded color to color for over the highest value
+        rgb_colors[29] = list(np.array([243, 255, 129])/255)
+        rgb_colors[30] = list(np.array([247, 237, 128])/255)
+        wks_res.wkColorMap = np.array(rgb_colors)
+        levels1 = np.arange(-20, 90+1, 2)
+        lbStride_value = 5
+
     elif variable1['name'] == 'wind_300hPa':
         wks_res.wkColorMap = 'wh-bl-gr-ye-re'
         levels1 = np.arange(150,300,25)
         lbStride_value = 1
+
     elif variable1['name'] == 'cape_ml':
         rgb_colors = []
         rgb_colors.append([0, 0, 0])    # color not seen, needed for pyngl
         rgb_colors.append([0, 0, 0])    # color not seen, needed for pyngl
         rgb_colors.append([0, 0, 0])    # placeholder for color for under the lowest value
-        for i in range(9):              # load colors from palettable
-            rgb_colors.append(list(palettable.cmocean.sequential.Thermal_9.get_mpl_colormap(N=9)(i)[:3]))
+        rgb_colors.append([1, 1, 1])
+        for i in range(2,7):            # load colors from palettable
+            rgb_colors.append(list(palettable.scientific.sequential.Tokyo_7.get_mpl_colormap(N=7)(i)[:3]))
+        for i in range(1,17,3):         # load colors from palettable
+            rgb_colors.append(list(palettable.cmocean.sequential.Thermal_20.get_mpl_colormap(N=22).reversed()(i)[:3]))
+        for i in range(9,18,4):         # load colors from palettable
+            rgb_colors.append(list(palettable.cmocean.sequential.Ice_20.get_mpl_colormap(N=20)(i)[:3]))
         rgb_colors[2] = rgb_colors[3]       # copy lowest loaded color to color for under the lowest value
         rgb_colors.append(rgb_colors[-1])   # add highest loaded color to color for over the highest value
+        rgb_colors[4] = list(np.array([138, 98, 110])/255)
+        rgb_colors[13] = list(np.array([142, 69, 139])/255)
         wks_res.wkColorMap = np.array(rgb_colors)
-        levels1 = np.arange(0, 3000+1, 100)
-        levels1 = ([0,10,20,50,100,200,500,1000,2000,5000])
+        #levels1 = ([0,100,200,350,530,750,1000,1300,1630,2000,2400,2850,3330,3850,4400,5000])  # more accurate sqr(x)
+        levels1 = ([0,100,200,350,500,750,1000,1300,1600,2000,2400,2800,3300,3800,4400,5000])   # rounded to be pretty
         lbStride_value = 1
+        rgb_arr = np.array(rgb_colors)
+        np.savetxt("colorpalette_marco_cape_ml.txt", np.around(rgb_arr[3:-1]*255,0), fmt='%2d', delimiter = ",")
 
     elif variable1['name'] == 'synth_bt_ir10.8':
         filename_colorpalette = 'rainbowIRsummer.txt'
@@ -552,7 +614,7 @@ def double_contourplot(var1var2):
     v1res.sfYArray          = clat_cut
     v1res.sfMissingValueV   = 9999
     v1res.cnFillBackgroundColor = 'white'
-    v1res.cnMissingValFillColor = 'white'
+    v1res.cnMissingValFillColor = 'Gray80'
 
     v1res.cnLinesOn = False
     v1res.cnFillOn  = True
@@ -595,9 +657,9 @@ def double_contourplot(var1var2):
 
 
     if variable1['name'] == 't_850hPa':
-        v1res.lbBottomMarginF   = -0.07
+        v1res.lbBottomMarginF   = 0.05
     elif variable1['name'] == 'theta_e_850hPa':
-        v1res.lbBottomMarginF   = -0.07
+        v1res.lbBottomMarginF   = 0.05
     elif variable1['name'] == 'wind_300hPa':
         v1res.lbBottomMarginF   = -0.35
     elif variable1['name'] == 'synth_bt_ir10.8'\
@@ -684,14 +746,8 @@ def double_contourplot(var1var2):
 
         if variable2['name'] == 'mslp':
             v2res.cnLevels = np.arange(900, 1100, 2)
-            v2res.cnLineLabelInterval = 2
-            v3res.cnLevels = np.arange(900, 1100, 10)
-            v3res.cnLineLabelInterval = 2
-
-        elif variable2['name'] == 'gph_500hPa':
-            v2res.cnLevels = np.arange(472, 633, 4)
             v2res.cnLineLabelInterval = 1
-            v3res.cnLevels = np.arange(472, 633, 16)
+            v3res.cnLevels = np.arange(900, 1100, 10)
             v3res.cnLineLabelInterval = 1
 
         elif variable2['name'] == 'gph_300hPa':
@@ -700,11 +756,79 @@ def double_contourplot(var1var2):
             v3res.cnLevels = np.arange(780, 1000, 24)
             v3res.cnLineLabelInterval = 1
 
-        elif variable2['name'] == 'shear_0-6km':
-            v2res.cnLevels = [15, 25, 35]
+        elif variable2['name'] == 'gph_850hPa':
+            v2res.cnLevels = np.arange(100, 180, 2)
+            v2res.cnLineLabelInterval = 2
+            v3res.cnLevels = np.arange(100, 180, 10)
+            v3res.cnLineLabelInterval = 2
+
+        elif variable2['name'] == 'gph_700hPa':
+            v2res.cnLevels = np.arange(472, 633, 2)
             v2res.cnLineLabelInterval = 1
-            v3res.cnLevels = [10, 20, 30]
+            v3res.cnLevels = np.arange(472, 633, 8)
             v3res.cnLineLabelInterval = 1
+
+        elif variable2['name'] == 'gph_500hPa':
+            v2res.cnLevels = np.arange(472, 633, 4)
+            v2res.cnLineLabelInterval = 1
+            v3res.cnLevels = np.arange(472, 633, 16)
+            v3res.cnLineLabelInterval = 1
+
+        elif variable2['name'] == 'shear_0-6km':
+            v4res = Ngl.Resources()
+            v4res.nglFrame = False
+            v4res.nglDraw  = False
+            v4res.sfDataArray       = data_array2_cut
+            v4res.sfXArray          = ll_lon_cut #ll_lon_cyclic
+            v4res.sfYArray          = ll_lat_cut
+            v4res.sfMissingValueV   = 9999  
+            #v4res.trGridType        = 'TriangularMesh'
+            v4res.cnFillOn          = False
+            v4res.cnLinesOn         = True
+            v4res.cnLineLabelsOn    = True
+            v4res.cnLineLabelPlacementMode = 'Constant'
+            v4res.cnLabelDrawOrder = 'PostDraw'
+            v4res.cnInfoLabelOn = False
+            v4res.cnSmoothingOn = False
+            v4res.cnLevelSelectionMode = 'ExplicitLevels'
+            v4res.cnLineLabelFontHeightF = 0.008
+            v4res.cnLineDashSegLenF = 0.25
+            v5res = Ngl.Resources()
+            v5res.nglFrame = False
+            v5res.nglDraw  = False
+            v5res.sfDataArray       = data_array2_cut
+            v5res.sfXArray          = ll_lon_cut #ll_lon_cyclic
+            v5res.sfYArray          = ll_lat_cut
+            v5res.sfMissingValueV   = 9999  
+            #54res.trGridType        = 'TriangularMesh'
+            v5res.cnFillOn          = False
+            v5res.cnLinesOn         = True
+            v5res.cnLineLabelsOn    = True
+            v5res.cnLineLabelPlacementMode = 'Constant'
+            v5res.cnLabelDrawOrder = 'PostDraw'
+            v5res.cnInfoLabelOn = False
+            v5res.cnSmoothingOn = False
+            v5res.cnLevelSelectionMode = 'ExplicitLevels'
+            v5res.cnLineLabelFontHeightF = 0.008
+            v5res.cnLineDashSegLenF = 0.25
+
+            v2res.cnLevels = [10]
+            v2res.cnLineLabelInterval = 1
+            v2res.cnLineDashSegLenF = 0.15
+            v2res.cnLineThicknessF = 2.4 * domain['plot_width'] / 1000
+            v3res.cnLevels = [15]
+            v3res.cnLineLabelInterval = 1
+            v3res.cnLineThicknessF = 4.5 * domain['plot_width'] / 1000
+            v3res.cnLineDashSegLenF = 0.15
+            v3res.cnLineThicknessF = 3.6 * domain['plot_width'] / 1000
+            v4res.cnLevels = [20]
+            v4res.cnLineLabelInterval = 1
+            v4res.cnLineDashSegLenF = 0.15
+            v4res.cnLineThicknessF = 5.4 * domain['plot_width'] / 1000
+            v5res.cnLevels = [25]
+            v5res.cnLineLabelInterval = 1
+            v5res.cnLineDashSegLenF = 0.15
+            v5res.cnLineThicknessF = 8.0 * domain['plot_width'] / 1000
 
 
     ''' these are settings for some experiment with lows/highs min/max pressure labels:
@@ -739,24 +863,65 @@ def double_contourplot(var1var2):
     text_y = domain['text_y']
 
 
+    # settings for description label #
+
+    res_text_descr = Ngl.Resources()
+    res_text_descr.txJust           = 'CenterLeft'
+    res_text_descr.txFontHeightF    = 0.01
+    res_text_descr.txFontColor      = 'black'
+    res_text_descr.txBackgroundFillColor = 'white'
+    res_text_descr.txPerimOn = True
+    res_text_descr.txPerimColor = 'black'
+
+    text_descr_str1 = 'ICON-Global-Deterministic from {:02d}.{:02d}.{:4d} {:02d}UTC +{:d}h, '.format(
+                       run['day'], run['month'], run['year'], run['hour'], hour)
+    if variable2['name'] == '':
+        text_descr_str2 = 'Contours: {} in {}'.format(
+                           variable1['name'], variable1['unit'])
+    else:
+        text_descr_str2 = 'Contours: {} in {}, Lines: {} in {}'.format(
+                           variable1['name'], variable1['unit'], variable2['name'], variable2['unit'])
+    text_descr_x = 0.02
+    text_descr_y = domain['text_y'] - 0.005
+
+
     # override settings for specific cases #
 
     if domain['name'] == 'mediterranean':
-        text_res_1.txFontHeightF = 0.010
+        mpres.mpGeophysicalLineThicknessF /= 1.5
+        mpres.mpNationalLineThicknessF /= 1.5
+        v2res.cnLineThicknessF /= 1.5
+        v2res.cnLineLabelFontHeightF /= 1.5
+        v3res.cnLineThicknessF /= 1.5
+        v3res.cnLineLabelFontHeightF /= 1.5
+        v2res.cnLineDashSegLenF = 0.12
+        v3res.cnLineDashSegLenF = 0.12
+        text_res_1.txFontHeightF = 0.007
         text_x = 0.980
-        mpres.mpGeophysicalLineThicknessF = 1.0 * domain['plot_width'] / 1000
-        mpres.mpNationalLineThicknessF    = 1.0 * domain['plot_width'] / 1000
+        res_text_descr.txFontHeightF = 0.007
+        text_descr_x = 0.005
 
     elif domain['name'] == 'north_pole' or domain['name'] == 'south_pole':
         if variable2['name'] == 'mslp':
             v2res.cnLevels = np.arange(900, 1100, 4)
             v3res.cnLevels = np.arange(900, 1100, 20)
-        elif variable2['name'] == 'gph_500hPa':
-            v2res.cnLevels = np.arange(472, 633, 8)
-            v3res.cnLevels = np.arange(472, 633, 32)
         elif variable2['name'] == 'gph_300hPa':
             v2res.cnLevels = np.arange(780, 1000, 12)
             v3res.cnLevels = np.arange(780, 1000, 48)
+        elif variable2['name'] == 'gph_500hPa':
+            v2res.cnLevels = np.arange(472, 633, 8)
+            v3res.cnLevels = np.arange(472, 633, 32)
+        elif variable2['name'] == 'gph_700hPa':
+            v2res.cnLevels = np.arange(472, 633, 8)
+            v3res.cnLevels = np.arange(472, 633, 32)
+        elif variable2['name'] == 'gph_850hPa':
+            v2res.cnLevels = np.arange(102, 180, 4)
+            v3res.cnLevels = np.arange(102, 180, 20)
+    elif domain['name'] == 'Argentina_Central' or domain['name'] == 'Argentina_Central_cerca':
+        if variable2['name'] == 'gph_850hPa':
+            v2res.cnLevels = np.arange(100, 180, 1)
+            v3res.cnLevels = np.arange(100, 180, 5)
+            v2res.cnLineLabelInterval = 1
 
 
     basic_map = Ngl.map(wks, mpres)
@@ -764,11 +929,17 @@ def double_contourplot(var1var2):
     # plot subnational borders for some domains #
 
     shp_filenames = []
-    if domain['name'] == 'southern_south_america':
+    if domain['name'] == 'southern_south_america'\
+     or domain['name'] == 'patagonia_cyclone'\
+     or domain['name'] == 'arg_uru_braz'\
+     or domain['name'] == 'argentina_central'\
+     or domain['name'] == 'argentina_central_cerca':
         shp_filenames.append(['gadm36_ARG_1.shp', 0.2])
         shp_filenames.append(['gadm36_BRA_1.shp', 0.2])
         shp_filenames.append(['gadm36_CHL_1.shp', 0.2])
-    elif domain['name'] == 'usa':
+    elif domain['name'] == 'conus'\
+     or domain['name'] == 'north_america'\
+     or domain['name'] == 'texas':
         shp_filenames.append(['gadm36_USA_1.shp', 0.2])
         shp_filenames.append(['gadm36_CAN_1.shp', 0.2])
         shp_filenames.append(['gadm36_MEX_1.shp', 0.2])
@@ -792,14 +963,21 @@ def double_contourplot(var1var2):
     if variable2['name'] != '':
         contourlines_minor_plot = Ngl.contour(wks, data_array2_cut, v2res)
         contourlines_major_plot = Ngl.contour(wks, data_array2_cut, v3res)
+        if variable2['name'] == 'shear_0-6km':
+            contourlines_major2_plot = Ngl.contour(wks, data_array2_cut, v4res)
+            contourlines_major3_plot = Ngl.contour(wks, data_array2_cut, v5res)
 
     Ngl.overlay(basic_map, contourshades_plot)
     if variable2['name'] != '':
         Ngl.overlay(basic_map, contourlines_minor_plot)
         Ngl.overlay(basic_map, contourlines_major_plot)
+        if variable2['name'] == 'shear_0-6km':
+            Ngl.overlay(basic_map, contourlines_major2_plot)
+            Ngl.overlay(basic_map, contourlines_major3_plot)
 
     Ngl.draw(basic_map)
     Ngl.text_ndc(wks, text_str, text_x, text_y, text_res_1)
+    #Ngl.text_ndc(wks, text_descr_str1 + text_descr_str2, text_descr_x, text_descr_y, res_text_descr)
 
     Ngl.frame(wks)
     Ngl.delete_wks(wks)

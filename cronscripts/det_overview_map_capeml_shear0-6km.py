@@ -16,16 +16,14 @@ def main():
     model = 'icon-global-det'
 
     run = calc_latest_run_time(model)
-    #run = dict(year = 2020, month = 9, day = 22, hour = 0)
+    #run = dict(year = 2021, month = 2, day = 23, hour = 0)
 
     domains = []
     domains.append(get_domain('europe'))
     domains.append(get_domain('europe_and_north_atlantic'))
     domains.append(get_domain('mediterranean'))
-    domains.append(get_domain('usa'))
+    domains.append(get_domain('north_america'))
     domains.append(get_domain('southern_south_america'))
-    #domains.append(get_domain('north_pole'))
-    #domains.append(get_domain('south_pole'))
 
     variable1 = dict(name='cape_ml', unit='J/kg', grid='icosahedral', load_global_field=True)
     variable2 = dict(name='shear_0-6km', unit='m/s', grid='latlon_0.1', load_global_field=True)

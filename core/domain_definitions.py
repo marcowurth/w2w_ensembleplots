@@ -37,15 +37,27 @@ def get_domain(domain_name):
     elif domain_name == 'mediterranean':
         domain =   dict(name = domain_name, plot_width = 1200, projection = 'CylindricalEquidistant',
                         limits_type = 'deltalatlon',
-                        centerlat = 38.7, centerlon = 15, deltalat_deg = 8.5, deltalon_deg = 22, text_y = 0.673)
+                        centerlat = 37.2, centerlon = 15, deltalat_deg = 10, deltalon_deg = 22, text_y = 0.710)
 
-    elif domain_name == 'usa':
+    elif domain_name == 'conus':
         domain =   dict(name = domain_name, plot_width = 800, projection = 'Hammer', limits_type = 'radius',
-                        centerlat = 37, centerlon = -99, radius = 1900, text_y = 0.875)
+                        centerlat = 37, centerlon = -96, radius = 2100, text_y = 0.870)
+
+    elif domain_name == 'texas':
+        domain =   dict(name = domain_name, plot_width = 800, projection = 'Hammer', limits_type = 'radius',
+                        centerlat = 31, centerlon = -99, radius = 600, text_y = 0.880)
+
+    elif domain_name == 'north_america':
+        domain =   dict(name = domain_name, plot_width = 800, projection = 'Hammer', limits_type = 'radius',
+                        centerlat = 42, centerlon = -96, radius = 2100, text_y = 0.860)
 
     elif domain_name == 'southern_south_america':
         domain =   dict(name = domain_name, plot_width = 800, projection = 'Hammer', limits_type = 'radius',
                         centerlat = -34, centerlon = -66, radius = 1900, text_y = 0.885)
+
+    elif domain_name == 'patagonia_cyclone':
+        domain =   dict(name = domain_name, plot_width = 800, projection = 'Hammer', limits_type = 'radius',
+                        centerlat = -43, centerlon = -60, radius = 800, text_y = 0.885)
 
     elif domain_name == 'southern_south_america_old':
         domain =   dict(name = domain_name, plot_width = 800, projection = 'Hammer', limits_type = 'radius',
@@ -67,6 +79,22 @@ def get_domain(domain_name):
         domain =   dict(name = domain_name, plot_width = 1200, projection = 'CylindricalEquidistant',
                         limits_type = 'deltalatlon',
                         centerlat = 20, centerlon = -55, deltalat_deg = 20, deltalon_deg = 50, text_y = 0.665)
+
+    elif domain_name == 'argentina_central':
+        domain =   dict(name = domain_name, plot_width = 800, projection = 'Hammer', limits_type = 'radius',
+                        centerlat = -34.6, centerlon = -64.4, radius = 800, text_y = 0.905)
+
+    elif domain_name == 'arg_uru_braz':
+        domain =   dict(name = domain_name, plot_width = 800, projection = 'Hammer', limits_type = 'radius',
+                        centerlat = -32.5, centerlon = -61.0, radius = 1000, text_y = 0.905)
+
+    elif domain_name == 'argentina_central_cerca':
+        domain =   dict(name = domain_name, plot_width = 800, projection = 'Hammer', limits_type = 'radius',
+                        centerlat = -36.0, centerlon = -66.0, radius = 500, text_y = 0.905)
+
+    elif domain_name == 'north_west_australia':
+        domain =   dict(name = domain_name, plot_width = 800, projection = 'Hammer', limits_type = 'radius',
+                        centerlat = -21.0, centerlon = 120.0, radius = 800, text_y = 0.905)
 
     else:
         print('domain not known:', domain_name)

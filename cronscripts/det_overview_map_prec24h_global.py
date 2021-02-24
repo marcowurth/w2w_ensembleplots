@@ -20,7 +20,7 @@ def main():
 
     domains = []
     domains.append(get_domain('europe_and_north_atlantic'))
-    domains.append(get_domain('usa'))
+    domains.append(get_domain('north_america'))
     domains.append(get_domain('southern_south_america'))
     domains.append(get_domain('north_pole'))
     domains.append(get_domain('south_pole'))

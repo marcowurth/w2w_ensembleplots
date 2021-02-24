@@ -104,15 +104,25 @@ def read_forecast_data(model, grid, date, var, **kwargs):
         varname1_folder = 'tqv'
         varname1_grib = 'tqv'
         varname1_cf = 'tciwv'
+    elif var == 'gph_300hPa':
+        varname1_lvtype = 'pl'
+        varname1_folder = 'fi_300hPa'
+        varname1_grib = '300_fi'
+        varname1_cf = 'z'
     elif var == 'gph_500hPa':
         varname1_lvtype = 'pl'
         varname1_folder = 'fi_500hPa'
         varname1_grib = '500_fi'
         varname1_cf = 'z'
-    elif var == 'gph_300hPa':
+    elif var == 'gph_700hPa':
         varname1_lvtype = 'pl'
-        varname1_folder = 'fi_300hPa'
-        varname1_grib = '300_fi'
+        varname1_folder = 'fi_700hPa'
+        varname1_grib = '700_fi'
+        varname1_cf = 'z'
+    elif var == 'gph_850hPa':
+        varname1_lvtype = 'pl'
+        varname1_folder = 'fi_850hPa'
+        varname1_grib = '850_fi'
         varname1_cf = 'z'
     elif var == 't_850hPa':
         varname1_lvtype = 'pl'
@@ -572,14 +582,13 @@ def read_forecast_data(model, grid, date, var, **kwargs):
             ds.close()
             del ds
         else:
-            with open(path['base'] + path['subdir'] + filename_inv,'rb') as file:
-                grib_id = eccodes.codes_grib_new_from_file(file)
-                if 'point' in kwargs:
-                    data_var_inv = eccodes.codes_get_array(grib_id, 'values')[point_index[0]]
-                elif 'fcst_hour' in kwargs:
-                    data_var_inv = eccodes.codes_get_array(grib_id, 'values')[:]
-                eccodes.codes_release(grib_id)
-            del grib_id
+            ds = xr.open_dataset(path['base'] + path['subdir'] + filename_inv, engine='cfgrib', backend_kwargs={'errors': 'ignore'})
+            if 'point' in kwargs:
+                data_var_inv = float(ds['h'][point_index[0]].values)
+            elif 'fcst_hour' in kwargs:
+                data_var_inv = ds['h'].values
+            ds.close()
+            del ds
 
 
     # calculate final variables out of the read data arrays #
@@ -617,9 +626,13 @@ def read_forecast_data(model, grid, date, var, **kwargs):
         data_final = data_var1 * 3.6
     elif var == 'tqv':          # in mm
         data_final = data_var1
+    elif var == 'gph_300hPa':   # in gpdm
+        data_final = data_var1 / 98.0665
     elif var == 'gph_500hPa':   # in gpdm
         data_final = data_var1 / 98.0665
-    elif var == 'gph_300hPa':   # in gpdm
+    elif var == 'gph_700hPa':   # in gpdm
+        data_final = data_var1 / 98.0665
+    elif var == 'gph_850hPa':   # in gpdm
         data_final = data_var1 / 98.0665
     elif var == 't_850hPa':     # in deg C
         data_final = data_var1 - 273.15
