@@ -280,7 +280,7 @@ def double_contourplot(var1var2):
                 if variable2['name'] != '':
                     data_array2 = loadedfile['data_array2']
 
-        print('loaded all vars')
+        #print('loaded all vars')
 
 
         if domain['limits_type'] == 'radius':
@@ -364,7 +364,7 @@ def double_contourplot(var1var2):
         rgb_colors[33] = list(np.array([243, 255, 129])/255)
         rgb_colors[34] = list(np.array([247, 237, 128])/255)
         wks_res.wkColorMap = np.array(rgb_colors)
-        levels1 = np.arange(-30, 30+1, 1)
+        levels1 = np.arange(-35, 25+1, 1)
         lbStride_value = 5
 
     elif variable1['name'] == 'theta_e_850hPa':
@@ -415,8 +415,8 @@ def double_contourplot(var1var2):
         #levels1 = ([0,100,200,350,530,750,1000,1300,1630,2000,2400,2850,3330,3850,4400,5000])  # more accurate sqr(x)
         levels1 = ([0,100,200,350,500,750,1000,1300,1600,2000,2400,2800,3300,3800,4400,5000])   # rounded to be pretty
         lbStride_value = 1
-        rgb_arr = np.array(rgb_colors)
-        np.savetxt("colorpalette_marco_cape_ml.txt", np.around(rgb_arr[3:-1]*255,0), fmt='%2d', delimiter = ",")
+        #rgb_arr = np.array(rgb_colors)
+        #np.savetxt("colorpalette_marco_cape_ml.txt", np.around(rgb_arr[3:-1]*255,0), fmt='%2d', delimiter = ",")
 
     elif variable1['name'] == 'synth_bt_ir10.8':
         filename_colorpalette = 'rainbowIRsummer.txt'
