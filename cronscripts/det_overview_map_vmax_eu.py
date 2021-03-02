@@ -18,13 +18,13 @@ def main():
     run = calc_latest_run_time(model)
     if run['hour'] == 6 or run['hour'] == 18:
         run['hour'] -= 6
-    #run = dict(year = 2020, month = 10, day = 15, hour = 0)
+    #run = dict(year = 2020, month = 8, day = 19, hour = 0)
 
     domains = []
     domains.append(get_domain('europe'))
     domains.append(get_domain('mediterranean'))
 
-    variable1 = dict(name='prec_24h', unit='mm', grid='latlon_0.0625', load_global_field=True)
+    variable1 = dict(name='vmax_10m', unit='km/h', grid='latlon_0.0625', load_global_field=True)
     variable2 = dict(name='')
 
     det_contourplot(domains, variable1, variable2, model, run)

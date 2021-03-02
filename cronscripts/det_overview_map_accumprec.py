@@ -16,7 +16,7 @@ def main():
     model = 'icon-global-det'
 
     run = calc_latest_run_time(model)
-    #run = dict(year = 2020, month = 9, day = 22, hour = 0)
+    #run = dict(year = 2021, month = 2, day = 21, hour = 12)
 
     domains = []
     domains.append(get_domain('europe'))
@@ -24,6 +24,7 @@ def main():
     domains.append(get_domain('mediterranean'))
     domains.append(get_domain('north_america'))
     domains.append(get_domain('southern_south_america'))
+    domains.append(get_domain('eastern_asia'))
     domains.append(get_domain('north_pole'))
     domains.append(get_domain('south_pole'))
 

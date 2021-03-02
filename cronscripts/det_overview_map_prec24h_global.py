@@ -16,16 +16,19 @@ def main():
     model = 'icon-global-det'
 
     run = calc_latest_run_time(model)
-    #run = dict(year = 2020, month = 10, day = 15, hour = 0)
+    #run = dict(year = 2021, month = 2, day = 21, hour = 12)
 
     domains = []
+    domains.append(get_domain('europe'))
     domains.append(get_domain('europe_and_north_atlantic'))
+    domains.append(get_domain('mediterranean'))
     domains.append(get_domain('north_america'))
     domains.append(get_domain('southern_south_america'))
+    domains.append(get_domain('eastern_asia'))
     domains.append(get_domain('north_pole'))
     domains.append(get_domain('south_pole'))
 
-    variable1 = dict(name='prec_24h_global', unit='mm', grid='icosahedral', load_global_field=True)
+    variable1 = dict(name='prec_24h', unit='mm', grid='icosahedral', load_global_field=True)
     variable2 = dict(name='')
 
     det_contourplot(domains, variable1, variable2, model, run)

@@ -7,6 +7,7 @@ import numpy as np
 import Ngl
 import Nio
 import palettable
+import cmasher
 from PIL import Image
 
 import sys
@@ -24,9 +25,12 @@ def det_contourplot(domains, variable1, variable2, model, run):
     #transfer_to_webserver = False
 
     if model == 'icon-global-det':
-        hours = list(range(0, 180+1, 6))
-        #hours = list(range(1, 48+1, 1))
-        #hours = [120]
+        if variable1['name'] == 'prec_24h' or variable1['name'] == 'vmax_10m':
+            hours = list(range(126, 180+1, 6))
+        else:
+            hours = list(range(0, 180+1, 6))
+        #hours = list(range(0, 78+1, 1))
+        #hours = [0]
     elif model == 'icon-eu-det':
         hours = list(range(0, 120+1, 6))
         #hours = list(range(0, 72+1, 1))
@@ -98,13 +102,8 @@ def det_contourplot(domains, variable1, variable2, model, run):
     for hour in hours:
         print('forecast hour:', hour)
 
-        if variable1['name'] == 'prec_24h_eu' or variable1['name'] == 'prec_24h_global':
-            varname = 'prec_24h'
-        else:
-            varname = variable1['name']
-
         if variable1['load_global_field']:
-            data_array1 = read_forecast_data(model, variable1['grid'], run, varname, fcst_hour=hour)
+            data_array1 = read_forecast_data(model, variable1['grid'], run, variable1['name'], fcst_hour=hour)
 
             if variable1['name'] == 't_850hPa'\
              or variable1['name'] == 'theta_e_850hPa':
@@ -280,7 +279,7 @@ def double_contourplot(var1var2):
                 if variable2['name'] != '':
                     data_array2 = loadedfile['data_array2']
 
-        #print('loaded all vars')
+        print('loaded all vars')
 
 
         if domain['limits_type'] == 'radius':
@@ -322,99 +321,85 @@ def double_contourplot(var1var2):
 
     # plot basic map with borders #
 
-    wks_res = Ngl.Resources()
-    wks_res.wkWidth  = domain['plot_width']
-    wks_res.wkHeight = domain['plot_width']     # the whitespace above and below the plot will be cut afterwards
-
     if variable1['name'] == 'prec_rate'\
      or variable1['name'] == 'prec_6h':
         filename_colorpalette = 'colorscale_prec_rate.txt'
         with open(path['base'] + path['colorpalette'] + filename_colorpalette, 'r') as f:
             lines = f.readlines()
         rgb_colors = []
-        rgb_colors.append([0, 0, 0])    # color not seen, needed for pyngl
-        rgb_colors.append([0, 0, 0])    # color not seen, needed for pyngl
-        rgb_colors.append([0, 0, 0])    # placeholder for color for under the lowest value
-        rgb_colors.append([1, 1, 1])    # first color
+        rgb_colors.append([0, 0, 0, 0])     # color for under the lowest value, transparent
         for i, line in enumerate(lines):
-            rgb_colors.append([float(line[0:3])/255, float(line[4:7])/255, float(line[8:11])/255])
-        rgb_colors[2] = rgb_colors[3]       # copy lowest loaded color to color for under the lowest value
+            rgb_colors.append([float(line[0:3])/255, float(line[4:7])/255, float(line[8:11])/255, 1])
         rgb_colors.append(rgb_colors[-1])   # add highest loaded color to color for over the highest value
-        wks_res.wkColorMap = np.array(rgb_colors)
-        levels1 = ([0,0.1,0.2,0.3,0.5,1,2,3,5,10,20,30,50])
+        levels1 = ([0.1,0.2,0.3,0.5,1,2,3,5,10,20,30,50])
         lbStride_value = 1
 
     elif variable1['name'] == 't_850hPa':
         rgb_colors = []
-        rgb_colors.append([0, 0, 0])    # color not seen, needed for pyngl
-        rgb_colors.append([0, 0, 0])    # color not seen, needed for pyngl
-        rgb_colors.append([0, 0, 0])    # placeholder for color for under the lowest value
-        for i in range(6,15):           # load colors from palettable
-            rgb_colors.append(list(palettable.scientific.sequential.Acton_10.get_mpl_colormap(N=15)(i)[:3]))
-        for i in range(4,13):           # load colors from palettable
-            rgb_colors.append(list(palettable.colorbrewer.sequential.Purples_9.get_mpl_colormap(N=16)(i)[:3]))
-        for i in range(26):             # load colors from palettable
-            rgb_colors.append(list(palettable.colorbrewer.diverging.Spectral_10.get_mpl_colormap(N=26).reversed()(i)[:3]))
-        for i in range(1,11):           # load colors from palettable
+        rgb_colors.append([0, 0, 0])        # placeholder for color for under the lowest value
+        for i in range(10):
+            rgb_colors.append(list(cmasher.take_cmap_colors('cmr.flamingo', 10, cmap_range=(0.45, 0.88))[i]))
+        for i in range(2,12):
+            rgb_colors.append(list(palettable.colorbrewer.sequential.Purples_9.get_mpl_colormap(N=14)(i)[:3]))
+        rgb_colors.append(list(np.array([60, 53, 139])/255))
+        rgb_colors.append(list(np.array([65, 69, 171])/255))
+        rgb_colors.append(list(np.array([68, 86, 199])/255))
+        for i in range(2,19):
+            rgb_colors.append(list(palettable.colorbrewer.diverging.Spectral_10.get_mpl_colormap(N=19).reversed()(i)[:3]))
+        for i in range(1,11):
             rgb_colors.append(list(palettable.cartocolors.sequential.Burg_7.get_mpl_colormap(N=11).reversed()(i)[:3]))
-        for i in range(2,2+6):          # load colors from palettable
-            rgb_colors.append(list(palettable.scientific.sequential.Turku_10.get_mpl_colormap(N=13).reversed()(i)[:3]))
-        rgb_colors[2] = rgb_colors[3]       # copy lowest loaded color to color for under the lowest value
+        rgb_colors[0] = rgb_colors[1]       # copy lowest loaded color to color for under the lowest value
         rgb_colors.append(rgb_colors[-1])   # add highest loaded color to color for over the highest value
-        rgb_colors[33] = list(np.array([243, 255, 129])/255)
-        rgb_colors[34] = list(np.array([247, 237, 128])/255)
-        wks_res.wkColorMap = np.array(rgb_colors)
-        levels1 = np.arange(-35, 25+1, 1)
+        rgb_colors[31] = list(np.array([255, 255, 160])/255)
+        rgb_colors[32] = list(np.array([247, 230, 128])/255)
+        levels1 = np.arange(-25, 25+1, 1)
         lbStride_value = 5
 
     elif variable1['name'] == 'theta_e_850hPa':
         rgb_colors = []
-        rgb_colors.append([0, 0, 0])    # color not seen, needed for pyngl
-        rgb_colors.append([0, 0, 0])    # color not seen, needed for pyngl
-        rgb_colors.append([0, 0, 0])    # placeholder for color for under the lowest value
-        for i in range(5,10):           # load colors from palettable
-            rgb_colors.append(list(palettable.scientific.sequential.Acton_10.get_mpl_colormap(N=10)(i)[:3]))
-        for i in range(4,13):           # load colors from palettable
+        rgb_colors.append([0, 0, 0])        # placeholder for color for under the lowest value
+        for i in range(5):
+            rgb_colors.append(list(cmasher.take_cmap_colors('cmr.flamingo', 5, cmap_range=(0.65, 0.93))[i]))
+        for i in range(4,13):
             rgb_colors.append(list(palettable.colorbrewer.sequential.Purples_9.get_mpl_colormap(N=16)(i)[:3]))
-        for i in range(26):             # load colors from palettable
+        for i in range(26):
             rgb_colors.append(list(palettable.colorbrewer.diverging.Spectral_10.get_mpl_colormap(N=26).reversed()(i)[:3]))
-        for i in range(1,11):           # load colors from palettable
+        for i in range(1,11):
             rgb_colors.append(list(palettable.cartocolors.sequential.Burg_7.get_mpl_colormap(N=11).reversed()(i)[:3]))
-        for i in range(2,2+5):          # load colors from palettable
+        for i in range(2,2+5):
             rgb_colors.append(list(palettable.scientific.sequential.Turku_10.get_mpl_colormap(N=12).reversed()(i)[:3]))
-        rgb_colors[2] = rgb_colors[3]       # copy lowest loaded color to color for under the lowest value
+        rgb_colors[0] = rgb_colors[1]       # copy lowest loaded color to color for under the lowest value
         rgb_colors.append(rgb_colors[-1])   # add highest loaded color to color for over the highest value
-        rgb_colors[29] = list(np.array([243, 255, 129])/255)
-        rgb_colors[30] = list(np.array([247, 237, 128])/255)
-        wks_res.wkColorMap = np.array(rgb_colors)
+        rgb_colors[27] = list(np.array([255, 255, 160])/255)
+        rgb_colors[28] = list(np.array([247, 237, 128])/255)
         levels1 = np.arange(-20, 90+1, 2)
         lbStride_value = 5
 
     elif variable1['name'] == 'wind_300hPa':
-        wks_res.wkColorMap = 'wh-bl-gr-ye-re'
-        levels1 = np.arange(150,300,25)
+        rgb_colors = []
+        rgb_colors.append([0, 0, 0, 0])     # color for under the lowest value, transparent
+        for i in range(1,8):
+            rgb_colors.append(list(palettable.cmocean.sequential.Ice_10.get_mpl_colormap(N=10).reversed()(i)[:3]) + [1])
+        rgb_colors.append(rgb_colors[-1])   # add highest loaded color to color for over the highest value
+        levels1 = (list(range(120,330+1,30)))
         lbStride_value = 1
 
     elif variable1['name'] == 'cape_ml':
         rgb_colors = []
-        rgb_colors.append([0, 0, 0])    # color not seen, needed for pyngl
-        rgb_colors.append([0, 0, 0])    # color not seen, needed for pyngl
-        rgb_colors.append([0, 0, 0])    # placeholder for color for under the lowest value
-        rgb_colors.append([1, 1, 1])
-        for i in range(2,7):            # load colors from palettable
-            rgb_colors.append(list(palettable.scientific.sequential.Tokyo_7.get_mpl_colormap(N=7)(i)[:3]))
-        for i in range(1,17,3):         # load colors from palettable
-            rgb_colors.append(list(palettable.cmocean.sequential.Thermal_20.get_mpl_colormap(N=22).reversed()(i)[:3]))
-        for i in range(9,18,4):         # load colors from palettable
-            rgb_colors.append(list(palettable.cmocean.sequential.Ice_20.get_mpl_colormap(N=20)(i)[:3]))
-        rgb_colors[2] = rgb_colors[3]       # copy lowest loaded color to color for under the lowest value
+        rgb_colors.append([0, 0, 0, 0])     # color for under the lowest value, transparent
+        for i in range(2,7):
+            rgb_colors.append(list(palettable.scientific.sequential.Tokyo_7.get_mpl_colormap(N=7)(i)[:3]) + [1])
+        for i in range(1,17,3):
+            rgb_colors.append(list(palettable.cmocean.sequential.Thermal_20.get_mpl_colormap(N=22).reversed()(i)[:3]) + [1])
+        for i in range(9,18,4):
+            rgb_colors.append(list(palettable.cmocean.sequential.Ice_20.get_mpl_colormap(N=20)(i)[:3]) + [1])
         rgb_colors.append(rgb_colors[-1])   # add highest loaded color to color for over the highest value
-        rgb_colors[4] = list(np.array([138, 98, 110])/255)
-        rgb_colors[13] = list(np.array([142, 69, 139])/255)
-        wks_res.wkColorMap = np.array(rgb_colors)
-        #levels1 = ([0,100,200,350,530,750,1000,1300,1630,2000,2400,2850,3330,3850,4400,5000])  # more accurate sqr(x)
-        levels1 = ([0,100,200,350,500,750,1000,1300,1600,2000,2400,2800,3300,3800,4400,5000])   # rounded to be pretty
+        rgb_colors[1] = list(np.array([138, 98, 110])/255) + [1]
+        rgb_colors[10] = list(np.array([142, 69, 139])/255) + [1]
+        #levels1 = ([0,100,200,350,530,750,1000,1300,1630,2000,2400,2850,3330,3850,4400,5000])  # follows (wmax)**2
+        levels1 = ([100,200,350,500,750,1000,1300,1600,2000,2400,2800,3300,3800,4400,5000])   # rounded to be pretty
         lbStride_value = 1
+
         #rgb_arr = np.array(rgb_colors)
         #np.savetxt("colorpalette_marco_cape_ml.txt", np.around(rgb_arr[3:-1]*255,0), fmt='%2d', delimiter = ",")
 
@@ -423,8 +408,8 @@ def double_contourplot(var1var2):
         with open(path['base'] + path['colorpalette'] + filename_colorpalette, 'r') as f:
             lines = f.readlines()
         rgb_colors = []
-        rgb_colors.append([1, 1, 1])
-        rgb_colors.append([1, 1, 1])
+        #rgb_colors.append([1, 1, 1])
+        #rgb_colors.append([1, 1, 1])
         for i, line in enumerate(lines):
             if i % 14 == 0 and i > 70:
                 rgb_colors.append([float(line[:10]), float(line[11:21]), float(line[22:32])])
@@ -432,25 +417,20 @@ def double_contourplot(var1var2):
         for i in range(num_bw_colors+1):
             rgb_colors.append([1-i/num_bw_colors, 1-i/num_bw_colors, 1-i/num_bw_colors])
         rgb_colors.append([0, 0, 0])
-        wks_res.wkColorMap = np.array(rgb_colors)
         levels1 = (list(range(-90,-20,1)) + list(range(-20,40+1,2)))
         lbStride_value = 10
 
-    elif variable1['name'] == 'prec_24h_eu'\
-     or variable1['name'] == 'prec_24h_global'\
+    elif variable1['name'] == 'prec_24h'\
      or variable1['name'] == 'prec_sum':
         filename_colorpalette = 'colorscale_prec24h.txt'
         with open(path['base'] + path['colorpalette'] + filename_colorpalette, 'r') as f:
             lines = f.readlines()
         rgb_colors = []
-        rgb_colors.append([1, 1, 1])
-        rgb_colors.append([1, 1, 1])
-        rgb_colors.append([1, 1, 1])
+        rgb_colors.append([0, 0, 0, 0])     # color for under the lowest value, transparent
         for i, line in enumerate(lines):
-            rgb_colors.append([float(line[0:3])/255, float(line[4:7])/255, float(line[8:11])/255])
-        rgb_colors.append([1, 1, 1])
-        wks_res.wkColorMap = np.array(rgb_colors)
-        levels1 = ([0,1,2,5,10,15,20,30,40,50,60,80,100,120,150,200,250,300,350,400,450,500,1000])
+            rgb_colors.append([float(line[0:3])/255, float(line[4:7])/255, float(line[8:11])/255, 1])
+        rgb_colors.append(rgb_colors[-1])   # add highest loaded color to color for over the highest value
+        levels1 = ([1,2,5,10,15,20,30,40,50,60,80,100,120,150,200,250,300,350,400,450,500,1000])
         lbStride_value = 1
 
     elif variable1['name'] == 'vmax_10m':
@@ -458,15 +438,16 @@ def double_contourplot(var1var2):
         with open(path['base'] + path['colorpalette'] + filename_colorpalette, 'r') as f:
             lines = f.readlines()
         rgb_colors = []
-        rgb_colors.append([1, 1, 1])
-        rgb_colors.append([1, 1, 1])
-        rgb_colors.append([1, 1, 1])
-        rgb_colors.append([1, 1, 1])
-        for i, line in enumerate(lines):
-            rgb_colors.append([float(line[0:3])/255, float(line[4:7])/255, float(line[8:11])/255])
-        rgb_colors.append([0, 0, 1])
-        wks_res.wkColorMap = np.array(rgb_colors)
-        levels1 = (list(range(0,90+1,5)) + list(range(100,160+1,10)) + list(range(180,260+1,20)))
+        rgb_colors.append([0, 0, 0])        # placeholder for color for under the lowest value
+        for i in range(0,11):               # load colors from palettable
+            rgb_colors.append(list(cmasher.take_cmap_colors('cmr.chroma', 11, cmap_range=(0.20, 0.95))[::-1][i]))
+        for i in range(0,3):                # load colors from palettable
+            rgb_colors.append(list(cmasher.take_cmap_colors('cmr.freeze', 3, cmap_range=(0.40, 0.90))[i]))
+        for i in range(0,2):                # load colors from palettable
+            rgb_colors.append(list(cmasher.take_cmap_colors('cmr.flamingo', 2, cmap_range=(0.55, 0.80))[::-1][i]))
+        rgb_colors[0] = rgb_colors[1]       # copy lowest loaded color to color for under the lowest value
+        rgb_colors.append(rgb_colors[-1])   # add highest loaded color to color for over the highest value
+        levels1 = ([0,6,12,20,29,39,50,62,75,89,103,118,154,178,209,251,300])
         lbStride_value = 1
 
     elif variable1['name'] == 'shear_200-850hPa':
@@ -475,12 +456,9 @@ def double_contourplot(var1var2):
             lines = f.readlines()
         rgb_colors = []
         rgb_colors.append([1, 1, 1])
-        rgb_colors.append([1, 1, 1])
-        rgb_colors.append([1, 1, 1])
         for i, line in enumerate(lines):
             rgb_colors.append([float(line[0:3])/255, float(line[4:7])/255, float(line[8:11])/255])
         rgb_colors.append([0, 0, 1])
-        wks_res.wkColorMap = np.array(rgb_colors)
         levels1 = (list(np.arange(0,30,2.5)) + list(range(30,50+1,5)) + [99])
         lbStride_value = 1
 
@@ -490,35 +468,25 @@ def double_contourplot(var1var2):
         with open(path['base'] + path['colorpalette'] + filename_colorpalette, 'r') as f:
             lines = f.readlines()
         rgb_colors = []
-        rgb_colors.append([0, 0, 0])    # color not seen, needed for pyngl
-        rgb_colors.append([0, 0, 0])    # color not seen, needed for pyngl
-        rgb_colors.append([0, 0, 0])    # placeholder for color for under the lowest value
+        rgb_colors.append([0, 0, 0])        # placeholder for color for under the lowest value
         for i, line in enumerate(lines):
             rgb_colors.append([float(line[0:3])/255, float(line[4:7])/255, float(line[8:11])/255])
-        rgb_colors[2] = rgb_colors[3]       # copy lowest loaded color to color for under the lowest value
+        rgb_colors[0] = rgb_colors[1]       # copy lowest loaded color to color for under the lowest value
         rgb_colors.append(rgb_colors[-1])   # add highest loaded color to color for over the highest value
-        wks_res.wkColorMap = np.array(rgb_colors)
         levels1 = ([-1,-0.5,0.2,0.7,1,1.5,2,3,4,5,6,7,8,9,10])
         lbStride_value = 1
 
     elif variable1['name'][:5] == 'theta'\
      and variable1['name'][-3:] == 'PVU':
         rgb_colors = []
-        rgb_colors.append([0, 0, 0])    # color not seen, needed for pyngl
-        rgb_colors.append([0, 0, 0])    # color not seen, needed for pyngl
-        rgb_colors.append([0, 0, 0])    # placeholder for color for under the lowest value
-        for i in range(30):              # load colors from palettable
+        rgb_colors.append([0, 0, 0])        # placeholder for color for under the lowest value
+        for i in range(30):
             rgb_colors.append(list(palettable.colorbrewer.diverging.RdYlBu_10.get_mpl_colormap(N=30)(i)[:3]))
-        rgb_colors[2] = rgb_colors[3]       # copy lowest loaded color to color for under the lowest value
+        rgb_colors[0] = rgb_colors[1]       # copy lowest loaded color to color for under the lowest value
         rgb_colors.append(rgb_colors[-1])   # add highest loaded color to color for over the highest value
-        wks_res.wkColorMap = np.array(rgb_colors)
         levels1 = np.arange(270, 420+1, 5)
         #levels1 = np.arange(300, 360+1, 20)
         lbStride_value = 2
-
-
-    wks_type = 'png'
-    wks = Ngl.open_wks(wks_type, path['base'] + path['plots'] + plot_name, wks_res)
 
 
     mpres   = Ngl.Resources()
@@ -570,23 +538,18 @@ def double_contourplot(var1var2):
     mpres.vpYF          = 1.00
     mpres.vpWidthF      = 0.88
     mpres.vpHeightF     = 1.00
-    mpres.mpMonoFillColor = 'True'
-    if variable1['name'] == 't_850hPa':
-        mpres.mpFillColors = ['transparent', 'transparent', 'transparent', 'transparent']
-    elif variable1['name'] == 'theta_e_850hPa':
-        mpres.mpFillColors = ['transparent', 'white', 'navajowhite1', 'transparent']
-    elif variable1['name'] == 'wind_300hPa':
-        mpres.mpFillColors = ['transparent', 'white', 'navajowhite1', 'transparent']
-    else:
-        mpres.mpFillColors = ['transparent', 'transparent', 'transparent', 'transparent']
 
-    mpres.mpFillOn = True
-    mpres.mpGridAndLimbOn = False
-    mpres.mpGreatCircleLinesOn = False
+    mpres.mpLandFillColor        = list(np.array([255, 225, 171])/255)
+    mpres.mpOceanFillColor       = [1, 1, 1]
+    mpres.mpInlandWaterFillColor = [1, 1, 1]
 
-    mpres.mpDataBaseVersion         = 'MediumRes'
-    mpres.mpDataSetName             = 'Earth..4'
-    mpres.mpOutlineBoundarySets     = 'national'
+    mpres.mpFillOn                     = True
+    mpres.mpGridAndLimbOn              = False
+    mpres.mpGreatCircleLinesOn         = False
+
+    mpres.mpDataBaseVersion             = 'MediumRes'
+    mpres.mpDataSetName                 = 'Earth..4'
+    mpres.mpOutlineBoundarySets         = 'national'
     mpres.mpGeophysicalLineColor        = 'black'
     mpres.mpNationalLineColor           = 'black'
     mpres.mpGeophysicalLineThicknessF   = 1.5 * domain['plot_width'] / 1000
@@ -613,8 +576,9 @@ def double_contourplot(var1var2):
     v1res.sfXArray          = clon_cut
     v1res.sfYArray          = clat_cut
     v1res.sfMissingValueV   = 9999
-    v1res.cnFillBackgroundColor = 'white'
+    #v1res.cnFillBackgroundColor = 'transparent'
     v1res.cnMissingValFillColor = 'Gray80'
+    v1res.cnFillColors          = np.array(rgb_colors)
 
     v1res.cnLinesOn = False
     v1res.cnFillOn  = True
@@ -639,6 +603,8 @@ def double_contourplot(var1var2):
     v1res.lbBoxMinorExtentF     = 0.20      # minor axis fraction: width of the color boxes when labelbar down
     v1res.lbTopMarginF          = 0.2       # make a little more space at top for the unit label
     v1res.lbRightMarginF        = 0.0
+    v1res.lbBottomMarginF       = 0.05
+    v1res.lbLeftMarginF         = -0.35
 
     v1res.cnLabelBarEndStyle    = 'ExcludeOuterBoxes'
     #if variable1['name'] == 'prec_rate' :
@@ -654,51 +620,6 @@ def double_contourplot(var1var2):
     #v1res.lbBoxEndCapStyle     = 'TriangleBothEnds'
     v1res.lbLabelAlignment      = 'ExternalEdges'
     v1res.lbLabelStride         = lbStride_value
-
-
-    if variable1['name'] == 't_850hPa':
-        v1res.lbBottomMarginF   = 0.05
-    elif variable1['name'] == 'theta_e_850hPa':
-        v1res.lbBottomMarginF   = 0.05
-    elif variable1['name'] == 'wind_300hPa':
-        v1res.lbBottomMarginF   = -0.35
-    elif variable1['name'] == 'synth_bt_ir10.8'\
-     or variable1['name'] == 'cape_ml'\
-     or variable1['name'] == 'prec_rate'\
-     or variable1['name'] == 'prec_24h_eu'\
-     or variable1['name'] == 'prec_24h_global'\
-     or variable1['name'] == 'prec_sum'\
-     or variable1['name'] == 'vmax_10m'\
-     or variable1['name'] == 'shear_200-850hPa'\
-     or variable1['name'][:2] == 'pv':
-        v1res.lbBottomMarginF   = 0.05
-
-    v1res.lbLeftMarginF         = -0.35
-
-    if domain['name'] == 'mediterranean':
-        # very wide domain
-        mpres.vpWidthF      = 0.94
-        v1res.lbBottomMarginF += 0.15
-        #v1res.lbBoxMinorExtentF = 0.13
-        if variable1['name'] == 'prec_rate':
-            v1res.lbLabelFontHeightF = 0.007
-        elif variable1['name'] == 't_850hPa':
-            v1res.lbLabelFontHeightF = 0.005
-        elif variable1['name'] == 'theta_e_850hPa':
-            v1res.lbLabelFontHeightF = 0.005
-        elif variable1['name'] == 'wind_300hPa'\
-         or variable1['name'] == 'shear_200-850hPa':
-            v1res.lbLabelFontHeightF = 0.005
-        elif variable1['name'] == 'synth_bt_ir10.8'\
-         or variable1['name'] == 'prec_24h_eu'\
-         or variable1['name'] == 'prec_sum'\
-         or variable1['name'] == 'cape_ml'\
-         or variable1['name'] == 'vmax_10m':
-            v1res.lbLabelFontHeightF = 0.005
-            v1res.lbTopMarginF = 0.35
-        v1res.lbBottomMarginF   = 0.05
-        v1res.pmLabelBarWidthF = 0.04
-        v1res.lbLeftMarginF = -0.5
 
 
     # settings for variable2 / contourlines #
@@ -888,14 +809,20 @@ def double_contourplot(var1var2):
     # override settings for specific cases #
 
     if domain['name'] == 'mediterranean':
+        mpres.mpPerimLineThicknessF /= 1.5
         mpres.mpGeophysicalLineThicknessF /= 1.5
         mpres.mpNationalLineThicknessF /= 1.5
-        v2res.cnLineThicknessF /= 1.5
-        v2res.cnLineLabelFontHeightF /= 1.5
-        v3res.cnLineThicknessF /= 1.5
-        v3res.cnLineLabelFontHeightF /= 1.5
-        v2res.cnLineDashSegLenF = 0.12
-        v3res.cnLineDashSegLenF = 0.12
+        mpres.vpWidthF              = 0.94
+        v1res.lbLabelFontHeightF    = 0.005
+        v1res.pmLabelBarWidthF      = 0.04
+        v1res.lbLeftMarginF         = -0.50
+        if variable2['name'] != '':
+            v2res.cnLineThicknessF /= 1.5
+            v2res.cnLineLabelFontHeightF /= 1.5
+            v3res.cnLineThicknessF /= 1.5
+            v3res.cnLineLabelFontHeightF /= 1.5
+            v2res.cnLineDashSegLenF = 0.12
+            v3res.cnLineDashSegLenF = 0.12
         text_res_1.txFontHeightF = 0.007
         text_x = 0.980
         res_text_descr.txFontHeightF = 0.007
@@ -924,25 +851,32 @@ def double_contourplot(var1var2):
             v2res.cnLineLabelInterval = 1
 
 
+    wks_res = Ngl.Resources()
+    wks_res.wkWidth  = domain['plot_width']
+    wks_res.wkHeight = domain['plot_width']     # the whitespace above and below the plot will be cut afterwards
+    #wks_res.wkColorMap = np.array(rgb_colors)
+    wks_type = 'png'
+    wks = Ngl.open_wks(wks_type, path['base'] + path['plots'] + plot_name, wks_res)
+
     basic_map = Ngl.map(wks, mpres)
+
 
     # plot subnational borders for some domains #
 
     shp_filenames = []
     if domain['name'] == 'southern_south_america'\
-     or domain['name'] == 'patagonia_cyclone'\
      or domain['name'] == 'arg_uru_braz'\
      or domain['name'] == 'argentina_central'\
      or domain['name'] == 'argentina_central_cerca':
-        shp_filenames.append(['gadm36_ARG_1.shp', 0.2])
-        shp_filenames.append(['gadm36_BRA_1.shp', 0.2])
-        shp_filenames.append(['gadm36_CHL_1.shp', 0.2])
-    elif domain['name'] == 'conus'\
-     or domain['name'] == 'north_america'\
-     or domain['name'] == 'texas':
-        shp_filenames.append(['gadm36_USA_1.shp', 0.2])
-        shp_filenames.append(['gadm36_CAN_1.shp', 0.2])
-        shp_filenames.append(['gadm36_MEX_1.shp', 0.2])
+        shp_filenames.append(['gadm36_ARG_1.shp', 0.3])
+        shp_filenames.append(['gadm36_BRA_1.shp', 0.3])
+        shp_filenames.append(['gadm36_CHL_1.shp', 0.3])
+    elif domain['name'] == 'north_america':
+        shp_filenames.append(['gadm36_USA_1.shp', 0.3])
+        shp_filenames.append(['gadm36_CAN_1.shp', 0.3])
+        shp_filenames.append(['gadm36_MEX_1.shp', 0.3])
+    elif domain['name'] == 'eastern_asia':
+        shp_filenames.append(['gadm36_CHN_1.shp', 0.3])
 
     for shp_filename, lineThickness in shp_filenames:
         shpf = Nio.open_file(path['base'] + path['shapefiles'] + shp_filename, 'r')

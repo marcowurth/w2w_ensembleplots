@@ -74,8 +74,12 @@ def main():
             fcst_hours_list = fcst_hours_list_prec_rate
         else:
             fcst_hours_list = fcst_hours_list_6h
+        #fcst_hours_list = fcst_hours_list_1h
 
         for fcst_hour in fcst_hours_list:
+            if var[0] == 'vmax_10m' and fcst_hour == 0:
+                fcst_hour = 1
+
             if var[1] == 'sl':
                 filename = 'icon_global_icosahedral_single-level_{}{:02}{:02}{:02}_{:03}_{}.grib2.bz2'.format(
                             date['year'], date['month'], date['day'], date['hour'], fcst_hour, var[0].upper())

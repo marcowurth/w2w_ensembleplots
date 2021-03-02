@@ -24,6 +24,7 @@ def main():
     domains.append(get_domain('mediterranean'))
     domains.append(get_domain('north_america'))
     domains.append(get_domain('southern_south_america'))
+    domains.append(get_domain('eastern_asia'))
     domains.append(get_domain('north_pole'))
     domains.append(get_domain('south_pole'))
 

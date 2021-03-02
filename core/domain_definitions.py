@@ -37,15 +37,7 @@ def get_domain(domain_name):
     elif domain_name == 'mediterranean':
         domain =   dict(name = domain_name, plot_width = 1200, projection = 'CylindricalEquidistant',
                         limits_type = 'deltalatlon',
-                        centerlat = 37.2, centerlon = 15, deltalat_deg = 10, deltalon_deg = 22, text_y = 0.710)
-
-    elif domain_name == 'conus':
-        domain =   dict(name = domain_name, plot_width = 800, projection = 'Hammer', limits_type = 'radius',
-                        centerlat = 37, centerlon = -96, radius = 2100, text_y = 0.870)
-
-    elif domain_name == 'texas':
-        domain =   dict(name = domain_name, plot_width = 800, projection = 'Hammer', limits_type = 'radius',
-                        centerlat = 31, centerlon = -99, radius = 600, text_y = 0.880)
+                        centerlat = 37, centerlon = 13.5, deltalat_deg = 11, deltalon_deg = 24.5, text_y = 0.705)
 
     elif domain_name == 'north_america':
         domain =   dict(name = domain_name, plot_width = 800, projection = 'Hammer', limits_type = 'radius',
@@ -55,13 +47,13 @@ def get_domain(domain_name):
         domain =   dict(name = domain_name, plot_width = 800, projection = 'Hammer', limits_type = 'radius',
                         centerlat = -34, centerlon = -66, radius = 1900, text_y = 0.885)
 
+    elif domain_name == 'eastern_asia':
+        domain =   dict(name = domain_name, plot_width = 800, projection = 'Hammer', limits_type = 'radius',
+                        centerlat = 30, centerlon = 118, radius = 2100, text_y = 0.885)
+
     elif domain_name == 'patagonia_cyclone':
         domain =   dict(name = domain_name, plot_width = 800, projection = 'Hammer', limits_type = 'radius',
-                        centerlat = -43, centerlon = -60, radius = 800, text_y = 0.885)
-
-    elif domain_name == 'southern_south_america_old':
-        domain =   dict(name = domain_name, plot_width = 800, projection = 'Hammer', limits_type = 'radius',
-                        centerlat = -32, centerlon = -66, radius = 1900, text_y = 0.885)
+                        centerlat = -43, centerlon = -60, radius = 800, text_y = 0.883)
 
     elif domain_name == 'northern_pacific':
         domain =   dict(name = domain_name, plot_width = 800, projection = 'Hammer', limits_type = 'radius',

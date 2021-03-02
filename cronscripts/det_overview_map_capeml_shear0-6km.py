@@ -24,6 +24,9 @@ def main():
     domains.append(get_domain('mediterranean'))
     domains.append(get_domain('north_america'))
     domains.append(get_domain('southern_south_america'))
+    domains.append(get_domain('eastern_asia'))
+    #domains.append(get_domain('north_pole'))
+    #domains.append(get_domain('south_pole'))
 
     variable1 = dict(name='cape_ml', unit='J/kg', grid='icosahedral', load_global_field=True)
     variable2 = dict(name='shear_0-6km', unit='m/s', grid='latlon_0.1', load_global_field=True)
