@@ -17,8 +17,7 @@ def main():
 
     # make lists of forecast hours and variables #
 
-    #fcst_hours_list_6h = list(range(0,60+1,1))
-    fcst_hours_list_6h = list(range(0,120+1,6))
+    fcst_hours_list_3h = list(range(0,120+1,3))
     fcst_hours_list_1h3h = list(range(0,78,1)) + list(range(78,120+1,3))
 
 
@@ -40,11 +39,12 @@ def main():
     # list of dwd variable names #
 
     if date['hour'] == 0 or date['hour'] == 12:
-        var_list = ['synmsg_bt_cl_ir10.8','tot_prec','vmax_10m','t_2m','u_10m','v_10m','pmsl','clct',
-                    'aswdir_s','aswdifd_s']
-        #var_list = ['synmsg_bt_cl_ir10.8']
+        var_list = ['synmsg_bt_cl_ir10.8','tot_prec','vmax_10m']
+        #var_list = ['synmsg_bt_cl_ir10.8','tot_prec','vmax_10m','t_2m','u_10m','v_10m','pmsl','clct',
+        #            'aswdir_s','aswdifd_s']
     else:
-        var_list = ['tot_prec','t_2m','u_10m','v_10m','pmsl','clct','aswdir_s','aswdifd_s','vmax_10m']
+        var_list = []
+        #var_list = ['tot_prec','t_2m','u_10m','v_10m','pmsl','clct','aswdir_s','aswdifd_s','vmax_10m']
 
 
     # create paths if necessary
@@ -65,10 +65,10 @@ def main():
 
         # download all grib files from website
 
-        if var == 'synmsg_bt_cl_ir10.8':
-            fcst_hours_list = fcst_hours_list_6h
-        else:
+        if var == 'tot_prec':
             fcst_hours_list = fcst_hours_list_1h3h
+        else:
+            fcst_hours_list = fcst_hours_list_3h
 
         for fcst_hour in fcst_hours_list:
             filename = 'icon-eu_europe_regular-lat-lon_single-level_{}{:02}{:02}{:02}_{:03}_{}.grib2.bz2'.format(

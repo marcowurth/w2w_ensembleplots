@@ -807,11 +807,11 @@ def get_fcst_hours_list_var_grid(model, var, grid):
     elif model == 'icon-global-eps_eu-extension':
         fcst_hours_list = list(range(132,180+1,12))
     elif model == 'icon-eu-det':
-        if var == 'synmsg_bt_cl_ir10.8':
-            fcst_hours_list = list(range(0,120+1,6))
-            #fcst_hours_list = list(range(0,72+1,1))
-        else:
+        if var == 'tot_prec':
             fcst_hours_list = list(range(0,78,1)) + list(range(78,120+1,3))
+        else:
+            fcst_hours_list = list(range(0,120+1,3))
+            #fcst_hours_list = list(range(0,78+1,1))
     elif model == 'icon-global-det':
         if var == 'tot_prec':
             fcst_hours_list = list(range(0,78,1)) + list(range(78,180+1,3))

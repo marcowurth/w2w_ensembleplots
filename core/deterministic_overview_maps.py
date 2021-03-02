@@ -32,7 +32,7 @@ def det_contourplot(domains, variable1, variable2, model, run):
         #hours = list(range(0, 78+1, 1))
         #hours = [0]
     elif model == 'icon-eu-det':
-        hours = list(range(0, 120+1, 6))
+        hours = list(range(0, 120+1, 3))
         #hours = list(range(0, 72+1, 1))
         #hours = [24]
 

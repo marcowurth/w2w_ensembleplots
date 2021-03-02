@@ -19,7 +19,7 @@ def main():
 
     fcst_hours_list_prec_rate = list(range(0,78,1)) + list(range(78,180+1,3))
     fcst_hours_list_6h = list(range(0,180+1,6))
-    fcst_hours_list_1h = list(range(0,78+1,1))
+    #fcst_hours_list_1h = list(range(0,78+1,1))
 
 
     # get latest run time #
@@ -40,8 +40,7 @@ def main():
     # list of dwd variable names #
 
     var_list = [['tot_prec','sl'],['pmsl','sl'],['relhum','850hPa'],['t','850hPa'],['fi','500hPa'],
-                ['fi','300hPa'],['u','300hPa'],['v','300hPa'],['u','200hPa'],['v','200hPa'],
-                ['u','850hPa'],['v','850hPa'],['cape_ml','sl'],
+                ['fi','300hPa'],['u','300hPa'],['v','300hPa'],['cape_ml','sl'],['vmax_10m', 'sl'],
                 ['u','500hPa'],['v','500hPa'],['u_10m','sl'],['v_10m','sl']]
     vars_to_interpolate = [['pmsl','sl'],['fi','500hPa'],['fi','300hPa'],['u_10m','sl'],['v_10m','sl'],
                            ['u','500hPa'],['v','500hPa']]
