@@ -25,16 +25,26 @@ def det_contourplot(domains, variable1, variable2, model, run):
     #transfer_to_webserver = False
 
     if model == 'icon-global-det':
-        if variable1['name'] == 'prec_24h' or variable1['name'] == 'vmax_10m':
-            hours = list(range(126, 180+1, 6))
+        if variable1['name'] == 'prec_sum':
+            hours = list(range(6, 180+1, 6))
+        elif variable1['name'] == 'prec_24h':
+            hours = list(range(24, 180+1, 6))
         else:
             hours = list(range(0, 180+1, 6))
-        #hours = list(range(0, 78+1, 1))
-        #hours = [0]
     elif model == 'icon-eu-det':
-        hours = list(range(0, 120+1, 3))
-        #hours = list(range(0, 72+1, 1))
-        #hours = [24]
+        if variable1['name'] == 'prec_24h':
+            hours = list(range(24, 120+1, 6))
+        else:
+            hours = list(range(0, 120+1, 6))
+
+
+    # hours for manual override for testing #
+
+    #hours = list(range(0, 72+1, 1))
+    #hours = list(range(0, 78+1, 6))
+    #hours = [0]
+    #hours = [24]
+
 
     if variable2['name'] == '':
         var1var2 = variable1['name']
@@ -164,8 +174,13 @@ def det_contourplot(domains, variable1, variable2, model, run):
                 else:
                     np.savez(f, data_array1 = data_array1, data_array2 = data_array2)
 
-
         for domain in domains:
+            if model == 'icon-global-det' \
+             and (variable1['name'] == 'prec_24h' or variable1['name'] == 'vmax_10m') \
+             and (domain['name'] == 'europe' or domain['name'] == 'mediterranean') \
+             and hour <= 120:
+                continue
+
             print('domain:', domain['name'])
 
             # for pv vars: read and save all domain-cut numpy arrays to npz file #
@@ -279,7 +294,7 @@ def double_contourplot(var1var2):
                 if variable2['name'] != '':
                     data_array2 = loadedfile['data_array2']
 
-        print('loaded all vars')
+        #print('loaded all vars')
 
 
         if domain['limits_type'] == 'radius':
@@ -408,15 +423,15 @@ def double_contourplot(var1var2):
         with open(path['base'] + path['colorpalette'] + filename_colorpalette, 'r') as f:
             lines = f.readlines()
         rgb_colors = []
-        #rgb_colors.append([1, 1, 1])
-        #rgb_colors.append([1, 1, 1])
+        rgb_colors.append(list(np.array([118, 39, 118])/255))
         for i, line in enumerate(lines):
             if i % 14 == 0 and i > 70:
                 rgb_colors.append([float(line[:10]), float(line[11:21]), float(line[22:32])])
+        rgb_colors.append(list(np.array([35, 244, 255])/255))
         num_bw_colors = 30
         for i in range(num_bw_colors+1):
             rgb_colors.append([1-i/num_bw_colors, 1-i/num_bw_colors, 1-i/num_bw_colors])
-        rgb_colors.append([0, 0, 0])
+        rgb_colors.append(rgb_colors[-1])   # add highest loaded color to color for over the highest value
         levels1 = (list(range(-90,-20,1)) + list(range(-20,40+1,2)))
         lbStride_value = 10
 
@@ -430,7 +445,8 @@ def double_contourplot(var1var2):
         for i, line in enumerate(lines):
             rgb_colors.append([float(line[0:3])/255, float(line[4:7])/255, float(line[8:11])/255, 1])
         rgb_colors.append(rgb_colors[-1])   # add highest loaded color to color for over the highest value
-        levels1 = ([1,2,5,10,15,20,30,40,50,60,80,100,120,150,200,250,300,350,400,450,500,1000])
+
+        levels1 = ([1,10,20,40,60,80,100,120,140,160,180,200,250,300,400])
         lbStride_value = 1
 
     elif variable1['name'] == 'vmax_10m':
