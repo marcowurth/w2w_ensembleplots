@@ -83,7 +83,7 @@ def det_contourplot(domains, variable1, variable2, model, run):
 
     # load icosahedral grid information and save as npz file #
 
-    numpyarrays_filename = 'deterministic_overview_maps_{}_ndarrays_outofloop.npz'.format(var1var2)
+    numpyarrays_filename = 'deterministic_overview_maps_{}_{}_ndarrays_outofloop.npz'.format(model, var1var2)
 
     if variable1['load_global_field']:
         if model == 'icon-eu-det':
@@ -167,7 +167,7 @@ def det_contourplot(domains, variable1, variable2, model, run):
         # for non-pv vars: save all global/eu numpy arrays to npz file #
 
         if variable1['load_global_field']:
-            numpyarrays_filename = 'deterministic_overview_maps_{}_ndarrays_withinloop.npz'.format(var1var2)
+            numpyarrays_filename = 'deterministic_overview_maps_{}_{}_ndarrays_withinloop.npz'.format(model, var1var2)
             with open(path['base'] + path['temp'] + numpyarrays_filename, 'wb') as f:
                 if variable2['name'] == '':
                     np.savez(f, data_array1 = data_array1)
@@ -208,16 +208,16 @@ def det_contourplot(domains, variable1, variable2, model, run):
 
             # save all dictionaries and strings to a json file #
 
-            json_filename = 'deterministic_overview_maps_{}_dicts_strings.json'.format(var1var2)
+            json_filename = 'deterministic_overview_maps_{}_{}_dicts_strings.json'.format(model, var1var2)
             with open(path['base'] + path['temp'] + json_filename, 'w') as f:
-                json.dump([path, domain, variable1, variable2, model, run, hour], f)
+                json.dump([path, domain, variable1, variable2, run, hour], f)
 
 
             # start new batch python script that will free its needed memory afterwards #
 
             scriptname = 'callfile_deterministic_overview_maps.py'
             command = 'python {}{}{} '.format(path['base'], path['callfiles'], scriptname)
-            arguments = var1var2
+            arguments = '{} {}'.format(var1var2, model)
             os.system(command + arguments)
 
 
@@ -241,22 +241,22 @@ def det_contourplot(domains, variable1, variable2, model, run):
 ########################################################################
 ########################################################################
 
-def double_contourplot(var1var2):
+def double_contourplot(var1var2, model):
 
     recoverpath = dict(base = '/',
                        temp = 'data/additional_data/temp/{}/'.format(ex_op_str))
 
     # load all dictionaries and strings from json file #
 
-    json_filename = 'deterministic_overview_maps_{}_dicts_strings.json'.format(var1var2)
+    json_filename = 'deterministic_overview_maps_{}_{}_dicts_strings.json'.format(model, var1var2)
     with open(recoverpath['base'] + recoverpath['temp'] + json_filename, 'r') as f:
-        path, domain, variable1, variable2, model, run, hour = json.load(f)
+        path, domain, variable1, variable2, run, hour = json.load(f)
 
 
     # load numpy arrays #
 
     if variable1['load_global_field']:
-        numpyarrays_filename = 'deterministic_overview_maps_{}_ndarrays_outofloop.npz'.format(var1var2)
+        numpyarrays_filename = 'deterministic_overview_maps_{}_{}_ndarrays_outofloop.npz'.format(model, var1var2)
 
         if model == 'icon-eu-det':
             with open(path['base'] + path['temp'] + numpyarrays_filename, 'rb') as f:
@@ -287,7 +287,7 @@ def double_contourplot(var1var2):
                         ll_lat = loadedfile['ll_lat']
                         ll_lon = loadedfile['ll_lon']
 
-        numpyarrays_filename = 'deterministic_overview_maps_{}_ndarrays_withinloop.npz'.format(var1var2)
+        numpyarrays_filename = 'deterministic_overview_maps_{}_{}_ndarrays_withinloop.npz'.format(model, var1var2)
         with open(recoverpath['base'] + recoverpath['temp'] + numpyarrays_filename, 'rb') as f:
             with np.load(f) as loadedfile:
                 data_array1 = loadedfile['data_array1']
