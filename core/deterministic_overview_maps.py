@@ -5,7 +5,6 @@ import json
 
 import numpy as np
 import Ngl
-import Nio
 import palettable
 import cmasher
 from PIL import Image
@@ -879,7 +878,7 @@ def double_contourplot(var1var2, model):
 
     # plot subnational borders for some domains #
 
-    shp_filenames = []
+    '''shp_filenames = []
     if domain['name'] == 'southern_south_america'\
      or domain['name'] == 'arg_uru_braz'\
      or domain['name'] == 'argentina_central'\
@@ -904,7 +903,7 @@ def double_contourplot(var1var2, model):
         plres.gsLineColor = 'black'
         plres.gsLineThicknessF = lineThickness
         plres.gsSegments = shpf_segments
-        Ngl.add_polyline(wks, basic_map, shpf_lon, shpf_lat, plres)
+        Ngl.add_polyline(wks, basic_map, shpf_lon, shpf_lat, plres)'''
 
 
     # put everything together # 
