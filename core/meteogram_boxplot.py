@@ -43,7 +43,7 @@ def boxplot_forecast(models, date, var, point, plot_type, verbose):
               date['year'], date['month'], date['day'], date['hour']))
 
     if making_comparison_plots:
-        lead_times = [0,12,24,36,48,72,96,120]
+        lead_times = [0,12,24,36,48]
     else:
         lead_times = [0]
 
@@ -1962,9 +1962,6 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
                         bar_median_eu_1h,
                         title,
                         init_time,
-                        data_shading_area,
-                        bar_shading_area,
-                        shading_area_text1,
                         unit,
                         unit_special,
                         logo_w2w,
@@ -2015,9 +2012,6 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
                         bar_median_eu_6h,
                         title,
                         init_time,
-                        data_shading_area,
-                        bar_shading_area,
-                        shading_area_text1,
                         unit,
                         unit_special,
                         logo_w2w,
@@ -2060,9 +2054,6 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
                         bar_median_eu_gust,
                         title,
                         init_time,
-                        data_shading_area,
-                        bar_shading_area,
-                        shading_area_text1,
                         unit,
                         unit_special,
                         logo_w2w,
@@ -2113,9 +2104,6 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
                         bar_median_eu_850hPa,
                         title,
                         init_time,
-                        data_shading_area,
-                        bar_shading_area,
-                        shading_area_text1,
                         unit,
                         unit_special,
                         logo_w2w,
@@ -2150,9 +2138,6 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
                         bar_median_eu_all,
                         title,
                         init_time,
-                        data_shading_area,
-                        bar_shading_area,
-                        shading_area_text1,
                         unit,
                         unit_special,
                         logo_w2w,
@@ -2500,6 +2485,8 @@ def get_variable_title_unit(var):
         meta = dict(var = '0-6km wind shear', units = 'm/s')
     elif var == 'lapse_rate_850hPa-500hPa':
         meta = dict(var = '850hPa-500hPa mean lapse rate', units = 'K/km')
+    elif var == 'cape_ml':
+        meta = dict(var = 'Mixed Layer CAPE', units = 'J/kg')
 
     return meta
 
@@ -2699,6 +2686,15 @@ def fit_y_axis_to_data(var, y_axis_range, pointname):
         y_axis_range['max'] = 11.0
         y_axis_range['interval'] = 2.0
         y_axis_range['ref'] = 9.8
+
+    elif var == 'cape_ml':
+        y_axis_range['min'] = 0.0
+        if y_axis_range['max'] < 1000.0:
+            y_axis_range['max'] = 1000.0
+        else:
+            y_axis_range['max'] += 0.1 * y_axis_range['max']
+        y_axis_range['interval'] = 200.0
+        y_axis_range['ref'] = 0.0
 
     return y_axis_range
 

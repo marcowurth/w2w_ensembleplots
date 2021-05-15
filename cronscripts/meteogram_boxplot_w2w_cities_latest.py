@@ -2,6 +2,8 @@
 ###  script for plotting boxplot meteograms of point data of icon-eu-eps    ###
 ###############################################################################
 
+import os
+
 import sys
 current_path = sys.path[0]
 ex_op_str = current_path[current_path.index('progs')+6: current_path.index('w2w_ensembleplots')-1]
@@ -27,6 +29,12 @@ def main():
     for pointname in pointnames:
         boxplot_forecast(models, date, var, dict(name = pointname), plot_type, verbose)
 
+        path = dict(base = '/',
+                    plots = 'data/plots/operational/meteogram_boxplot/forecast/w2w_cities/')
+        subfolder_name = 'deterministic_overview_maps'
+        path_webserver = '/home/iconeps/Data3/plots/icon/meteogram_boxplot/forecast/operational_cities/'
+        os.system('scp ' + path['base'] + path['plots'] + pointname + '/*.png '\
+                  + 'iconeps@imk-tss-web.imk-tro.kit.edu:' + path_webserver + pointname)
 
     return
 

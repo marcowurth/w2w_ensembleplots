@@ -31,7 +31,7 @@ def main():
     # explicit download options #
 
    ###########################################################
-    #date = dict(year = 2020, month = 9, day = 21, hour = 0)
+    #date = dict(year = 2021, month = 5, day = 14, hour = 12)
    ###########################################################
 
     print('download run_{}{:02}{:02}{:02}'.format(
@@ -42,7 +42,7 @@ def main():
 
     if date['hour'] == 0 or date['hour'] == 12:
         var_list = [['tot_prec','sl'],['t_2m','sl'],['u_10m','sl'],['v_10m','sl'],['ps','sl'],['clct','sl'],
-                    ['aswdir_s','sl'],['aswdifd_s','sl'],['vmax_10m','sl'],['tqv','sl'],
+                    ['aswdir_s','sl'],['aswdifd_s','sl'],['vmax_10m','sl'],['tqv','sl'],['cape_ml','sl'],
                     ['fi','500hPa'],['t','500hPa'],['u','500hPa'],['v','500hPa'],
                     ['fi','850hPa'],['t','850hPa'],['u','850hPa'],['v','850hPa'],
                     ['fi','300hPa'],['u','300hPa'],['v','300hPa']]

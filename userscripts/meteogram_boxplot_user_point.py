@@ -12,22 +12,24 @@ from w2w_ensembleplots.core.meteogram_boxplot import boxplot_forecast
 def main():
 
   ###########################################################
-    #date = dict(year = 2020, month = 3, day = 3, hour = 0)
-    date = 'latest'
+    date = dict(year = 2021, month = 5, day = 14, hour = 12)
+    #date = 'latest'
 
-    var = 'all_available'
+    #var = 'all_available'
     #var = 't_2m'
     #var = 'prec_rate'
     #var = 'prec_sum'
     #var = 'mslp'
     #var = 'wind_10m'
-    #var = 'wind_850hPa'
+    #var = 't_850hPa'
+    var = 'cape_ml'
 
     #point = dict(lat = 52.519, lon = 13.407, name = 'Berlin')
-    #point = dict(lat = 49.014, lon =  8.404, name='Karlsruhe')
+    point = dict(lat = 49.014, lon =  8.404, name='Karlsruhe')
+    #point = dict(lat = 50.728, lon = 12.480, name='Zwickau')
     #point = dict(lat = 37.984, lon = 23.690, name = 'Athens')
     #point = dict(lat =-33.337, lon =-60.213, name = 'San Nicolás')
-    point = dict(lat =-34.800, lon =-58.400, name = 'Buenos Aires')
+    #point = dict(lat =-34.800, lon =-58.400, name = 'Buenos Aires')
     #point = dict(lat =-31.409, lon =-64.186, name = 'Córdoba Capital')
     #point = dict(lat =-27.486, lon =-58.814, name = 'Corrientes Capital')
 
@@ -41,8 +43,8 @@ def main():
         point['lon'] -= 360.0
     if point['lat'] > 29.5 and point['lat'] < 70.5 and point['lon'] > -23.5 and point['lon'] < 62.5:
         models = 'both-eps'
-    #else:
-    models = 'icon-global-eps'
+    else:
+        models = 'icon-global-eps'
 
 
     boxplot_forecast(models, date, var, point, plot_type, verbose)
