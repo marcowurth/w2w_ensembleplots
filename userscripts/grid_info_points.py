@@ -4,23 +4,23 @@
 
 import sys
 current_path = sys.path[0]
-ex_op_str = current_path[current_path.index('scripts')+8 : current_path.index('w2w_ensembleplots')-1]
-sys.path.append('/lsdfos/kit/imk-tro/projects/MOD/Gruppe_Knippertz/nw5893/scripts/{}'.format(ex_op_str))
+ex_op_str = current_path[current_path.index('progs')+6: current_path.index('w2w_ensembleplots')-1]
+sys.path.append('/progs/{}'.format(ex_op_str))
 from w2w_ensembleplots.core.grid_information_around_point import plot_point_information_eu
 
 
 def main():
 
-    pointnames =   ['Karlsruhe','Mainz','Munich',\
-                    'Amsterdam','Athens','Berlin','Bologna','Brussels','Copenhagen','Dublin','Hamburg',\
-                    'Madrid','Leeds','Lisbon','London','Paris','Rome','Toulouse','Valencia','Vienna','Warsaw']
-    pointnames =   ['BuenosAires']
-    pointnames =   ['Cotonou_sea','Cotonou_land','Accra','Kumasi','Abidjan','Sal','Dakar_sea', 'Dakar_land','Bamako','Ouagadougou','Niamey',\
-                    'Douala','Ngaoundere','Abuja','Agadez','Parakou','Libreville_sea','Libreville_land']
+    #pointnames =   ['Karlsruhe','Mainz','Munich',\
+    #                'Amsterdam','Athens','Berlin','Bologna','Brussels','Copenhagen','Dublin','Hamburg',\
+    #                'Madrid','Leeds','Lisbon','London','Paris','Rome','Toulouse','Valencia','Vienna','Warsaw']
+    pointnames =   ['Rottenburg_am_Neckar']
+    #pointnames =   ['Cotonou_sea','Cotonou_land','Accra','Kumasi','Abidjan','Sal','Dakar_sea', 'Dakar_land','Bamako','Ouagadougou','Niamey',\
+    #                'Douala','Ngaoundere','Abuja','Agadez','Parakou','Libreville_sea','Libreville_land']
 
-    #models_type = 'eu-eps'     # icon-eu-eps and icon-global-eps
+    models_type = 'eu-eps'     # icon-eu-eps and icon-global-eps
     #models_type = 'eu-det'     # icon-eu-det and icon-global-det
-    models_type = 'global-eps'     # icon-global-eps
+    #models_type = 'global-eps'     # icon-global-eps
     #models_type = 'global-det'     # icon-global-det
 
     no_title = True

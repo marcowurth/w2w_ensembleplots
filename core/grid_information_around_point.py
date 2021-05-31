@@ -24,6 +24,7 @@ def which_grid_point(pointname, model):
                     dict(lat = 48.141, lon = 11.580, name = 'Munich'),\
                     dict(lat = 52.519, lon = 13.391, name = 'Berlin'),\
                     dict(lat = 53.549, lon =  9.990, name = 'Hamburg'),\
+                    dict(lat = 48.477, lon =  8.934, name = 'Rottenburg_am_Neckar'),\
                     dict(lat = 52.373, lon =  4.899, name = 'Amsterdam'),\
                     dict(lat = 48.210, lon = 16.371, name = 'Vienna'),\
                     dict(lat = 41.898, lon = 12.491, name = 'Rome'),\
@@ -67,6 +68,7 @@ def which_grid_point(pointname, model):
                     dict(lat = 48.109, lon = 11.594, name = 'Munich'),\
                     dict(lat = 52.519, lon = 13.407, name = 'Berlin'),\
                     dict(lat = 53.500, lon =  9.993, name = 'Hamburg'),\
+                    dict(lat = 48.477, lon =  8.934, name = 'Rottenburg_am_Neckar'),\
                     dict(lat = 52.373, lon =  4.899, name = 'Amsterdam'),\
                     dict(lat = 48.256, lon = 16.438, name = 'Vienna'),\
                     dict(lat = 41.890, lon = 12.481, name = 'Rome'),\
@@ -91,6 +93,7 @@ def which_grid_point(pointname, model):
                     dict(lat = 48.109, lon = 11.594, name = 'Munich'),\
                     dict(lat = 52.519, lon = 13.407, name = 'Berlin'),\
                     dict(lat = 53.500, lon =  9.993, name = 'Hamburg'),\
+                    dict(lat = 48.477, lon =  8.934, name = 'Rottenburg_am_Neckar'),\
                     dict(lat = 52.373, lon =  4.899, name = 'Amsterdam'),\
                     dict(lat = 48.256, lon = 16.438, name = 'Vienna'),\
                     dict(lat = 41.890, lon = 12.481, name = 'Rome'),\
@@ -134,6 +137,7 @@ def which_grid_point(pointname, model):
                     dict(lat = 48.141, lon = 11.580, name = 'Munich'),\
                     dict(lat = 52.519, lon = 13.391, name = 'Berlin'),\
                     dict(lat = 53.549, lon =  9.990, name = 'Hamburg'),\
+                    dict(lat = 48.477, lon =  8.934, name = 'Rottenburg_am_Neckar'),\
                     dict(lat = 52.373, lon =  4.899, name = 'Amsterdam'),\
                     dict(lat = 48.210, lon = 16.371, name = 'Vienna'),\
                     dict(lat = 41.898, lon = 12.491, name = 'Rome'),\
@@ -158,6 +162,7 @@ def which_grid_point(pointname, model):
                     dict(lat = 48.141, lon = 11.580, name = 'Munich'),\
                     dict(lat = 52.519, lon = 13.391, name = 'Berlin'),\
                     dict(lat = 53.549, lon =  9.990, name = 'Hamburg'),\
+                    dict(lat = 48.477, lon =  8.934, name = 'Rottenburg_am_Neckar'),\
                     dict(lat = 52.373, lon =  4.899, name = 'Amsterdam'),\
                     dict(lat = 48.210, lon = 16.371, name = 'Vienna'),\
                     dict(lat = 41.898, lon = 12.491, name = 'Rome'),\
@@ -230,8 +235,8 @@ def get_latlon_filter_distance(model):
 #######################################################################################################################
 
 def plot_point_information_eu(pointname, models_type, no_title):
-    path = dict(base = '/lsdfos/kit/imk-tro/projects/MOD/Gruppe_Knippertz/nw5893/',
-                plots = 'plots/point_information/')
+    path = dict(base = '/',
+                plots = 'data/plots/point_information/')
 
     print('plot {} information about {}'.format(models_type, pointname))
 
@@ -276,10 +281,10 @@ def plot_point_information_eu(pointname, models_type, no_title):
 
         img_combined.save(path['base'] + path['plots'] + 'eu/' + filenames['composite'],'png')
 
-        #os.remove(path['base'] + path['plots'] + filenames['oro_icon-eu-eps'])
-        #os.remove(path['base'] + path['plots'] + filenames['oro_icon-global-eps'])
-        #os.remove(path['base'] + path['plots'] + filenames['landsea_icon-eu-eps'])
-        #os.remove(path['base'] + path['plots'] + filenames['landsea_icon-global-eps'])
+        os.remove(path['base'] + path['plots'] + filenames['oro_icon-eu-eps'])
+        os.remove(path['base'] + path['plots'] + filenames['oro_icon-global-eps'])
+        os.remove(path['base'] + path['plots'] + filenames['landsea_icon-eu-eps'])
+        os.remove(path['base'] + path['plots'] + filenames['landsea_icon-global-eps'])
 
 
     elif models_type == 'eu-det':
@@ -404,10 +409,6 @@ def plot_point_information_eu(pointname, models_type, no_title):
         os.remove(path['base'] + path['plots'] + filenames['landsea_icon-global-det'])
 
 
-    else:
-        return
-
-
     if no_title:
         if models_type == 'eu-eps' or models_type == 'eu-det':
             img_with_title = Image.open(path['base'] + path['plots'] + 'eu/' + filenames['composite'])
@@ -440,35 +441,26 @@ def plot_orography(pointname, model):
     plot_name = '{}_orography_{}'.format(model, pointname)
 
     filenames = dict()
-    path = dict(base = '/lsdfos/kit/imk-tro/projects/MOD/Gruppe_Knippertz/nw5893/',
-                plots = 'plots/point_information/')
+    path = dict(base = '/',
+                plots = 'data/plots/point_information/')
+
+    path['data'] = 'data/model_data/{}/invariant/'.format(model)
+    path['grid'] = 'data/model_data/{}/grid/'.format(model)
 
     if model == 'icon-eu-eps':
-        path['data'] = 'forecast_archive/icon-eu-eps/invariant/'
-        path['grid'] = 'forecast_archive/icon-eu-eps/grid/'
-
         filenames['cells'] = 'icon_grid_0028_R02B07_N02.nc'
-        filenames['oro'] = 'icon-eu-eps_europe_icosahedral_time-invariant_2018121312_hsurf.grib2'
+        filenames['oro'] = 'icon-eu-eps_europe_icosahedral_time-invariant_2021021700_hsurf.grib2'
 
     elif model == 'icon-global-eps':
-        path['data'] = 'forecast_archive/icon-eps/invariant/'
-        path['grid'] = 'forecast_archive/icon-eps/grid/'
-
         filenames['cells'] = 'icon_grid_0024_R02B06_G.nc'
         filenames['oro'] = 'icon-eps_global_icosahedral_time-invariant_2019010800_hsurf.grib2'
 
     elif model == 'icon-eu-det':
-        path['data'] = 'forecast_archive/icon-eu/invariant/'
-        path['grid'] = 'forecast_archive/icon-eu/grid/'
-
         filenames['lat'] = 'icon-eu_europe_regular-lat-lon_time-invariant_2019040800_RLAT.grib2'
         filenames['lon'] = 'icon-eu_europe_regular-lat-lon_time-invariant_2019040800_RLON.grib2'
         filenames['oro'] = 'icon-eu_europe_regular-lat-lon_time-invariant_2019061400_HSURF.grib2'
 
     elif model == 'icon-global-det':
-        path['data'] = 'forecast_archive/icon/invariant/'
-        path['grid'] = 'forecast_archive/icon/grid/'
-
         filenames['cells'] = 'icon_grid_0026_R03B07_G.nc'
         filenames['oro'] = 'icon_global_icosahedral_time-invariant_2019061400_HSURF.grib2'
 
@@ -762,35 +754,26 @@ def plot_landsea(pointname, model):
     plot_name = '{}_landsea_{}'.format(model, pointname)
 
     filenames = dict()
-    path = dict(base = '/lsdfos/kit/imk-tro/projects/MOD/Gruppe_Knippertz/nw5893/',
-                plots = 'plots/point_information/')
+    path = dict(base = '/',
+                plots = 'data/plots/point_information/')
+
+    path['data'] = 'data/model_data/{}/invariant/'.format(model)
+    path['grid'] = 'data/model_data/{}/grid/'.format(model)
 
     if model == 'icon-eu-eps':
-        path['data'] = 'forecast_archive/icon-eu-eps/invariant/'
-        path['grid'] = 'forecast_archive/icon-eu-eps/grid/'
-
         filenames['cells'] = 'icon_grid_0028_R02B07_N02.nc'
         filenames['landsea_fr'] = 'icon-eu-eps_europe_icosahedral_time-invariant_2018121312_fr_land.grib2'
 
     elif model == 'icon-global-eps':
-        path['data'] = 'forecast_archive/icon-eps/invariant/'
-        path['grid'] = 'forecast_archive/icon-eps/grid/'
-
         filenames['cells'] = 'icon_grid_0024_R02B06_G.nc'
         filenames['landsea_fr'] = 'icon-eps_global_icosahedral_time-invariant_2019010800_fr_land.grib2'
 
     elif model == 'icon-eu-det':
-        path['data'] = 'forecast_archive/icon-eu/invariant/'
-        path['grid'] = 'forecast_archive/icon-eu/grid/'
-
         filenames['lat'] = 'icon-eu_europe_regular-lat-lon_time-invariant_2019040800_RLAT.grib2'
         filenames['lon'] = 'icon-eu_europe_regular-lat-lon_time-invariant_2019040800_RLON.grib2'
         filenames['landsea_fr'] = 'icon-eu_europe_regular-lat-lon_time-invariant_2019061400_FR_LAND.grib2'
 
     elif model == 'icon-global-det':
-        path['data'] = 'forecast_archive/icon/invariant/'
-        path['grid'] = 'forecast_archive/icon/grid/'
-
         filenames['cells'] = 'icon_grid_0026_R03B07_G.nc'
         filenames['landsea_fr'] = 'icon_global_icosahedral_time-invariant_2019061400_FR_LAND.grib2'
 
@@ -965,13 +948,13 @@ def plot_landsea(pointname, model):
 
     ########################################################################
 
-    text = 'Point Information about {}'.format(pointname)
+    text = 'Point Information about {}'.format(pointname.replace('_', ' '))
 
     x = 0.02
     y = 0.14
 
     text_res_2 = Ngl.Resources()
-    text_res_2.txFontHeightF    = 0.04
+    text_res_2.txFontHeightF    = 0.032
     text_res_2.txJust           = 'BottomLeft'
 
     Ngl.text_ndc(wks, text, x, y, text_res_2)

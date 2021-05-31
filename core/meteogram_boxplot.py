@@ -1600,7 +1600,7 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
     ########################################################################
 
     if plot_type == 'w2w_city':
-        title_str = '<b>{} in {}</b>'.format(meta['var'], point['name'])
+        title_str = '<b>{} in {}</b>'.format(meta['var'], point['name'].replace('_',' '))
     elif plot_type == 'user_point':
         if point['lat'] >= 0.0 and point['lon'] >= 0.0:
             coord_str = '{:.2f}°N, {:.2f}°E'.format(abs(point['lat']), abs(point['lon']))
