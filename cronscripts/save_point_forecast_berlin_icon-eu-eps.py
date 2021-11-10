@@ -17,7 +17,7 @@ def main():
     model = 'icon-eu-eps'
 
     date = calc_latest_run_time(model)
-    #date = dict(year = 2021, month = 11, day = 9, hour = 0)
+    #date = dict(year = 2021, month = 11, day = 10, hour = 0)
 
     var_list = ['t_2m','wind_mean_10m','vmax_10m','mslp','clct','direct_rad','t_850hPa']
 
@@ -57,6 +57,7 @@ def commit_and_push_files(path):
     os.system('git ' + git_paths + 'add --all')
     os.system('git ' + git_paths + 'commit -m "Upload new point forecast files"')
     os.system('git ' + git_paths + 'push --repo=' + git_repo)
+    os.system('git ' + git_paths + 'fetch origin')
     os.system('git ' + git_paths + 'status')
 
     return

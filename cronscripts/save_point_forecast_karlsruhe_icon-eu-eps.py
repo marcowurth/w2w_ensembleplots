@@ -57,6 +57,7 @@ def commit_and_push_files(path):
     os.system('git ' + git_paths + 'add --all')
     os.system('git ' + git_paths + 'commit -m "Upload new point forecast files"')
     os.system('git ' + git_paths + 'push --repo=' + git_repo)
+    os.system('git ' + git_paths + 'fetch origin')
     os.system('git ' + git_paths + 'status')
 
     return
