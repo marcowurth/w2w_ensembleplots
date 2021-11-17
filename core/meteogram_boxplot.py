@@ -296,13 +296,14 @@ def boxplot_forecast(models, date, var, point, plot_type, save_point_data, verbo
                         os.mkdir(path['base'] + path['benedikt'])
                     path['benedikt'] += '/'
 
-                    filename_latest = 'icon-eu-eps_latest_run_{}_{}.txt'.format(var_to_save, point['name'])
-                    filename = 'icon-eu-eps_{}{:02}{:02}{:02}_{}_{}.txt'.format(
+                    filename_textfile_latest = 'icon-eu-eps_latest_run_{}_{}.txt'.format(var_to_save, point['name'])
+                    filename_textfile = 'icon-eu-eps_{}{:02}{:02}{:02}_{}_{}.txt'.format(
                                 date['year'], date['month'], date['day'], date['hour'], var_to_save, point['name'])
 
-                    astropy.io.ascii.write(t, output = path['base'] + path['benedikt_latest'] + filename_latest,
+                    astropy.io.ascii.write(t, output = path['base'] + path['benedikt_latest'] \
+                                                      + filename_textfile_latest,
                                            overwrite = True, Writer = astropy.io.ascii.FixedWidth)
-                    astropy.io.ascii.write(t, output = path['base'] + path['benedikt'] + filename,
+                    astropy.io.ascii.write(t, output = path['base'] + path['benedikt'] + filename_textfile,
                                            overwrite = True, Writer = astropy.io.ascii.FixedWidth)
 
 

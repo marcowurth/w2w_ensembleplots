@@ -20,7 +20,7 @@ def main():
     var = 'all_available'
     pointnames =   ['Karlsruhe','Mainz','Munich',\
                     'Amsterdam','Athens','Berlin','Bologna','Brussels','Copenhagen','Dublin','Hamburg',\
-                    'Madrid','Leeds','Lisbon','London','Paris','Rome','Rottenburg_am_Neckar',\
+                    'Madrid','Leeds','Lisbon','London','Paris','Rome',\
                     'Toulouse','Valencia','Vienna','Warsaw','Zurich']
     #pointnames = ['Karlsruhe','Mainz','Munich','Berlin','Hamburg']
     plot_type = 'w2w_city'
