@@ -14,7 +14,7 @@ def main():
     #pointnames =   ['Karlsruhe','Mainz','Munich',\
     #                'Amsterdam','Athens','Berlin','Bologna','Brussels','Copenhagen','Dublin','Hamburg',\
     #                'Madrid','Leeds','Lisbon','London','Paris','Rome','Toulouse','Valencia','Vienna','Warsaw']
-    pointnames =   ['Rottenburg_am_Neckar']
+    pointnames =   ['Offenbach']
     #pointnames =   ['Cotonou_sea','Cotonou_land','Accra','Kumasi','Abidjan','Sal','Dakar_sea', 'Dakar_land','Bamako','Ouagadougou','Niamey',\
     #                'Douala','Ngaoundere','Abuja','Agadez','Parakou','Libreville_sea','Libreville_land']
 
