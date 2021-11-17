@@ -6,6 +6,8 @@ import os
 import datetime
 
 import numpy as np
+import astropy.table
+import astropy.io
 import Magics.macro as magics
 
 import sys
@@ -20,7 +22,7 @@ from w2w_ensembleplots.core.read_data import read_forecast_data, get_fcst_hours_
 ########################################################################
 ########################################################################
 
-def boxplot_forecast(models, date, var, point, plot_type, verbose):
+def boxplot_forecast(models, date, var, point, plot_type, save_point_data, verbose):
 
     # determine date and lead_times list #
 
@@ -219,6 +221,89 @@ def boxplot_forecast(models, date, var, point, plot_type, verbose):
             if not os.path.isdir(path['base'] + temp_subdir):
                 os.mkdir(path['base'] + temp_subdir)
             path['plots'] = temp_subdir + '/'
+
+
+            ##### save point data to textfile #####
+
+            if save_point_data \
+             and var in ['t_2m','prec_rate','prec_sum','wind_10m','mslp','clct','direct_rad', 'diffuse_rad']:
+                if var == 'wind_10m':
+                    vars_to_save = ['wind_mean_10m', 'vmax_10m']
+                else:
+                    vars_to_save = [var]
+
+                for var_to_save in vars_to_save:
+                    if var_to_save in ['prec_rate', 'vmax_10m', 'direct_rad', 'diffuse_rad']:
+                        fcst_hours_list_save = fcst_hours_list_eu[1:]
+                    else:
+                        fcst_hours_list_save = fcst_hours_list_eu
+
+
+                    # print data values to string matrix #
+
+                    data_to_save = []
+                    data_to_save.append(fcst_hours_list_save)
+
+                    for column in range(40):
+                        data_column = []
+                        for row in range(len(fcst_hours_list_save)):
+                            if var_to_save == 'wind_mean_10m':
+                                value = point_values_eu_eps[0, row, column, 0]
+                            elif var_to_save == 'vmax_10m':
+                                value = point_values_eu_eps[0, row + 1, column, 1]
+                            else:
+                                value = point_values_eu_eps[0, row, column]
+
+                            if abs(value) < 0.01:
+                                value_str = '{:.0f}'.format(value)
+                            else:
+                                value_str = '{:.2f}'.format(value)
+                            data_column.append(value_str)
+                        data_to_save.append(data_column)
+
+
+                        # make  header #
+
+                        header = [str(x) for x in range(1,41)]
+                        header.insert(0, 'fcst_hour')
+
+
+                    # make astropy table and add meta data #
+
+                    t = astropy.table.Table(data_to_save, names = header)
+                    meta = get_meta_data(var_to_save)
+                    str1 = 'variable: {}'.format(meta['var'])
+                    str2 = 'units: {}'.format(meta['units'])
+                    t.meta['comments'] = [str1, str2, '']
+
+
+                    # write table to file #
+
+                    path['benedikt_latest'] = 'data/model_data/icon-eu-eps/point-forecasts/benedikt_post_processing/'
+                    path['benedikt_latest'] += 'latest_run/' + point['name']
+                    if not os.path.isdir(path['base'] + path['benedikt_latest']):
+                        os.mkdir(path['base'] + path['benedikt_latest'])
+                    path['benedikt_latest'] += '/'
+
+
+                    path['benedikt'] = 'data/model_data/icon-eu-eps/point-forecasts/benedikt_post_processing/'
+                    path['benedikt'] += 'run_{}{:02}{:02}{:02}'.format(
+                                         date['year'], date['month'], date['day'], date['hour'])
+                    if not os.path.isdir(path['base'] + path['benedikt']):
+                        os.mkdir(path['base'] + path['benedikt'])
+                    path['benedikt'] += '/' + point['name']
+                    if not os.path.isdir(path['base'] + path['benedikt']):
+                        os.mkdir(path['base'] + path['benedikt'])
+                    path['benedikt'] += '/'
+
+                    filename_latest = 'icon-eu-eps_latest_run_{}_{}.txt'.format(var_to_save, point['name'])
+                    filename = 'icon-eu-eps_{}{:02}{:02}{:02}_{}_{}.txt'.format(
+                                date['year'], date['month'], date['day'], date['hour'], var_to_save, point['name'])
+
+                    astropy.io.ascii.write(t, output = path['base'] + path['benedikt_latest'] + filename_latest,
+                                           overwrite = True, Writer = astropy.io.ascii.FixedWidth)
+                    astropy.io.ascii.write(t, output = path['base'] + path['benedikt'] + filename,
+                                           overwrite = True, Writer = astropy.io.ascii.FixedWidth)
 
 
             # calculate percentiles #
@@ -2487,6 +2572,54 @@ def get_variable_title_unit(var):
         meta = dict(var = '850hPa-500hPa mean lapse rate', units = 'K/km')
     elif var == 'cape_ml':
         meta = dict(var = 'Mixed Layer CAPE', units = 'J/kg')
+
+    return meta
+
+########################################################################
+########################################################################
+########################################################################
+
+def get_meta_data(var):
+
+    if var == 't_2m':
+        meta = dict(var = 'Temperature at 2m', units = 'degree celsius')
+    elif var == 'prec_rate':
+        meta = dict(var = 'Total Precipitation Rate, Average of Time Interval before fcst_hour',
+                    units = 'mm/h')
+    elif var == 'prec_sum':
+        meta = dict(var = 'Total Precipitation Sum', units = 'mm')
+    elif var == 'wind_mean_10m':
+        meta = dict(var = 'Momentary Wind Speed at 10m', units = 'km/h')
+    elif var == 'mslp':
+        meta = dict(var = 'Mean Sea Level Pressure', units = 'hPa')
+    elif var == 'clct':
+        meta = dict(var = 'Total Cloud Cover', units = 'percent')
+    elif var == 'direct_rad':
+        meta = dict(var = 'Direct Downward Shortwave Radiation, Average of Time Interval before fcst_hour',
+                    units = 'W/m^2')
+    elif var == 'diffuse_rad':
+        meta = dict(var = 'Diffuse Downward Shortwave Radiation, Average of Time Interval before fcst_hour',
+                    units = 'W/m^2')
+    elif var == 'vmax_10m':
+        meta = dict(var = 'Wind Gust at 10m, Maximum of Time Interval before fcst_hour', units = 'km/h')
+    elif var == 'tqv':
+        meta = dict(var = 'Total Column Integrated Water Vapour', units = 'mm')
+    elif var == 't_850hPa':
+        meta = dict(var = 'Temperature at 850hPa', units = 'degree celsius')
+    elif var == 'wind_850hPa':
+        meta = dict(var = 'Momentary Wind Speed at 850hPa', units = 'km/h')
+    elif var == 'wind_300hPa':
+        meta = dict(var = 'Momentary Wind Speed at 300hPa', units = 'km/h')
+    elif var == 'gph_500hPa':
+        meta = dict(var = 'Geopotential Height at 500hPa', units = 'gpdm')
+    elif var == 'gph_300hPa':
+        meta = dict(var = 'Geopotential Height at 300hPa', units = 'gpdm')
+    elif var == 'shear_0-6km':
+        meta = dict(var = 'Momentary Vertical Wind Shear 0-6km (Difference of 10m and 500hPa Wind Vector)',
+                    units = 'm/s')
+    elif var == 'lapse_rate_850hPa-500hPa':
+        meta = dict(var = 'Mean Lapse Rate 850hPa-500hPa', units = 'K/km')
+
 
     return meta
 

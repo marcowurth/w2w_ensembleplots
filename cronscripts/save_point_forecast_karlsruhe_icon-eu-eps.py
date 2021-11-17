@@ -10,6 +10,7 @@ ex_op_str = current_path[current_path.index('progs')+6: current_path.index('w2w_
 sys.path.append('/progs/{}'.format(ex_op_str))
 from w2w_ensembleplots.core.download_forecast import calc_latest_run_time
 from w2w_ensembleplots.core.read_data import read_forecast_data
+from w2w_ensembleplots.core.meteogram_boxplot import get_meta_data
 
 
 def main():
@@ -118,54 +119,6 @@ def save_values(data_source, path, date, point, var, model):
                            overwrite = True, Writer = astropy.io.ascii.FixedWidth)
 
     return
-
-########################################################################
-########################################################################
-########################################################################
-
-def get_meta_data(var):
-
-    if var == 't_2m':
-        meta = dict(var = 'Temperature at 2m', units = 'degree celsius')
-    elif var == 'prec_rate':
-        meta = dict(var = 'Total Precipitation Rate, Average of Time Interval before fcst_hour',
-                    units = 'mm/h')
-    elif var == 'prec_sum':
-        meta = dict(var = 'Total Precipitation Sum', units = 'mm')
-    elif var == 'wind_mean_10m':
-        meta = dict(var = 'Momentary Wind Speed at 10m', units = 'km/h')
-    elif var == 'mslp':
-        meta = dict(var = 'Mean Sea Level Pressure', units = 'hPa')
-    elif var == 'clct':
-        meta = dict(var = 'Total Cloud Cover', units = 'percent')
-    elif var == 'direct_rad':
-        meta = dict(var = 'Direct Downward Shortwave Radiation, Average of Time Interval before fcst_hour',
-                    units = 'W/m^2')
-    elif var == 'diffuse_rad':
-        meta = dict(var = 'Diffuse Downward Shortwave Radiation, Average of Time Interval before fcst_hour',
-                    units = 'W/m^2')
-    elif var == 'vmax_10m':
-        meta = dict(var = 'Wind Gust at 10m, Maximum of Time Interval before fcst_hour', units = 'km/h')
-    elif var == 'tqv':
-        meta = dict(var = 'Total Column Integrated Water Vapour', units = 'mm')
-    elif var == 't_850hPa':
-        meta = dict(var = 'Temperature at 850hPa', units = 'degree celsius')
-    elif var == 'wind_850hPa':
-        meta = dict(var = 'Momentary Wind Speed at 850hPa', units = 'km/h')
-    elif var == 'wind_300hPa':
-        meta = dict(var = 'Momentary Wind Speed at 300hPa', units = 'km/h')
-    elif var == 'gph_500hPa':
-        meta = dict(var = 'Geopotential Height at 500hPa', units = 'gpdm')
-    elif var == 'gph_300hPa':
-        meta = dict(var = 'Geopotential Height at 300hPa', units = 'gpdm')
-    elif var == 'shear_0-6km':
-        meta = dict(var = 'Momentary Vertical Wind Shear 0-6km (Difference of 10m and 500hPa Wind Vector)',
-                    units = 'm/s')
-    elif var == 'lapse_rate_850hPa-500hPa':
-        meta = dict(var = 'Mean Lapse Rate 850hPa-500hPa', units = 'K/km')
-
-
-    return meta
 
 ########################################################################
 ########################################################################

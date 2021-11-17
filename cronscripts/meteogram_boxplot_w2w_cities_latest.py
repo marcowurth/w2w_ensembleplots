@@ -16,19 +16,25 @@ def main():
   ###########################################################
     models = 'both-eps'     # plot icon-eu-eps only if global not available
     date = 'latest'
-    #date = dict(year = 2021, month = 5, day = 31, hour = 0)
+    #date = dict(year = 2021, month = 11, day = 14, hour = 6)
     var = 'all_available'
     pointnames =   ['Karlsruhe','Mainz','Munich',\
                     'Amsterdam','Athens','Berlin','Bologna','Brussels','Copenhagen','Dublin','Hamburg',\
                     'Madrid','Leeds','Lisbon','London','Paris','Rome','Rottenburg_am_Neckar',\
                     'Toulouse','Valencia','Vienna','Warsaw','Zurich']
+    #pointnames = ['Karlsruhe','Mainz','Munich','Berlin','Hamburg']
     plot_type = 'w2w_city'
     verbose = True
 
   ###########################################################
 
     for pointname in pointnames:
-        boxplot_forecast(models, date, var, dict(name = pointname), plot_type, verbose)
+        if pointname in ['Karlsruhe','Mainz','Munich','Berlin','Hamburg']:
+            save_point_data = True
+        else:
+            save_point_data = False
+
+        boxplot_forecast(models, date, var, dict(name = pointname), plot_type, save_point_data, verbose)
 
         path = dict(base = '/',
                     plots = 'data/plots/operational/meteogram_boxplot/forecast/w2w_cities/')
