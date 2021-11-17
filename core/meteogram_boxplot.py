@@ -90,10 +90,7 @@ def boxplot_forecast(models, date, var, point, plot_type, save_point_data, verbo
             else:
                 point_values_eu_eps = np.empty((len(lead_times), 65, 40), dtype='float32')
         if extend_with_global:
-            if var == 'prec_rate':
-                point_values_global_eps = np.empty((len(lead_times), 5, 40), dtype='float32')
-            else:
-                point_values_global_eps = np.empty((len(lead_times), 5, 40), dtype='float32')
+            point_values_global_eps = np.empty((len(lead_times), 5, 40), dtype='float32')
         if models == 'icon-global-eps':
             if var == 'prec_rate':
                 point_values_global_eps = np.empty((len(lead_times), 69, 40), dtype='float32')
@@ -223,7 +220,7 @@ def boxplot_forecast(models, date, var, point, plot_type, save_point_data, verbo
             path['plots'] = temp_subdir + '/'
 
 
-            ##### save point data to textfile #####
+            ##### save icon-eu-eps point data to textfile #####
 
             if save_point_data \
              and var in ['t_2m','prec_rate','prec_sum','wind_10m','mslp','clct','direct_rad', 'diffuse_rad']:
@@ -296,9 +293,80 @@ def boxplot_forecast(models, date, var, point, plot_type, save_point_data, verbo
                         os.mkdir(path['base'] + path['benedikt'])
                     path['benedikt'] += '/'
 
-                    filename_textfile_latest = 'icon-eu-eps_latest_run_{}_{}.txt'.format(var_to_save, point['name'])
+                    filename_textfile_latest = 'icon-eu-eps_latest_run_{}_{}.txt'.format(
+                                                var_to_save, point['name'])
                     filename_textfile = 'icon-eu-eps_{}{:02}{:02}{:02}_{}_{}.txt'.format(
-                                date['year'], date['month'], date['day'], date['hour'], var_to_save, point['name'])
+                                         date['year'], date['month'], date['day'], date['hour'],
+                                         var_to_save, point['name'])
+
+                    astropy.io.ascii.write(t, output = path['base'] + path['benedikt_latest'] \
+                                                      + filename_textfile_latest,
+                                           overwrite = True, Writer = astropy.io.ascii.FixedWidth)
+                    astropy.io.ascii.write(t, output = path['base'] + path['benedikt'] + filename_textfile,
+                                           overwrite = True, Writer = astropy.io.ascii.FixedWidth)
+
+                ##### save icon-global-eps point data to textfile #####
+
+                if extend_with_global:
+
+                    # print data values to string matrix #
+
+                    var_to_save = var
+                    data_to_save = []
+                    data_to_save.append(fcst_hours_list_global)
+
+                    for column in range(40):
+                        data_column = []
+                        for row in range(len(fcst_hours_list_global)):
+                            value = point_values_global_eps[0, row, column]
+
+                            if abs(value) < 0.01:
+                                value_str = '{:.0f}'.format(value)
+                            else:
+                                value_str = '{:.2f}'.format(value)
+                            data_column.append(value_str)
+                        data_to_save.append(data_column)
+
+
+                        # make  header #
+
+                        header = [str(x) for x in range(1,41)]
+                        header.insert(0, 'fcst_hour')
+
+
+                    # make astropy table and add meta data #
+
+                    t = astropy.table.Table(data_to_save, names = header)
+                    meta = get_meta_data(var_to_save)
+                    str1 = 'variable: {}'.format(meta['var'])
+                    str2 = 'units: {}'.format(meta['units'])
+                    t.meta['comments'] = [str1, str2, '']
+
+
+                    # write table to file #
+
+                    path['benedikt_latest'] = 'data/model_data/icon-global-eps/point-forecasts/'
+                    path['benedikt_latest'] += 'benedikt_post_processing/latest_run/' + point['name']
+                    if not os.path.isdir(path['base'] + path['benedikt_latest']):
+                        os.mkdir(path['base'] + path['benedikt_latest'])
+                    path['benedikt_latest'] += '/'
+
+
+                    path['benedikt'] = 'data/model_data/icon-global-eps/point-forecasts/benedikt_post_processing/'
+                    path['benedikt'] += 'run_{}{:02}{:02}{:02}'.format(
+                                         date['year'], date['month'], date['day'], date['hour'])
+                    if not os.path.isdir(path['base'] + path['benedikt']):
+                        os.mkdir(path['base'] + path['benedikt'])
+                    path['benedikt'] += '/' + point['name']
+                    if not os.path.isdir(path['base'] + path['benedikt']):
+                        os.mkdir(path['base'] + path['benedikt'])
+                    path['benedikt'] += '/'
+
+                    filename_textfile_latest = 'icon-global-eps_latest_run_{}_{}.txt'.format(
+                                                var_to_save, point['name'])
+                    filename_textfile = 'icon-global-eps_{}{:02}{:02}{:02}_{}_{}.txt'.format(
+                                         date['year'], date['month'], date['day'], date['hour'],
+                                         var_to_save, point['name'])
 
                     astropy.io.ascii.write(t, output = path['base'] + path['benedikt_latest'] \
                                                       + filename_textfile_latest,
