@@ -51,9 +51,17 @@ def get_domain(domain_name):
         domain =   dict(name = domain_name, plot_width = 800, projection = 'Hammer', limits_type = 'radius',
                         centerlat = 30, centerlon = 118, radius = 2100, text_y = 0.885)
 
-    elif domain_name == 'patagonia_cyclone':
+    elif domain_name == 'west_africa':
         domain =   dict(name = domain_name, plot_width = 800, projection = 'Hammer', limits_type = 'radius',
-                        centerlat = -43, centerlon = -60, radius = 800, text_y = 0.883)
+                        centerlat = 9, centerlon = -4.5, radius = 2300, text_y = 0.925)
+
+    elif domain_name == 'east_africa':
+        domain =   dict(name = domain_name, plot_width = 800, projection = 'Hammer', limits_type = 'radius',
+                        centerlat = 9, centerlon = 34.5, radius = 2300, text_y = 0.925)
+
+    elif domain_name == 'southern_africa':
+        domain =   dict(name = domain_name, plot_width = 800, projection = 'Hammer', limits_type = 'radius',
+                        centerlat = -26, centerlon = 28, radius = 2300, text_y = 0.885)
 
     elif domain_name == 'northern_pacific':
         domain =   dict(name = domain_name, plot_width = 800, projection = 'Hammer', limits_type = 'radius',
@@ -71,22 +79,6 @@ def get_domain(domain_name):
         domain =   dict(name = domain_name, plot_width = 1200, projection = 'CylindricalEquidistant',
                         limits_type = 'deltalatlon',
                         centerlat = 20, centerlon = -55, deltalat_deg = 20, deltalon_deg = 50, text_y = 0.665)
-
-    elif domain_name == 'argentina_central':
-        domain =   dict(name = domain_name, plot_width = 800, projection = 'Hammer', limits_type = 'radius',
-                        centerlat = -34.6, centerlon = -64.4, radius = 800, text_y = 0.905)
-
-    elif domain_name == 'arg_uru_braz':
-        domain =   dict(name = domain_name, plot_width = 800, projection = 'Hammer', limits_type = 'radius',
-                        centerlat = -32.5, centerlon = -61.0, radius = 1000, text_y = 0.905)
-
-    elif domain_name == 'argentina_central_cerca':
-        domain =   dict(name = domain_name, plot_width = 800, projection = 'Hammer', limits_type = 'radius',
-                        centerlat = -36.0, centerlon = -66.0, radius = 500, text_y = 0.905)
-
-    elif domain_name == 'north_west_australia':
-        domain =   dict(name = domain_name, plot_width = 800, projection = 'Hammer', limits_type = 'radius',
-                        centerlat = -21.0, centerlon = 120.0, radius = 800, text_y = 0.905)
 
     else:
         print('domain not known:', domain_name)
