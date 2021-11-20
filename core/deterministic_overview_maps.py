@@ -176,7 +176,9 @@ def det_contourplot(domains, variable1, variable2, model, run):
         for domain in domains:
             if model == 'icon-global-det' \
              and (variable1['name'] == 'prec_24h' or variable1['name'] == 'vmax_10m') \
-             and (domain['name'] == 'europe' or domain['name'] == 'mediterranean') \
+             and (domain['name'] == 'central_europe'\
+                  or domain['name'] == 'europe'\
+                  or domain['name'] == 'mediterranean') \
              and hour <= 120:
                 continue
 
