@@ -21,7 +21,7 @@ def main():
     #run = dict(year = 2020, month = 9, day = 16, hour = 0)
 
     domains = []
-    domains.append(get_domain('europe'))
+    domains.append(get_domain('central_europe'))
     domains.append(get_domain('europe_and_north_atlantic'))
     domains.append(get_domain('mediterranean'))
 

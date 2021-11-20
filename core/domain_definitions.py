@@ -26,6 +26,10 @@ def get_domain(domain_name):
                         limits_type = 'deltalatlon',
                         centerlat = 50, centerlon = 19.5, deltalat_deg = 20.5, deltalon_deg = 43, text_y = 0.837)
 
+    elif domain_name == 'central_europe':
+        domain =   dict(name = domain_name, plot_width = 800, projection = 'Hammer', limits_type = 'radius',
+                        centerlat = 50, centerlon = 8, radius = 1000, text_y = 0.875)
+
     elif domain_name == 'europe':
         domain =   dict(name = domain_name, plot_width = 800, projection = 'Hammer', limits_type = 'radius',
                         centerlat = 48, centerlon = 9, radius = 1400, text_y = 0.865)

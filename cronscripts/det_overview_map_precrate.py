@@ -16,7 +16,7 @@ def main():
     model = 'icon-global-det'
 
     run = calc_latest_run_time(model)
-    #run = dict(year = 2021, month = 2, day = 21, hour = 12)
+    #run = dict(year = 2024, month = 10, day = 17, hour = 12)
 
     domains = []
     domains.append(get_domain('europe'))
