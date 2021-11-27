@@ -16,13 +16,13 @@ def main():
   ###########################################################
     models = 'both-eps'     # plot icon-eu-eps only if global not available
     date = 'latest'
-    #date = dict(year = 2021, month = 11, day = 17, hour = 0)
+    #date = dict(year = 2021, month = 11, day = 27, hour = 12)
     var = 'all_available'
     pointnames =   ['Karlsruhe','Mainz','Munich','Offenbach','Berlin','Hamburg',\
                     'Amsterdam','Athens','Bologna','Brussels','Copenhagen','Dublin',\
                     'Madrid','Leeds','Lisbon','London','Paris','Rome',\
                     'Toulouse','Valencia','Vienna','Warsaw','Zurich']
-    #pointnames = ['Offenbach']
+    #pointnames = ['Karlsruhe']
     plot_type = 'w2w_city'
     verbose = True
 

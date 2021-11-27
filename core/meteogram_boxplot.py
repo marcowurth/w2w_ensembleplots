@@ -77,7 +77,7 @@ def boxplot_forecast(models, date, var, point, plot_type, save_point_data, verbo
 
 
         if models == 'both-eps':
-            if var == 'prec_rate' or var == 'direct_rad' or var == 'diffuse_rad':
+            if var == 'prec_rate' or var == 'snow_rate' or var == 'direct_rad' or var == 'diffuse_rad':
                 point_values_eu_eps = np.empty((len(lead_times), 64, 40), dtype='float32')
             elif var == 'vmax_10m':
                 point_values_eu_eps = np.empty((len(lead_times), 65, 40), dtype='float32')
@@ -223,14 +223,14 @@ def boxplot_forecast(models, date, var, point, plot_type, save_point_data, verbo
             ##### save icon-eu-eps point data to textfile #####
 
             if save_point_data \
-             and var in ['t_2m','prec_rate','prec_sum','wind_10m','mslp','clct','direct_rad', 'diffuse_rad']:
+             and var in ['t_2m','prec_rate','snow_rate','prec_sum','wind_10m','mslp','clct','direct_rad', 'diffuse_rad']:
                 if var == 'wind_10m':
                     vars_to_save = ['wind_mean_10m', 'vmax_10m']
                 else:
                     vars_to_save = [var]
 
                 for var_to_save in vars_to_save:
-                    if var_to_save in ['prec_rate', 'vmax_10m', 'direct_rad', 'diffuse_rad']:
+                    if var_to_save in ['prec_rate', 'snow_rate', 'vmax_10m', 'direct_rad', 'diffuse_rad']:
                         fcst_hours_list_save = fcst_hours_list_eu[1:]
                     else:
                         fcst_hours_list_save = fcst_hours_list_eu
@@ -460,7 +460,7 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
             data_percentiles_eu_1h = data_percentiles_eu[[list(fcst_hours_list_eu).index(x)\
                                                           for x in fcst_hours_list_eu_1h]]
 
-        elif var == 'prec_rate' or var == 'direct_rad' or var == 'diffuse_rad':
+        elif var == 'prec_rate' or var == 'snow_rate' or var == 'direct_rad' or var == 'diffuse_rad':
             dates_eu_all = []
             for i in range(len(fcst_hours_list_eu)-1):
                 dates_eu_all.append(str(run_time + datetime.timedelta(0,\
@@ -706,7 +706,7 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
 
     ########################################################################
 
-        elif var == 'prec_rate' or var == 'direct_rad' or var == 'diffuse_rad':
+        elif var == 'prec_rate' or var == 'snow_rate' or var == 'direct_rad' or var == 'diffuse_rad':
             bar_minmax_eu_1h = magics.mgraph(
                     graph_type = 'bar',
                     graph_bar_colour = 'black',
@@ -2129,7 +2129,7 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
                         date6_label,
                         date7_label,
                         )
-            elif var == 'prec_rate' or var == 'direct_rad' or var == 'diffuse_rad':
+            elif var == 'prec_rate' or var == 'snow_rate' or var == 'direct_rad' or var == 'diffuse_rad':
                 magics.plot(
                         output_layout,
                         page_layout,
@@ -2611,6 +2611,8 @@ def get_variable_title_unit(var):
         meta = dict(var = '2-m temperature', units = 'C')
     elif var == 'prec_rate':
         meta = dict(var = 'Precipitation rate', units = 'mm/h')
+    elif var == 'snow_rate':
+        meta = dict(var = 'Snow rate (water equivalent)', units = 'mm/h')
     elif var == 'prec_sum':
         meta = dict(var = 'Accumulated precipitation', units = 'mm')
     elif var == 'wind_10m':
@@ -2654,6 +2656,9 @@ def get_meta_data(var):
         meta = dict(var = 'Temperature at 2m', units = 'degree celsius')
     elif var == 'prec_rate':
         meta = dict(var = 'Total Precipitation Rate, Average of Time Interval before fcst_hour',
+                    units = 'mm/h')
+    elif var == 'snow_rate':
+        meta = dict(var = 'Snow Rate (Water Equivalent), Average of Time Interval before fcst_hour',
                     units = 'mm/h')
     elif var == 'prec_sum':
         meta = dict(var = 'Total Precipitation Sum', units = 'mm')
@@ -2711,7 +2716,7 @@ def fit_y_axis_to_data(var, y_axis_range, pointname):
         y_axis_range['interval'] = 5.0
         y_axis_range['ref'] = 0.0
 
-    elif var == 'prec_rate':
+    elif var == 'prec_rate' or var == 'snow_rate':
         y_axis_range['min'] = -0.1
         if y_axis_range['max'] < 2.75:
             y_axis_range['max'] = 3.0
@@ -2823,7 +2828,7 @@ def fit_y_axis_to_data(var, y_axis_range, pointname):
         y_axis_range['ref'] = 0.0
 
     elif var == 't_850hPa':
-        if pointname == 'Karlsruhe' or pointname == 'Mainz' or pointname == 'Munich':
+        if False: #pointname == 'Karlsruhe' or pointname == 'Mainz' or pointname == 'Munich':
             ##### hard axis with extension if over borders #####
             if y_axis_range['min'] < 0.0:
                 y_axis_range['min'] -= 2.5
@@ -2891,11 +2896,11 @@ def fit_y_axis_to_data(var, y_axis_range, pointname):
 
     elif var == 'cape_ml':
         y_axis_range['min'] = 0.0
-        if y_axis_range['max'] < 1000.0:
-            y_axis_range['max'] = 1000.0
+        if y_axis_range['max'] < 500.0:
+            y_axis_range['max'] = 500.0
         else:
             y_axis_range['max'] += 0.1 * y_axis_range['max']
-        y_axis_range['interval'] = 200.0
+        y_axis_range['interval'] = 100.0
         y_axis_range['ref'] = 0.0
 
     return y_axis_range

@@ -30,6 +30,15 @@ def read_forecast_data(model, grid, date, var, **kwargs):
         varname1_folder = 'tot_prec'
         varname1_grib = 'tot_prec'
         varname1_cf = 'tp'
+    elif var == 'snow_rate':
+        varname1_lvtype = 'sl'
+        varname1_folder = 'snow_con'
+        varname1_grib = 'snow_con'
+        varname1_cf = 'csrwe'
+        varname2_lvtype = 'sl'
+        varname2_folder = 'snow_gsp'
+        varname2_grib = 'snow_gsp'
+        varname2_cf = 'lssrwe'
     elif var == 'prec_6h':
         varname1_lvtype = 'sl'
         varname1_folder = 'tot_prec'
@@ -600,6 +609,10 @@ def read_forecast_data(model, grid, date, var, **kwargs):
             data_final = calculate_inst_values_of_sum(data_var1, model)
         elif 'fcst_hour' in kwargs:
             data_final = data_var1
+    elif var == 'snow_rate':    # in mm/h (water equivalent)
+        if 'point' in kwargs:
+            data_final = calculate_inst_values_of_sum(data_var1, model) \
+                       + calculate_inst_values_of_sum(data_var2, model)
     elif var == 'prec_6h':     # in mm
         data_final = data_var1
     elif var == 'prec_24h':     # in mm
@@ -834,12 +847,13 @@ def get_all_available_vars(models, date):
             #var_list = ['t_2m','prec_rate','prec_sum','wind_10m','wind_mean_10m','vmax_10m','mslp','clct',\
             #'direct_rad','diffuse_rad','tqv','gph_500hPa','t_850hPa','wind_850hPa',\
             #'shear_0-6km','lapse_rate_850hPa-500hPa']
-            var_list = ['t_2m','prec_rate','prec_sum','wind_10m','mslp','clct','direct_rad','diffuse_rad','tqv',\
-                        'cape_ml','t_850hPa','shear_0-6km']
+            var_list = ['t_2m','prec_rate','snow_rate','prec_sum','wind_10m','mslp','clct',
+                        'direct_rad','diffuse_rad','tqv','cape_ml','t_850hPa','shear_0-6km']
+            #var_list = ['snow_rate']
         else:
             #var_list = ['t_2m','prec_rate','prec_sum','wind_10m','wind_mean_10m','vmax_10m','mslp','clct',\
             #'direct_rad','diffuse_rad']
-            var_list = ['t_2m','prec_rate','prec_sum','wind_10m','mslp','clct','direct_rad', 'diffuse_rad']
+            var_list = ['t_2m','prec_rate','snow_rate','prec_sum','wind_10m','mslp','clct','direct_rad', 'diffuse_rad']
     elif models == 'icon-global-eps':
         var_list = ['t_2m','prec_rate','prec_sum','wind_mean_10m','clct']
 
