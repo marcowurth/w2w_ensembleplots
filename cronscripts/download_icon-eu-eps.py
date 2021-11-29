@@ -52,7 +52,7 @@ def main():
         #vars_to_interpolate = []
 
     elif date['hour'] == 6 or date['hour'] == 18:
-        var_list = [['tot_prec','sl'],['snow_con','sl'],['snow_gsp','sl'],['t_2m','sl'],
+        var_list = [['tot_prec','sl'],['t_2m','sl'],
                     ['u_10m','sl'],['v_10m','sl'],['ps','sl'],['clct','sl'],
                     ['aswdir_s','sl'],['aswdifd_s','sl'],['vmax_10m','sl']]
 

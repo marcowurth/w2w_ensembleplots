@@ -853,7 +853,7 @@ def get_all_available_vars(models, date):
         else:
             #var_list = ['t_2m','prec_rate','prec_sum','wind_10m','wind_mean_10m','vmax_10m','mslp','clct',\
             #'direct_rad','diffuse_rad']
-            var_list = ['t_2m','prec_rate','snow_rate','prec_sum','wind_10m','mslp','clct','direct_rad', 'diffuse_rad']
+            var_list = ['t_2m','prec_rate','prec_sum','wind_10m','mslp','clct','direct_rad', 'diffuse_rad']
     elif models == 'icon-global-eps':
         var_list = ['t_2m','prec_rate','prec_sum','wind_mean_10m','clct']
 
