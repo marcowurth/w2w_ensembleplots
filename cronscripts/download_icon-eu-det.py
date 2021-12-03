@@ -24,6 +24,8 @@ def main():
     # get latest run time #
 
     date = calc_latest_run_time('icon-eu-det')
+    if date['hour'] == 6 or date['hour'] == 18:
+        date['hour'] -= 6
 
 
     # explicit download options #
