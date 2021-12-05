@@ -5,6 +5,7 @@
 import numpy as np
 import xarray as xr
 import eccodes
+from astropy.io import ascii
 
 from w2w_ensembleplots.core.grid_information_around_point import which_grid_point
 from w2w_ensembleplots.core.grid_information_around_point import get_latlon_filter_distance
@@ -670,6 +671,34 @@ def read_forecast_data(model, grid, date, var, **kwargs):
 
     print(var + ', shape:', data_final.shape)
     return data_final
+
+########################################################################
+########################################################################
+########################################################################
+
+def read_forecast_pp_data(model, date, var, pointname):
+    path = dict(base = '/',
+                textfiles_pp_eu = 'data/model_data/icon-eu-eps/point-forecasts/benedikt_post_processing/',
+                textfiles_pp_global = 'data/model_data/icon-global-eps/point-forecasts/benedikt_post_processing/')
+    path['textfiles_pp_eu'] += 'latest_run_pp/{}/'.format(pointname)
+    path['textfiles_pp_global'] += 'latest_run_pp/{}/'.format(pointname)
+
+    filename = '{}_latest_run_pp_{}_{}.txt'.format(model, var, pointname)
+
+    if model == 'icon-eu-eps':
+        data_table = ascii.read(path['base'] + path['textfiles_pp_eu'] + filename)
+    elif model == 'icon-global-eps':
+        data_table = ascii.read(path['base'] + path['textfiles_pp_global'] + filename)
+
+    data = data_table.as_array()
+
+    read_values = np.zeros((len(data), len(data[0])-1), dtype='float32')
+    for i in range(len(data)):
+        data_row = data.data[i]
+        for j in range(1,len(data[0])):
+            read_values[i][j-1] = data_row[j]
+
+    return read_values[1:, :-1]
 
 ########################################################################
 ########################################################################

@@ -15,14 +15,15 @@ current_path = sys.path[0]
 ex_op_str = current_path[current_path.index('progs')+6: current_path.index('w2w_ensembleplots')-1]
 sys.path.append('/progs/{}'.format(ex_op_str))
 from w2w_ensembleplots.core.download_forecast import calc_latest_run_time, get_timeshift
-from w2w_ensembleplots.core.read_data import read_forecast_data, get_fcst_hours_list, get_all_available_vars
+from w2w_ensembleplots.core.read_data import read_forecast_data, read_forecast_pp_data
+from w2w_ensembleplots.core.read_data import get_fcst_hours_list, get_all_available_vars
 
 
 ########################################################################
 ########################################################################
 ########################################################################
 
-def boxplot_forecast(models, date, var, point, plot_type, save_point_data, verbose):
+def boxplot_forecast_raw(models, date, var, point, point_type, save_point_data, y_axis_limits, verbose):
 
     # determine date and lead_times list #
 
@@ -56,6 +57,17 @@ def boxplot_forecast(models, date, var, point, plot_type, save_point_data, verbo
         var_list = get_all_available_vars(models, date)
         if making_comparison_plots:
             var_list = ['t_2m','prec_rate','prec_sum','wind_10m','mslp','clct','direct_rad','diffuse_rad']
+        if y_axis_limits == 'raw_and_pp':
+            if point['name'] == 'Karlsruhe':
+                var_list = ['t_2m','prec_rate','prec_sum','wind_10m','mslp','clct','direct_rad']
+            elif point['name'] == 'Mainz':
+                var_list = ['t_2m','prec_rate','prec_sum']
+            elif point['name'] == 'Munich':
+                var_list = ['t_2m','prec_rate','prec_sum','wind_10m','mslp','clct']
+            elif point['name'] == 'Berlin':
+                var_list = ['t_2m','prec_rate','prec_sum','wind_10m','mslp','direct_rad']
+            elif point['name'] == 'Hamburg':
+                var_list = ['t_2m','prec_rate','prec_sum','wind_10m','mslp','clct','direct_rad','diffuse_rad']
     else:
         var_list = [var]
 
@@ -109,7 +121,6 @@ def boxplot_forecast(models, date, var, point, plot_type, save_point_data, verbo
 
             # get forecast data from icon-eu-eps #
 
-            first_run_not_found = False
             if models == 'both-eps':
                 try:
                     if var == 'wind_10m':
@@ -165,6 +176,11 @@ def boxplot_forecast(models, date, var, point, plot_type, save_point_data, verbo
 
         # calculate y axis limits #
 
+        ex_op_str = current_path[current_path.index('progs')+6: current_path.index('w2w_ensembleplots')-1]
+        path = dict(base = '/',
+                    y_axis_data = 'data/additional_data/temp/{}/'.format(ex_op_str))
+
+
         if models == 'both-eps':
             y_axis_range['min'] = np.nanmin(point_values_eu_eps)
             y_axis_range['max'] = np.nanmax(point_values_eu_eps)
@@ -177,12 +193,29 @@ def boxplot_forecast(models, date, var, point, plot_type, save_point_data, verbo
             y_axis_range['min'] = np.nanmin(point_values_global_eps)
             y_axis_range['max'] = np.nanmax(point_values_global_eps)
 
+        if y_axis_limits == 'raw_and_pp':
+            filename = 'boxplot_meteogram_raw+pp_y_axis_{}_{}.txt'.format(point['name'], var)
+            with open(path['base'] + path['y_axis_data'] + filename, 'r') as f:
+                lines = f.readlines()
+                minval = float(lines[0][5:])
+                maxval = float(lines[1][5:])
+
+            if np.nanmin(minval) < y_axis_range['min']:
+                y_axis_range['min'] = np.nanmin(minval)
+            if np.nanmax(maxval) > y_axis_range['max']:
+                y_axis_range['max'] = np.nanmax(maxval)
+
+        elif point['name'] in ['Karlsruhe','Mainz','Munich','Berlin','Hamburg']:
+            filename = 'boxplot_meteogram_raw_y_axis_{}_{}.txt'.format(point['name'], var)
+            with open(path['base'] + path['y_axis_data'] + filename, 'w') as f:
+                f.write('min: {:.2f}\n'.format(y_axis_range['min']))
+                f.write('max: {:.2f}\n'.format(y_axis_range['max']))
+
         y_axis_range = fit_y_axis_to_data(var, y_axis_range, point['name'])
 
 
         # main loop 2 in this function, every iteration makes one plot #
 
-        path = dict(base = '/')
         for i, lead_time in enumerate(lead_times):
             if models == 'both-eps':
                 fcst_hours_list_eu = get_fcst_hours_list('icon-eu-eps')
@@ -201,20 +234,25 @@ def boxplot_forecast(models, date, var, point, plot_type, save_point_data, verbo
 
             # define plot path and filename #
 
-            ex_op_str = current_path[current_path.index('progs')+6: current_path.index('w2w_ensembleplots')-1]
             if making_comparison_plots:
                 temp_subdir = 'data/plots/{}/meteogram_boxplot/forecast/comparison/{:03}h_ago/'.format(
-                               ex_op_str,lead_time)
+                               ex_op_str, lead_time)
                 filename = 'meteogram_boxplot_{:03}h_ago_{}_{}'.format(lead_time, var, point['name'])
-            elif plot_type == 'w2w_city':
-                temp_subdir = 'data/plots/{}/meteogram_boxplot/forecast/w2w_cities/'.format(ex_op_str)
-                filename = 'meteogram_boxplot_{}_latest_{}'.format(point['name'], var)
-            elif plot_type == 'user_point':
+            elif point_type == 'operational_city':
+                temp_subdir = 'data/plots/{}/meteogram_boxplot/forecast/operational_cities/'.format(ex_op_str)
+                filename = 'meteogram_boxplot_raw_{}{:02}{:02}{:02}_{}_{}'.format(
+                            date['year'], date['month'], date['day'], date['hour'], point['name'], var)
+            elif point_type == 'user_point':
                 temp_subdir = 'data/plots/{}/meteogram_boxplot/forecast/user_points/'.format(ex_op_str)
-                filename = 'meteogram_boxplot_{}_{}{:02}{:02}{:02}_{}'.format(
-                            point['name'], date['year'], date['month'], date['day'], date['hour'], var)
+                filename = 'meteogram_boxplot_{}{:02}{:02}{:02}_{}_{}'.format(
+                            date['year'], date['month'], date['day'], date['hour'], point['name'], var)
 
-            temp_subdir = temp_subdir + point['name']
+            date_str = 'run_{}{:02}{:02}{:02}'.format(date['year'], date['month'], date['day'], date['hour'])
+            temp_subdir = temp_subdir + date_str
+            if not os.path.isdir(path['base'] + temp_subdir):
+                os.mkdir(path['base'] + temp_subdir)
+
+            temp_subdir = temp_subdir + '/' + point['name']
             if not os.path.isdir(path['base'] + temp_subdir):
                 os.mkdir(path['base'] + temp_subdir)
             path['plots'] = temp_subdir + '/'
@@ -403,10 +441,204 @@ def boxplot_forecast(models, date, var, point, plot_type, save_point_data, verbo
 
             # plotting #
 
+            data_type = 'raw_model_output'
             plot_in_magics_boxplot(path, date_run, point, var, meta, y_axis_range, filename,
                                    fcst_hours_list_eu, fcst_hours_list_global,
                                    data_percentiles_eu_eps, data_percentiles_global_eps,
-                                   models, extend_with_global, making_comparison_plots, lead_time, plot_type)
+                                   models, extend_with_global, making_comparison_plots, lead_time,
+                                   point_type, data_type)
+        del y_axis_range
+
+    return
+
+########################################################################################################################
+########################################################################################################################
+########################################################################################################################
+
+def boxplot_forecast_pp(date, var, point, verbose):
+
+    # determine date and lead_times list #
+
+    if date == 'latest':
+        date = calc_latest_run_time('icon-eu-eps')
+
+    if verbose:
+        if 'lat' in point:
+            print('----- next point is {}, {:.2f}°N, {:.2f}°E -----'.format(point['name'], point['lat'], point['lon']))
+        else:
+            print('----- next point is {} -----'.format(point['name']))
+        print('-- Initial time of run: {}{:02}{:02}-{:02}UTC --'.format(\
+              date['year'], date['month'], date['day'], date['hour']))
+
+
+    # determine var_list #
+
+    if var == 'all_available':
+        if point['name'] == 'Karlsruhe':
+            var_list = ['t_2m','prec_rate','prec_sum','wind_10m','mslp','clct','direct_rad']
+        elif point['name'] == 'Mainz':
+            var_list = ['t_2m','prec_rate','prec_sum']
+        elif point['name'] == 'Munich':
+            var_list = ['t_2m','prec_rate','prec_sum','wind_10m','mslp','clct']
+        elif point['name'] == 'Berlin':
+            var_list = ['t_2m','prec_rate','prec_sum','wind_10m','mslp','direct_rad']
+        elif point['name'] == 'Hamburg':
+            var_list = ['t_2m','prec_rate','prec_sum','wind_10m','mslp','clct','direct_rad','diffuse_rad']
+    else:
+        var_list = [var]
+
+
+    # main loop in this function, every iteration makes one plot #
+
+    for var in var_list:
+        if verbose:
+            print('----- next variable is {} -----'.format(var))
+
+        if (date['hour'] == 0 or date['hour'] == 12)\
+         and (var == 't_2m' or var == 'prec_rate' or var == 'prec_sum' or var == 'clct'): 
+            extend_with_global = False
+        else:
+            extend_with_global = False
+
+
+        if var == 'prec_rate' or var == 'direct_rad' or var == 'diffuse_rad':
+            point_values_eu_eps = np.empty((64, 40), dtype='float32')
+        elif var == 'vmax_10m':
+            point_values_eu_eps = np.empty((65, 40), dtype='float32')
+            point_values_eu_eps[0 , :] = np.nan
+        elif var == 'wind_10m':
+            point_values_eu_eps = np.empty((65, 40, 2), dtype='float32')
+            point_values_eu_eps[0 , :, 1] = np.nan
+        elif var == 'prec_sum':
+            point_values_eu_eps = np.empty((65, 40), dtype='float32')
+            point_values_eu_eps[0 , :] = 0.0
+        else:
+            point_values_eu_eps = np.empty((65, 40), dtype='float32')
+
+
+        if extend_with_global:
+            point_values_global_eps = np.empty((5, 40), dtype='float32')
+
+
+        # get forecast data from icon-eu-eps #
+
+        try:
+            if var == 'wind_10m':
+                point_values_eu_eps[:, :, 0] = read_forecast_pp_data('icon-eu-eps', date, 'wind_mean_10m',
+                                                                      point['name'])
+                point_values_eu_eps[1:, :, 1] = read_forecast_pp_data('icon-eu-eps', date, 'vmax_10m', point['name'])
+            elif var == 'vmax_10m':
+                point_values_eu_eps[1:, :] = read_forecast_pp_data('icon-eu-eps', date, var, point['name'])
+            elif var == 'prec_sum':
+                point_values_eu_eps[1:, :] = read_forecast_pp_data('icon-eu-eps', date, var, point['name'])
+            else:
+                point_values_eu_eps[:, :] = read_forecast_pp_data('icon-eu-eps', date, var, point['name'])
+        except FileNotFoundError:
+            point_values_eu_eps[:, :] = -100
+            print('-- icon-eu-eps pp data not found --')
+
+
+        # get forecast data from icon-global-eps #
+
+        if extend_with_global:
+            try:
+                point_values_global_eps[:, :] = read_forecast_pp_data('icon-global-eps', date, var, point['name'])
+            except FileNotFoundError:
+                point_values_global_eps[:, :] = -100
+                print('-- icon-global-eps pp data not found --')
+
+
+        # calculate y axis limits #
+
+        ex_op_str = current_path[current_path.index('progs')+6: current_path.index('w2w_ensembleplots')-1]
+        path = dict(base = '/',
+                    y_axis_data = 'data/additional_data/temp/{}/'.format(ex_op_str))
+
+
+        y_axis_range = dict()
+        y_axis_range['min'] = np.nanmin(point_values_eu_eps)
+        y_axis_range['max'] = np.nanmax(point_values_eu_eps)
+
+        if extend_with_global:
+            if np.nanmin(point_values_global_eps) < y_axis_range['min']:
+                y_axis_range['min'] = np.nanmin(point_values_global_eps)
+            if np.nanmax(point_values_global_eps) > y_axis_range['max']:
+                y_axis_range['max'] = np.nanmax(point_values_global_eps)
+
+        filename = 'boxplot_meteogram_raw_y_axis_{}_{}.txt'.format(point['name'], var)
+        with open(path['base'] + path['y_axis_data'] + filename, 'r') as f:
+            lines = f.readlines()
+            minval = float(lines[0][5:])
+            maxval = float(lines[1][5:])
+
+        if np.nanmin(minval) < y_axis_range['min']:
+            y_axis_range['min'] = np.nanmin(minval)
+        if np.nanmax(maxval) > y_axis_range['max']:
+            y_axis_range['max'] = np.nanmax(maxval)
+
+        filename = 'boxplot_meteogram_raw+pp_y_axis_{}_{}.txt'.format(point['name'], var)
+        with open(path['base'] + path['y_axis_data'] + filename, 'w') as f:
+            f.write('min: {:.2f}\n'.format(y_axis_range['min']))
+            f.write('max: {:.2f}\n'.format(y_axis_range['max']))
+
+        y_axis_range = fit_y_axis_to_data(var, y_axis_range, point['name'])
+
+
+        fcst_hours_list_eu = get_fcst_hours_list('icon-eu-eps')
+        if extend_with_global:
+            fcst_hours_list_global = get_fcst_hours_list('icon-global-eps_eu-extension')
+        else:
+            fcst_hours_list_global = None
+
+
+        # define plot path and filename #
+
+        temp_subdir = 'data/plots/{}/meteogram_boxplot/forecast/operational_cities/'.format(ex_op_str)
+        filename = 'meteogram_boxplot_pp_{}{:02}{:02}{:02}_{}_{}'.format(
+                    date['year'], date['month'], date['day'], date['hour'], point['name'], var)
+
+        date_str = 'run_{}{:02}{:02}{:02}'.format(date['year'], date['month'], date['day'], date['hour'])
+        temp_subdir = temp_subdir + date_str
+        if not os.path.isdir(path['base'] + temp_subdir):
+            os.mkdir(path['base'] + temp_subdir)
+
+        temp_subdir = temp_subdir + '/' + point['name']
+        if not os.path.isdir(path['base'] + temp_subdir):
+            os.mkdir(path['base'] + temp_subdir)
+        path['plots'] = temp_subdir + '/'
+
+
+        # calculate percentiles #
+
+        # data_percentiles_eu: 65 timesteps x 7 percentiles
+        # data_percentiles_global: 70/5 timesteps x 7 percentiles
+        data_percentiles_eu_eps = np.percentile(point_values_eu_eps[:, :],
+                                                [0,10,25,50,75,90,100], axis = 1).T
+        if var == 'wind_10m':
+            data_percentiles_eu_eps = np.moveaxis(data_percentiles_eu_eps, 0, 2)
+ 
+        if extend_with_global:
+            data_percentiles_global_eps = np.percentile(point_values_global_eps[:, :], 
+                                                        [0,10,25,50,75,90,100], axis = 1).T
+        else:
+            data_percentiles_global_eps = None
+
+
+        meta = get_variable_title_unit(var)
+
+
+        # plotting #
+
+        models = 'both-eps'
+        making_comparison_plots = False
+        lead_time = 0
+        point_type = 'operational_city'
+        data_type = 'post_processed'
+        plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
+                               fcst_hours_list_eu, fcst_hours_list_global,
+                               data_percentiles_eu_eps, data_percentiles_global_eps,
+                               models, extend_with_global, making_comparison_plots, lead_time,
+                               point_type, data_type)
         del y_axis_range
 
     return
@@ -418,7 +650,8 @@ def boxplot_forecast(models, date, var, point, plot_type, save_point_data, verbo
 def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
                            fcst_hours_list_eu, fcst_hours_list_global,
                            data_percentiles_eu, data_percentiles_global,
-                           models, extend_with_global, making_comparison_plots, lead_time, plot_type):
+                           models, extend_with_global, making_comparison_plots, lead_time,
+                           point_type, data_type):
 
     run_time = datetime.datetime(date['year'], date['month'], date['day'], date['hour'])
     if models == 'both-eps':
@@ -430,7 +663,7 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
     time_end   = run_time + datetime.timedelta(0, 3600 * (183 + timeshift))
 
     if not extend_with_global:
-        shading_area_time = [str(run_time + datetime.timedelta(0,3600 * int(183 - 24*1.25 + timeshift)))]
+        shading_area_time = [str(run_time + datetime.timedelta(0, 3600 * int(183 - 24*1.25 + timeshift)))]
 
     if var == 't_2m':
         if timeshift == 0:
@@ -1753,9 +1986,9 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
 
     ########################################################################
 
-    if plot_type == 'w2w_city':
+    if point_type == 'operational_city':
         title_str = '<b>{} in {}</b>'.format(meta['var'], point['name'].replace('_',' '))
-    elif plot_type == 'user_point':
+    elif point_type == 'user_point':
         if point['lat'] >= 0.0 and point['lon'] >= 0.0:
             coord_str = '{:.2f}°N, {:.2f}°E'.format(abs(point['lat']), abs(point['lon']))
         elif point['lat'] >= 0.0 and point['lon'] < 0.0:
@@ -1801,6 +2034,26 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
             text_box_x_length = 1.5,
             text_box_y_length = 0.5,
         )
+
+    ########################################################################
+
+    if data_type == 'raw_model_output':
+        data_type_str = 'Raw Model Output'
+    if data_type == 'post_processed':
+        data_type_str = 'Post-Processed'
+    data_type_text = magics.mtext(
+            text_line_1 = data_type_str,
+            text_font_size = 0.8,
+            text_colour = 'black',
+            text_justification = 'left',
+            text_mode = 'positional',
+            text_box_x_position = 1.65,
+            text_box_y_position = 5.1,
+            text_box_x_length = 1.0,
+            text_box_y_length = 0.5,
+        )
+
+    ########################################################################
 
     shading_area_text_str1 = 'ICON-Global-EPS forecasts for day 5-7.5'
     shading_area_text_str2 = 'not available for {:02}{} initial time'.format(initial_time, time_code)
@@ -2116,6 +2369,7 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
                         bar_median_eu_1h,
                         title,
                         init_time,
+                        data_type_text,
                         unit,
                         unit_special,
                         logo_w2w,
@@ -2166,6 +2420,7 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
                         bar_median_eu_6h,
                         title,
                         init_time,
+                        data_type_text,
                         unit,
                         unit_special,
                         logo_w2w,
@@ -2208,6 +2463,7 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
                         bar_median_eu_gust,
                         title,
                         init_time,
+                        data_type_text,
                         unit,
                         unit_special,
                         logo_w2w,
@@ -2258,6 +2514,7 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
                         bar_median_eu_850hPa,
                         title,
                         init_time,
+                        data_type_text,
                         unit,
                         unit_special,
                         logo_w2w,
@@ -2292,6 +2549,7 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
                         bar_median_eu_all,
                         title,
                         init_time,
+                        data_type_text,
                         unit,
                         unit_special,
                         logo_w2w,
@@ -2343,6 +2601,7 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
                         bar_median_global,
                         title,
                         init_time,
+                        data_type_text,
                         unit,
                         unit_special,
                         logo_w2w,
@@ -2401,6 +2660,7 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
                         bar_median_global,
                         title,
                         init_time,
+                        data_type_text,
                         unit,
                         unit_special,
                         logo_w2w,
@@ -2443,6 +2703,7 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
                         bar_median_global,
                         title,
                         init_time,
+                        data_type_text,
                         unit,
                         unit_special,
                         logo_w2w,
@@ -2494,6 +2755,7 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
                         bar_median_global_1h,
                         title,
                         init_time,
+                        data_type_text,
                         unit,
                         unit_special,
                         logo_w2w,
@@ -2552,6 +2814,7 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
                         bar_median_global_12h,
                         title,
                         init_time,
+                        data_type_text,
                         unit,
                         unit_special,
                         logo_w2w,
@@ -2586,6 +2849,7 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
                         bar_median_global,
                         title,
                         init_time,
+                        data_type_text,
                         unit,
                         unit_special,
                         logo_w2w,
@@ -2803,6 +3067,8 @@ def fit_y_axis_to_data(var, y_axis_range, pointname):
         y_axis_range['min'] = -20.0
         if y_axis_range['max'] < 280.0:
             y_axis_range['max'] = 300.0
+        elif y_axis_range['max'] > 1400.0:
+            y_axis_range['max'] = 1400.0
         else:
             y_axis_range['max'] += 0.1 * y_axis_range['max']
         y_axis_range['interval'] = 100.0
@@ -2812,6 +3078,8 @@ def fit_y_axis_to_data(var, y_axis_range, pointname):
         y_axis_range['min'] = -20.0
         if y_axis_range['max'] < 280.0:
             y_axis_range['max'] = 300.0
+        elif y_axis_range['max'] > 1400.0:
+            y_axis_range['max'] = 1400.0
         else:
             y_axis_range['max'] += 0.1 * y_axis_range['max']
         y_axis_range['interval'] = 100.0
