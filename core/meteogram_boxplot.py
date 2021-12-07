@@ -496,7 +496,7 @@ def boxplot_forecast_pp(date, var, point, verbose):
 
         if (date['hour'] == 0 or date['hour'] == 12)\
          and (var == 't_2m' or var == 'prec_rate' or var == 'prec_sum' or var == 'clct'): 
-            extend_with_global = False
+            extend_with_global = True
         else:
             extend_with_global = False
 
@@ -1174,7 +1174,7 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
                     graph_bar_colour = 'rgb(0, 150, 130)', # KIT turquoise
                     graph_bar_width = 3600 * width_1h,
                     legend = 'on',
-                    legend_user_text = '<font colour="black"> ICON-EU-EPS (20km): gust</font>'
+                    legend_user_text = '<font colour="black"> ICON-EU-EPS (20km): 1h-gust</font>'
                 )
             data_p2575_eu_gust = magics.minput(
                     input_x_type = 'date',
@@ -2155,7 +2155,7 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
             legend = magics.mlegend(
                     legend_text_font_size = 0.7,
                     legend_box_mode = 'positional',
-                    legend_box_x_position = 8.4,
+                    legend_box_x_position = 8.15,
                     legend_box_y_position = 5.07,
                     legend_box_x_length = 7.5,
                     legend_box_y_length = 0.5,

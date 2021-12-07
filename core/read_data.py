@@ -680,15 +680,14 @@ def read_forecast_pp_data(model, date, var, pointname):
     path = dict(base = '/',
                 textfiles_pp_eu = 'data/model_data/icon-eu-eps/point-forecasts/benedikt_post_processing/',
                 textfiles_pp_global = 'data/model_data/icon-global-eps/point-forecasts/benedikt_post_processing/')
-    path['textfiles_pp_eu'] += 'latest_run_pp/{}/'.format(pointname)
-    path['textfiles_pp_global'] += 'latest_run_pp/{}/'.format(pointname)
+    subfolder = 'latest_run_pp/{}/'.format(pointname)
 
     filename = '{}_latest_run_pp_{}_{}.txt'.format(model, var, pointname)
 
     if model == 'icon-eu-eps':
-        data_table = ascii.read(path['base'] + path['textfiles_pp_eu'] + filename)
+        data_table = ascii.read(path['base'] + path['textfiles_pp_eu'] + subfolder + filename)
     elif model == 'icon-global-eps':
-        data_table = ascii.read(path['base'] + path['textfiles_pp_global'] + filename)
+        data_table = ascii.read(path['base'] + path['textfiles_pp_global'] + subfolder + filename)
 
     data = data_table.as_array()
 
