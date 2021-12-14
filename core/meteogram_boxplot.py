@@ -59,7 +59,7 @@ def boxplot_forecast_raw(models, date, var, point, point_type, save_point_data, 
             var_list = ['t_2m','prec_rate','prec_sum','wind_10m','mslp','clct','direct_rad','diffuse_rad']
         if y_axis_limits == 'raw_and_pp':
             if point['name'] == 'Karlsruhe':
-                var_list = ['t_2m','prec_rate','prec_sum','wind_10m','mslp','clct','direct_rad']
+                var_list = ['t_2m','prec_rate','prec_sum','wind_10m','mslp','clct','direct_rad','diffuse_rad']
             elif point['name'] == 'Mainz':
                 var_list = ['t_2m','prec_rate','prec_sum']
             elif point['name'] == 'Munich':
@@ -148,9 +148,22 @@ def boxplot_forecast_raw(models, date, var, point, point_type, save_point_data, 
                         point_values_eu_eps[i, :, :] = read_forecast_data('icon-eu-eps', 'icosahedral',
                                                                            old_run_date, var,
                                                                            point = point)
+                    eu_data_missing = False                    
+
                 except FileNotFoundError:
-                    point_values_eu_eps[i, :, :] = -100
+                    print('------------------------------------')
                     print('-- icon-eu-eps forecast not found --')
+                    print('------------------------------------')
+
+                    if var == 'wind_10m':
+                        point_values_eu_eps[i, :, :, 0] = -100
+                        point_values_eu_eps[i, 1, :, 1] = -100
+                    elif var == 'vmax_10m':
+                        point_values_eu_eps[i, 1:, :] = -100
+                    else:
+                        point_values_eu_eps[i, :, :] = -100
+
+                    eu_data_missing = True                    
 
 
             # get forecast data from icon-global-eps #
@@ -261,7 +274,9 @@ def boxplot_forecast_raw(models, date, var, point, point_type, save_point_data, 
             ##### save icon-eu-eps point data to textfile #####
 
             if save_point_data \
-             and var in ['t_2m','prec_rate','snow_rate','prec_sum','wind_10m','mslp','clct','direct_rad', 'diffuse_rad']:
+             and var in \
+                  ['t_2m','prec_rate','snow_rate','prec_sum','wind_10m','mslp','clct','direct_rad', 'diffuse_rad'] \
+             and not eu_data_missing:
                 if var == 'wind_10m':
                     vars_to_save = ['wind_mean_10m', 'vmax_10m']
                 else:
@@ -412,6 +427,33 @@ def boxplot_forecast_raw(models, date, var, point, point_type, save_point_data, 
                     astropy.io.ascii.write(t, output = path['base'] + path['benedikt'] + filename_textfile,
                                            overwrite = True, Writer = astropy.io.ascii.FixedWidth)
 
+            if eu_data_missing:
+                path['textfiles_pp_eu'] = 'data/model_data/icon-eu-eps/point-forecasts/benedikt_post_processing/'
+                subfolder_latest = 'latest_run/{}/'.format(point['name'])
+                subfolder_latest_pp = 'latest_run_pp/{}/'.format(point['name'])
+
+                if var == 'wind_10m':
+                    vars_to_save = ['wind_mean_10m', 'vmax_10m']
+                else:
+                    vars_to_save = [var]
+
+                for var_to_save in vars_to_save:
+                    filename_textfile_latest = 'icon-eu-eps_latest_run_{}_{}.txt'.format(
+                                                   var_to_save, point['name'])
+                    if os.path.exists(path['base'] + path['textfiles_pp_eu'] \
+                                      + subfolder_latest + filename_textfile_latest):
+                        os.remove(path['base'] + path['textfiles_pp_eu'] \
+                                  + subfolder_latest + filename_textfile_latest)
+
+                    filename_textfile_latest_pp = 'icon-eu-eps_latest_run_pp_{}_{}.txt'.format(
+                                                   var_to_save, point['name'])
+                    if os.path.exists(path['base'] + path['textfiles_pp_eu'] \
+                                      + subfolder_latest_pp + filename_textfile_latest_pp):
+                        os.remove(path['base'] + path['textfiles_pp_eu'] \
+                                  + subfolder_latest_pp + filename_textfile_latest_pp)
+
+                continue
+
 
             # calculate percentiles #
 
@@ -475,7 +517,7 @@ def boxplot_forecast_pp(date, var, point, verbose):
 
     if var == 'all_available':
         if point['name'] == 'Karlsruhe':
-            var_list = ['t_2m','prec_rate','prec_sum','wind_10m','mslp','clct','direct_rad']
+            var_list = ['t_2m','prec_rate','prec_sum','wind_10m','mslp','clct','direct_rad','diffuse_rad']
         elif point['name'] == 'Mainz':
             var_list = ['t_2m','prec_rate','prec_sum']
         elif point['name'] == 'Munich':
@@ -533,9 +575,12 @@ def boxplot_forecast_pp(date, var, point, verbose):
                 point_values_eu_eps[1:, :] = read_forecast_pp_data('icon-eu-eps', date, var, point['name'])
             else:
                 point_values_eu_eps[:, :] = read_forecast_pp_data('icon-eu-eps', date, var, point['name'])
-        except FileNotFoundError:
-            point_values_eu_eps[:, :] = -100
+
+        except:
+            print('-----------------------------------')
             print('-- icon-eu-eps pp data not found --')
+            print('-----------------------------------')
+            continue
 
 
         # get forecast data from icon-global-eps #
@@ -543,9 +588,12 @@ def boxplot_forecast_pp(date, var, point, verbose):
         if extend_with_global:
             try:
                 point_values_global_eps[:, :] = read_forecast_pp_data('icon-global-eps', date, var, point['name'])
-            except FileNotFoundError:
+
+            except:
                 point_values_global_eps[:, :] = -100
+                print('---------------------------------------')
                 print('-- icon-global-eps pp data not found --')
+                print('---------------------------------------')
 
 
         # calculate y axis limits #
@@ -634,11 +682,20 @@ def boxplot_forecast_pp(date, var, point, verbose):
         lead_time = 0
         point_type = 'operational_city'
         data_type = 'post_processed'
-        plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
-                               fcst_hours_list_eu, fcst_hours_list_global,
-                               data_percentiles_eu_eps, data_percentiles_global_eps,
-                               models, extend_with_global, making_comparison_plots, lead_time,
-                               point_type, data_type)
+        try:
+            plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
+                                   fcst_hours_list_eu, fcst_hours_list_global,
+                                   data_percentiles_eu_eps, data_percentiles_global_eps,
+                                   models, extend_with_global, making_comparison_plots, lead_time,
+                                   point_type, data_type)
+        except:
+            print('--------------------------------------------------------------')
+            print('--------------------------------------------------------------')
+            print('plotting of the pp meteogram did not work!')
+            print('date:', date, 'point:', point, 'var:', var)
+            print('--------------------------------------------------------------')
+            print('--------------------------------------------------------------')
+
         del y_axis_range
 
     return

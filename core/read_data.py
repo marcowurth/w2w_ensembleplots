@@ -658,18 +658,49 @@ def read_forecast_data(model, grid, date, var, **kwargs):
         data_final = np.sqrt(data_var1**2 + data_var2**2) * 3.6
     elif var == 'wind_300hPa':  # in km/h
         data_final = np.sqrt(data_var1**2 + data_var2**2) * 3.6
+    elif var == 'windvector_300hPa':  # in km/h
+        print(data_var1.shape)
+        data_final = np.stack((data_var1, data_var2)) #feld mit u,v,lat,
+        print(data_final.shape)
+    elif var == 'u_300hPa':
+        data_final = data_var1
+    elif var == 'v_300hPa':
+        data_final = data_var1    
+    elif var[:5] == 'u_div' and var[-1:] == 'K':
+        data_final = data_var1 
+    elif var[:5] == 'v_div' and var[-1:] == 'K':
+        data_final = data_var1 
     elif var == 'shear_0-6km':  # in m/s
         data_final = np.sqrt((data_var3 - data_var1)**2 + (data_var4 - data_var2)**2)
     elif var == 'shear_200-850hPa':  # in knots
         data_final = np.sqrt((data_var1 - data_var3)**2 + (data_var2 - data_var4)**2) * 1.943844
     elif var == 'lapse_rate_850hPa-500hPa':     # in k/km
         data_final = 9806.65 * (data_var1 - data_var3) / (data_var4 - data_var2)
-    elif var == 'synth_bt_ir10.8':      # deg C
+    elif var == 'synth_bt_ir10.8':      # in deg C
         data_final = data_var1 - 273.15
-    elif var == 'orography':            # m
+    elif var == 'orography':            # in m
         data_final = data_var_inv
+    elif var[:2] == 'pv' and var[-1:] == 'K':       # in PVU
+        data_final = data_var1
+    elif var[:10] == 'pv_adv_div' and var[-1:] == 'K':
+        data_final = data_var1
+    elif var[:5] == 'theta' and var[-3:] == 'PVU':  # in K
+        data_final = data_var1
+    elif var == 'ivt':            # in kg /m / s
+        data_final = data_var1
+    elif var[:6] == 'w_mean':     # in m / s
+        data_final = data_var1
+    elif var == 'qvec_div_850hPa':
+        data_final = data_var1
+    elif var == 'qvec_div_700-900hPa':
+        data_final = data_var1
+    elif var == 'qvec_x_700-900hPa':
+        data_final = data_var1
+    elif var == 'qvec_y_700-900hPa':
+        data_final = data_var1
 
-    print(var + ', shape:', data_final.shape)
+
+    #print(var + ', shape:', data_final.shape)
     return data_final
 
 ########################################################################
@@ -708,7 +739,7 @@ def get_point_index(model, point):
     # if known named point get grid point location #
 
     if not 'lat' in point:
-        print('pointname is known: {}'.format(point['name']))
+        #print('pointname is known: {}'.format(point['name']))
         point = which_grid_point(point['name'], model)
 
 

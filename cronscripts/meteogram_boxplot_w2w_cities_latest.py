@@ -17,7 +17,7 @@ def main():
   ###########################################################
     models = 'both-eps'     # plot icon-eu-eps only if global not available
     date = 'latest'
-    #date = dict(year = 2021, month = 12, day = 4, hour = 18)
+    #date = dict(year = 2021, month = 12, day = 14, hour = 6)
     var = 'all_available'
     pointnames_raw =   ['Karlsruhe','Mainz','Munich','Berlin','Hamburg','Offenbach',\
                         'Amsterdam','Athens','Bologna','Brussels','Copenhagen','Dublin',\
@@ -55,7 +55,12 @@ def main():
     # run post-processing #
 
     os.system('Rscript ' + path['rscripts'] + 'pp_init.R')
-    print('-------- pp calculation done ---------')
+    if verbose:
+        print('--------------------------------------')
+        print('--------------------------------------')
+        print('-------- pp calculation done ---------')
+        print('--------------------------------------')
+        print('--------------------------------------')
 
 
     # plot post-processed meteograms and replot with adjusted y-axis the corresponding raw meteograms #
@@ -65,6 +70,10 @@ def main():
             print('--- next meteogram (pp) point is {} ---'.format(pointname))
         boxplot_forecast_pp(date, var, dict(name = pointname), verbose)
 
+        if verbose:
+            print('--------------------------------------')
+            print('--------------------------------------')
+            print('--- next meteogram (raw replot) point is {} ---'.format(pointname))
         save_point_data = False
         y_axis_limits = 'raw_and_pp'
         boxplot_forecast_raw(models, date, var, dict(name = pointname),
