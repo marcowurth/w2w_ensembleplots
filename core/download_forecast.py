@@ -56,20 +56,17 @@ def unzip(path, filename):
 
 # this function interpolates data fom icon to latlon grid #
 
-def interpolate_icon_grib_to_latlon(path, grib_filename, latlon_filename, model, latlon_resolution):
-
-    # interpolate icosahedral to regular latlon grid and save as netcdf4 file #
+def interpolate_icon_grib_to_latlon(path, grib_filename, latlon_filename, model):
 
     if model == 'icon-global-det':
-        targetgridfile = path['base'] + path['grid']
-        targetgridfile += 'target_grid_global_latlon_{:.3f}.txt'.format(latlon_resolution)
-        weightsfile = path['base'] + path['grid']
-        weightsfile += 'weights_con1_{}_icosahedral_to_latlon_{:.3f}.nc'.format(model, latlon_resolution)
+        targetgridfile = path['base'] + path['grid'] + 'target_grid_global_latlon_0.1.txt'
+        weightsfile = path['base'] + path['grid'] + 'weights_dis_{}_icosahedral_to_latlon_0.1.nc'.format(model)
+
+
     if model == 'icon-eu-eps':
-        targetgridfile = path['base'] + path['grid']
-        targetgridfile += 'target_grid_eu_latlon_{:.3f}.txt'.format(latlon_resolution)
-        weightsfile = path['base'] + path['grid']
-        weightsfile += 'weights_con1_{}_icosahedral_to_latlon_{:.3f}.nc'.format(model, latlon_resolution)
+        targetgridfile = path['base'] + path['grid'] + 'target_grid_eu_latlon_0.2.txt'
+        weightsfile = path['base'] + path['grid'] + 'weights_dis_{}_icosahedral_to_latlon_0.2.nc'.format(model)
+
 
     cdo_module = cdo.Cdo()
     cdo_module.remap(targetgridfile + ',' + weightsfile,
