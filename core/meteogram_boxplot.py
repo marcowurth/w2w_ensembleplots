@@ -3223,9 +3223,13 @@ def fit_y_axis_to_data(var, y_axis_range, pointname):
         y_axis_range['min'] = 0.0
         if y_axis_range['max'] < 500.0:
             y_axis_range['max'] = 500.0
+            y_axis_range['interval'] = 100.0
+        elif y_axis_range['max'] < 1500.0:
+            y_axis_range['max'] += 0.1 * y_axis_range['max']
+            y_axis_range['interval'] = 200.0
         else:
             y_axis_range['max'] += 0.1 * y_axis_range['max']
-        y_axis_range['interval'] = 100.0
+            y_axis_range['interval'] = 500.0
         y_axis_range['ref'] = 0.0
 
     return y_axis_range
