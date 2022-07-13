@@ -364,11 +364,21 @@ def double_contourplot(var1var2, model):
             rgb_colors.append(list(palettable.colorbrewer.diverging.Spectral_10.get_mpl_colormap(N=19).reversed()(i)[:3]))
         for i in range(1,11):
             rgb_colors.append(list(palettable.cartocolors.sequential.Burg_7.get_mpl_colormap(N=11).reversed()(i)[:3]))
-        rgb_colors[0] = rgb_colors[1]       # copy lowest loaded color to color for under the lowest value
-        rgb_colors.append(rgb_colors[-1])   # add highest loaded color to color for over the highest value
         rgb_colors[31] = list(np.array([255, 255, 160])/255)
         rgb_colors[32] = list(np.array([247, 230, 128])/255)
-        levels1 = np.arange(-25, 25+1, 1)
+        rgb_colors.append(list(np.array([247, 218, 207])/255))
+        rgb_colors.append(list(np.array([242, 188, 173])/255))
+        rgb_colors.append(list(np.array([239, 156, 140])/255))
+        rgb_colors.append(list(np.array([235, 121, 105])/255))
+        rgb_colors.append(list(np.array([232, 82, 71])/255))
+        rgb_colors.append(list(np.array([230, 41, 38])/255))
+        rgb_colors.append(list(np.array([209, 22, 29])/255))
+        rgb_colors.append(list(np.array([176, 17, 30])/255))
+        rgb_colors.append(list(np.array([144, 12, 30])/255))
+        rgb_colors.append(list(np.array([109, 8, 28])/255))
+        rgb_colors[0] = rgb_colors[1]       # copy lowest loaded color to color for under the lowest value
+        rgb_colors.append(rgb_colors[-1])   # add highest loaded color to color for over the highest value
+        levels1 = np.arange(-25, 35+1, 1)
         lbStride_value = 5
 
     elif variable1['name'] == 'theta_e_850hPa':
