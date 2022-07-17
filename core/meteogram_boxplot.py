@@ -1762,55 +1762,6 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
     ########################################################################
 
         elif var == 'wbt_td_2m':
-            bar_minmax_global_wbt = magics.mgraph(
-                    graph_type = 'bar',
-                    graph_bar_colour = 'black',
-                    graph_bar_width = 3600 * 0.05,
-                )
-            data_minmax_global_wbt = magics.minput(
-                    input_x_type = 'date',
-                    input_date_x_values = dates_global,
-                    input_y_values  = data_percentiles_global[:, 0, 0],
-                    input_y2_values = data_percentiles_global[:, 6, 0],
-                )
-            bar_p1090_global_wbt = magics.mgraph(
-                    graph_type = 'bar',
-                    graph_bar_colour = 'rgb(0, 150, 130)', # KIT turquoise
-                    graph_bar_width = 3600 * 0.5,
-                )
-            data_p1090_global_wbt = magics.minput(
-                    input_x_type = 'date',
-                    input_date_x_values = dates_global,
-                    input_y_values  = data_percentiles_global[:, 1, 0],
-                    input_y2_values = data_percentiles_global[:, 5, 0],
-                )
-            bar_p2575_global_wbt = magics.mgraph(
-                    graph_type = 'bar',
-                    graph_bar_colour = 'rgb(0, 150, 130)', # KIT turquoise
-                    graph_bar_width = 3600 * width_1h,
-                    legend = 'on',
-                    legend_user_text = '<font colour="black"> ICON-Global-EPS (40km): wet bulb temperature</font>'
-                )
-            data_p2575_global_wbt = magics.minput(
-                    input_x_type = 'date',
-                    input_date_x_values = dates_global,
-                    input_y_values  = data_percentiles_global[:, 2, 0],
-                    input_y2_values = data_percentiles_global[:, 4, 0],
-                )
-            bar_median_global_wbt = magics.mgraph(
-                    graph_type = 'bar',
-                    graph_bar_colour = 'black',
-                    graph_bar_width = 3600 * width_1h,
-                )
-            data_median_global_wbt = magics.minput(
-                    input_x_type = 'date',
-                    input_date_x_values = dates_global,
-                    input_y_values  = data_percentiles_global[:, 3, 0] - (y_axis_range['max']-y_axis_range['min'])/400.,
-                    input_y2_values = data_percentiles_global[:, 3, 0] + (y_axis_range['max']-y_axis_range['min'])/400.,
-                )
-
-    ########################################################################
-
             bar_minmax_global_td = magics.mgraph(
                     graph_type = 'bar',
                     graph_bar_colour = 'black',
@@ -1837,8 +1788,6 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
                     graph_type = 'bar',
                     graph_bar_colour = 'rgb(88, 217, 34)', # green
                     graph_bar_width = 3600 * width_1h,
-                    legend = 'on',
-                    legend_user_text = '<font colour="black"> ICON-Global-EPS (40km): dewpoint</font>'
                 )
             data_p2575_global_td = magics.minput(
                     input_x_type = 'date',
@@ -1856,6 +1805,82 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
                     input_date_x_values = dates_global,
                     input_y_values  = data_percentiles_global[:, 3, 1] - (y_axis_range['max']-y_axis_range['min'])/400.,
                     input_y2_values = data_percentiles_global[:, 3, 1] + (y_axis_range['max']-y_axis_range['min'])/400.,
+                )
+
+    ########################################################################
+
+            bar_minmax_global_wbt = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'black',
+                    graph_bar_width = 3600 * 0.05,
+                )
+            data_minmax_global_wbt = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_global,
+                    input_y_values  = data_percentiles_global[:, 0, 0],
+                    input_y2_values = data_percentiles_global[:, 6, 0],
+                )
+            bar_p1090_global_wbt = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'rgb(0, 150, 130)', # KIT turquoise
+                    graph_bar_width = 3600 * 0.5,
+                )
+            data_p1090_global_wbt = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_global,
+                    input_y_values  = data_percentiles_global[:, 1, 0],
+                    input_y2_values = data_percentiles_global[:, 5, 0],
+                )
+            bar_p2575_global_wbt = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'rgb(0, 150, 130)', # KIT turquoise
+                    graph_bar_width = 3600 * width_1h,
+                )
+            data_p2575_global_wbt = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_global,
+                    input_y_values  = data_percentiles_global[:, 2, 0],
+                    input_y2_values = data_percentiles_global[:, 4, 0],
+                )
+            bar_median_global_wbt = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'black',
+                    graph_bar_width = 3600 * width_1h,
+                )
+            data_median_global_wbt = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_global,
+                    input_y_values  = data_percentiles_global[:, 3, 0] - (y_axis_range['max']-y_axis_range['min'])/400.,
+                    input_y2_values = data_percentiles_global[:, 3, 0] + (y_axis_range['max']-y_axis_range['min'])/400.,
+                )
+
+    ########################################################################
+
+            bar_p2575_global_td_legend = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'rgb(88, 217, 34)', # green
+                    graph_bar_width = 3600 * width_1h,
+                    legend = 'on',
+                    legend_user_text = '<font colour="black"> ICON-Global-EPS (40km): dewpoint</font>'
+                )
+            data_p2575_global_td_legend = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_global,
+                    input_y_values  = data_percentiles_global[:, 2, 1] + 100,
+                    input_y2_values = data_percentiles_global[:, 4, 1] + 100,
+                )
+            bar_p2575_global_wbt_legend = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'rgb(0, 150, 130)', # KIT turquoise
+                    graph_bar_width = 3600 * width_1h,
+                    legend = 'on',
+                    legend_user_text = '<font colour="black"> ICON-Global-EPS (40km): wet bulb temperature</font>'
+                )
+            data_p2575_global_wbt_legend = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_global,
+                    input_y_values  = data_percentiles_global[:, 2, 0] + 100,
+                    input_y2_values = data_percentiles_global[:, 4, 0] + 100,
                 )
 
     ########################################################################
@@ -3041,14 +3066,6 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
                         init_timeline_line,
                         ref_level_value,
                         ref_level_line,
-                        data_minmax_global_td,
-                        bar_minmax_global_td,
-                        data_p1090_global_td,
-                        bar_p1090_global_td,
-                        data_p2575_global_td,
-                        bar_p2575_global_td,
-                        data_median_global_td,
-                        bar_median_global_td,
                         data_minmax_global_wbt,
                         bar_minmax_global_wbt,
                         data_p1090_global_wbt,
@@ -3057,6 +3074,18 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
                         bar_p2575_global_wbt,
                         data_median_global_wbt,
                         bar_median_global_wbt,
+                        data_minmax_global_td,
+                        bar_minmax_global_td,
+                        data_p1090_global_td,
+                        bar_p1090_global_td,
+                        data_p2575_global_td,
+                        bar_p2575_global_td,
+                        data_median_global_td,
+                        bar_median_global_td,
+                        data_p2575_global_td_legend,
+                        bar_p2575_global_td_legend,
+                        data_p2575_global_wbt_legend,
+                        bar_p2575_global_wbt_legend,
                         title,
                         init_time,
                         data_type_text,
