@@ -17,7 +17,8 @@ def main():
 
     # list of forecast hours #
 
-    fcst_hours_list = list(range(0,48,1)) + list(range(48,72,3)) + list(range(72,120,6)) + list(range(120,180+1,12))
+    fcst_hours_list_ext = list(range(120,180+1,12))
+    fcst_hours_list_all = list(range(0,48,1)) + list(range(48,72,3)) + list(range(72,120,6)) + list(range(120,180+1,12))
 
 
     # get latest run time #
@@ -28,7 +29,7 @@ def main():
     # explicit download options #
 
    ###########################################################
-    #date = dict(year = 2019, month = 5, day = 1, hour = 12)
+    #date = dict(year = 2021, month = 4, day = 29, hour = 12)
    ###########################################################
 
     print('download run_{}{:02}{:02}{:02}'.format(
@@ -37,7 +38,8 @@ def main():
 
     # list of dwd variable names #
 
-    var_list = ['tot_prec','t_2m','u_10m','v_10m','clct']
+    var_list_ext = ['tot_prec','u_10m','v_10m','clct','ps']
+    var_list_all = ['t_2m','td_2m']
 
 
     # create paths if necessary #
@@ -49,32 +51,33 @@ def main():
         os.mkdir(path['base'] + path['data'])
     path['data'] = path['data'] + '/'
 
-    for var in var_list:
-        temp_subdir = path['data'] + var
-        if not os.path.isdir(path['base'] + temp_subdir):
-            os.mkdir(path['base'] + temp_subdir)
-        path['subdir'] = temp_subdir + '/'
+    for var_list, fcst_hours_list in [var_list_ext, fcst_hours_list_ext], [var_list_all, fcst_hours_list_all]:
+        for var in var_list:
+            temp_subdir = path['data'] + var
+            if not os.path.isdir(path['base'] + temp_subdir):
+                os.mkdir(path['base'] + temp_subdir)
+            path['subdir'] = temp_subdir + '/'
 
 
-        # download all grib files from website #
+            # download all grib files from website #
 
-        for fcst_hour in fcst_hours_list:
-            filename = 'icon-eps_global_icosahedral_single-level_{}{:02}{:02}{:02}_{:03}_{}.grib2.bz2'.format(
-                        date['year'], date['month'], date['day'], date['hour'], fcst_hour, var)
-            url = 'https://opendata.dwd.de/weather/nwp/icon-eps/grib/{:02}/{}/'.format(
-                   date['hour'], var)
+            for fcst_hour in fcst_hours_list:
+                filename = 'icon-eps_global_icosahedral_single-level_{}{:02}{:02}{:02}_{:03}_{}.grib2.bz2'.format(
+                            date['year'], date['month'], date['day'], date['hour'], fcst_hour, var)
+                url = 'https://opendata.dwd.de/weather/nwp/icon-eps/grib/{:02}/{}/'.format(
+                       date['hour'], var)
 
-            if download(url, filename, path):
-                filename = unzip(path, filename)
+                if download(url, filename, path):
+                    filename = unzip(path, filename)
 
 
-        # read in all grib files of variable and save as one combined netcdf file #
+            # read in all grib files of variable and save as one combined netcdf file #
 
-        grib_filename = 'icon-eps_global_icosahedral_single-level_{}{:02}{:02}{:02}_*_{}.grib2'.format(
-                         date['year'], date['month'], date['day'], date['hour'], var)
-        netcdf_filename = 'icon-global-eps_icosahedral_single-level_{}{:02}{:02}{:02}_{}.nc'.format(
-                           date['year'], date['month'], date['day'], date['hour'], var)
-        convert_gribfiles_to_one_netcdf(path, grib_filename, netcdf_filename, 'icon-global-eps')
+            grib_filename = 'icon-eps_global_icosahedral_single-level_{}{:02}{:02}{:02}_*_{}.grib2'.format(
+                             date['year'], date['month'], date['day'], date['hour'], var)
+            netcdf_filename = 'icon-global-eps_icosahedral_single-level_{}{:02}{:02}{:02}_{}.nc'.format(
+                               date['year'], date['month'], date['day'], date['hour'], var)
+            convert_gribfiles_to_one_netcdf(path, grib_filename, netcdf_filename, 'icon-global-eps')
 
     return
 

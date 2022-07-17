@@ -78,9 +78,18 @@ def boxplot_forecast_raw(models, date, var, point, point_type, save_point_data, 
         if verbose:
             print('----- next variable is {} -----'.format(var))
 
+        if 'models_old' in locals():
+            models = models_old
+            del models_old
+
         if models == 'both-eps':
-            if (date['hour'] == 0 or date['hour'] == 12)\
-             and (var == 't_2m' or var == 'prec_rate' or var == 'prec_sum' or var == 'clct'): 
+            if var == 'wbt_td_2m':
+                models_old = models
+                models = 'icon-global-eps'
+
+            if (date['hour'] == 0 or date['hour'] == 12) \
+             and (var == 't_2m' or var == 'prec_rate' or var == 'prec_sum' \
+                  or var == 'clct' or var == 'mslp' or var == 'wind_10m'): 
                 extend_with_global = True
             else:
                 extend_with_global = False
@@ -106,6 +115,8 @@ def boxplot_forecast_raw(models, date, var, point, point_type, save_point_data, 
         if models == 'icon-global-eps':
             if var == 'prec_rate':
                 point_values_global_eps = np.empty((len(lead_times), 69, 40), dtype='float32')
+            elif var == 'wbt_td_2m':
+                point_values_global_eps = np.empty((len(lead_times), 70, 40, 2), dtype='float32')
             else:
                 point_values_global_eps = np.empty((len(lead_times), 70, 40), dtype='float32')
 
@@ -121,6 +132,7 @@ def boxplot_forecast_raw(models, date, var, point, point_type, save_point_data, 
 
             # get forecast data from icon-eu-eps #
 
+            eu_data_missing = False                    
             if models == 'both-eps':
                 try:
                     if var == 'wind_10m':
@@ -148,7 +160,6 @@ def boxplot_forecast_raw(models, date, var, point, point_type, save_point_data, 
                         point_values_eu_eps[i, :, :] = read_forecast_data('icon-eu-eps', 'icosahedral',
                                                                            old_run_date, var,
                                                                            point = point)
-                    eu_data_missing = False                    
 
                 except FileNotFoundError:
                     print('------------------------------------')
@@ -170,18 +181,31 @@ def boxplot_forecast_raw(models, date, var, point, point_type, save_point_data, 
 
             if extend_with_global:
                 try:
-                    point_values_global_eps[i, :, :] = read_forecast_data('icon-global-eps', 'icosahedral',
-                                                                           old_run_date, var,
-                                                                           point = point)[-5:, :]
+                    if var == 'wind_10m':
+                        point_values_global_eps[i, :, :] = read_forecast_data('icon-global-eps', 'icosahedral',
+                                                                               old_run_date, 'wind_mean_10m',
+                                                                               point = point)[-5:, :]
+                    else:
+                        point_values_global_eps[i, :, :] = read_forecast_data('icon-global-eps', 'icosahedral',
+                                                                               old_run_date, var,
+                                                                               point = point)[-5:, :]
                 except FileNotFoundError:
                     point_values_global_eps[i, :, :] = -100
                     print('-- icon-global-eps forecast not found --')
 
             if models == 'icon-global-eps':
                 try:
-                    point_values_global_eps[i, :, :] = read_forecast_data('icon-global-eps', 'icosahedral',
-                                                                           old_run_date, var,
-                                                                           point = point)
+                    if var == 'wbt_td_2m':
+                        point_values_global_eps[i, :, :, 0] = read_forecast_data('icon-global-eps', 'icosahedral',
+                                                                                  old_run_date, 'wbt_2m',
+                                                                                  point = point)
+                        point_values_global_eps[i, :, :, 1] = read_forecast_data('icon-global-eps', 'icosahedral',
+                                                                                  old_run_date, 'td_2m',
+                                                                                  point = point)
+                    else:
+                        point_values_global_eps[i, :, :] = read_forecast_data('icon-global-eps', 'icosahedral',
+                                                                               old_run_date, var,
+                                                                               point = point)
                 except FileNotFoundError:
                     point_values_global_eps[i, :, :] = -100
                     print('-- icon-global-eps forecast not found --')
@@ -238,7 +262,7 @@ def boxplot_forecast_raw(models, date, var, point, point_type, save_point_data, 
                     fcst_hours_list_global = None
             elif models == 'icon-global-eps':
                 fcst_hours_list_eu = None
-                fcst_hours_list_global = get_fcst_hours_list('icon-global-eps')
+                fcst_hours_list_global = get_fcst_hours_list('icon-global-eps', var)
 
             time = datetime.datetime(date['year'], date['month'], date['day'], date['hour'])
             time -= datetime.timedelta(0, 3600 * lead_time)
@@ -365,6 +389,8 @@ def boxplot_forecast_raw(models, date, var, point, point_type, save_point_data, 
                     # print data values to string matrix #
 
                     var_to_save = var
+                    if var == 'wind_10m':
+                        var_to_save = 'wind_mean_10m'
                     data_to_save = []
                     data_to_save.append(fcst_hours_list_global)
 
@@ -474,6 +500,8 @@ def boxplot_forecast_raw(models, date, var, point, point_type, save_point_data, 
             elif models == 'icon-global-eps':
                 data_percentiles_global_eps = np.percentile(point_values_global_eps[i, :, :], 
                                                             [0,10,25,50,75,90,100], axis = 1).T
+                if var == 'wbt_td_2m':
+                    data_percentiles_global_eps = np.moveaxis(data_percentiles_global_eps, 0, 2)
             else:
                 data_percentiles_global_eps = None
 
@@ -711,7 +739,7 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
                            point_type, data_type):
 
     run_time = datetime.datetime(date['year'], date['month'], date['day'], date['hour'])
-    if models == 'both-eps':
+    if models == 'both-eps' or var == 'wbt_td_2m':
         timeshift = get_timeshift()
     elif models == 'icon-global-eps':
         timeshift = 0
@@ -1519,6 +1547,11 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
     ########################################################################
 
         else:
+            if var == 'wind_10m':
+                legend_user_text = '<font colour="black"> ICON-Global-EPS (40km): mean wind</font>'
+            else:
+                legend_user_text = '<font colour="black"> ICON-Global-EPS (40km)</font>'
+
             bar_minmax_global = magics.mgraph(
                     graph_type = 'bar',
                     graph_bar_colour = 'black',
@@ -1548,7 +1581,7 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
                     graph_bar_colour = 'rgb(88, 217, 34)', # green
                     graph_bar_width = 3600 * width_1h,
                     legend = 'on',
-                    legend_user_text = '<font colour="black"> ICON-Global-EPS (40km)</font>'
+                    legend_user_text = legend_user_text
                 )
             data_p2575_global = magics.minput(
                     input_x_type = 'date',
@@ -1724,6 +1757,105 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
                                       - (y_axis_range['max'] - y_axis_range['min']) / 400.,
                     input_y2_values = data_percentiles_global_6_18UTC[:,3]\
                                       + (y_axis_range['max'] - y_axis_range['min']) / 400.,
+                )
+
+    ########################################################################
+
+        elif var == 'wbt_td_2m':
+            bar_minmax_global_wbt = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'black',
+                    graph_bar_width = 3600 * 0.05,
+                )
+            data_minmax_global_wbt = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_global,
+                    input_y_values  = data_percentiles_global[:, 0, 0],
+                    input_y2_values = data_percentiles_global[:, 6, 0],
+                )
+            bar_p1090_global_wbt = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'rgb(0, 150, 130)', # KIT turquoise
+                    graph_bar_width = 3600 * 0.5,
+                )
+            data_p1090_global_wbt = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_global,
+                    input_y_values  = data_percentiles_global[:, 1, 0],
+                    input_y2_values = data_percentiles_global[:, 5, 0],
+                )
+            bar_p2575_global_wbt = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'rgb(0, 150, 130)', # KIT turquoise
+                    graph_bar_width = 3600 * width_1h,
+                    legend = 'on',
+                    legend_user_text = '<font colour="black"> ICON-Global-EPS (40km): wet bulb temperature</font>'
+                )
+            data_p2575_global_wbt = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_global,
+                    input_y_values  = data_percentiles_global[:, 2, 0],
+                    input_y2_values = data_percentiles_global[:, 4, 0],
+                )
+            bar_median_global_wbt = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'black',
+                    graph_bar_width = 3600 * width_1h,
+                )
+            data_median_global_wbt = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_global,
+                    input_y_values  = data_percentiles_global[:, 3, 0] - (y_axis_range['max']-y_axis_range['min'])/400.,
+                    input_y2_values = data_percentiles_global[:, 3, 0] + (y_axis_range['max']-y_axis_range['min'])/400.,
+                )
+
+    ########################################################################
+
+            bar_minmax_global_td = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'black',
+                    graph_bar_width = 3600 * 0.05,
+                )
+            data_minmax_global_td = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_global,
+                    input_y_values  = data_percentiles_global[:, 0, 1],
+                    input_y2_values = data_percentiles_global[:, 6, 1],
+                )
+            bar_p1090_global_td = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'rgb(88, 217, 34)', # green
+                    graph_bar_width = 3600 * 0.5,
+                )
+            data_p1090_global_td = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_global,
+                    input_y_values  = data_percentiles_global[:, 1, 1],
+                    input_y2_values = data_percentiles_global[:, 5, 1],
+                )
+            bar_p2575_global_td = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'rgb(88, 217, 34)', # green
+                    graph_bar_width = 3600 * width_1h,
+                    legend = 'on',
+                    legend_user_text = '<font colour="black"> ICON-Global-EPS (40km): dewpoint</font>'
+                )
+            data_p2575_global_td = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_global,
+                    input_y_values  = data_percentiles_global[:, 2, 1],
+                    input_y2_values = data_percentiles_global[:, 4, 1],
+                )
+            bar_median_global_td = magics.mgraph(
+                    graph_type = 'bar',
+                    graph_bar_colour = 'black',
+                    graph_bar_width = 3600 * width_1h,
+                )
+            data_median_global_td = magics.minput(
+                    input_x_type = 'date',
+                    input_date_x_values = dates_global,
+                    input_y_values  = data_percentiles_global[:, 3, 1] - (y_axis_range['max']-y_axis_range['min'])/400.,
+                    input_y2_values = data_percentiles_global[:, 3, 1] + (y_axis_range['max']-y_axis_range['min'])/400.,
                 )
 
     ########################################################################
@@ -2145,7 +2277,7 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
             text_box_y_length = 0.5,
         )
 
-    if var == 't_2m' or var == 't_850hPa':
+    if var == 't_2m' or var == 'td_2m' or var == 'wbt_2m' or var == 'wbt_td_2m' or var == 't_850hPa':
         unit_special_str = 'o'
         correction = -0.12
     elif var == 'direct_rad' or var == 'diffuse_rad':
@@ -2209,15 +2341,26 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
                         legend_entry_text_width = 90,
                     )
         elif var == 'wind_10m':
-            legend = magics.mlegend(
-                    legend_text_font_size = 0.7,
-                    legend_box_mode = 'positional',
-                    legend_box_x_position = 8.15,
-                    legend_box_y_position = 5.07,
-                    legend_box_x_length = 7.5,
-                    legend_box_y_length = 0.5,
-                    legend_entry_text_width = 90,
-                )
+            if extend_with_global:
+                legend = magics.mlegend(
+                        legend_text_font_size = 0.7,
+                        legend_box_mode = 'positional',
+                        legend_box_x_position = 4.1,
+                        legend_box_y_position = 5.07,
+                        legend_box_x_length = 11.0,
+                        legend_box_y_length = 0.5,
+                        legend_entry_text_width = 90,
+                    )
+            else:
+                legend = magics.mlegend(
+                        legend_text_font_size = 0.7,
+                        legend_box_mode = 'positional',
+                        legend_box_x_position = 8.15,
+                        legend_box_y_position = 5.07,
+                        legend_box_x_length = 7.5,
+                        legend_box_y_length = 0.5,
+                        legend_entry_text_width = 90,
+                    )
         elif var == 'wind_3pl':
             legend = magics.mlegend(
                     legend_text_font_size = 0.7,
@@ -2257,6 +2400,16 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
                     legend_box_x_position = 3.55,
                     legend_box_y_position = 5.07,
                     legend_box_x_length = 11.8,
+                    legend_box_y_length = 0.5,
+                    legend_entry_text_width = 90,
+                )
+        elif var == 'wbt_td_2m':
+            legend = magics.mlegend(
+                    legend_text_font_size = 0.7,
+                    legend_box_mode = 'positional',
+                    legend_box_x_position = 6.5,
+                    legend_box_y_position = 5.07,
+                    legend_box_x_length = 7.7,
                     legend_box_y_length = 0.5,
                     legend_entry_text_width = 90,
                 )
@@ -2731,6 +2884,57 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
                         date6_label,
                         date7_label,
                         )
+            elif var == 'wind_10m':
+                magics.plot(
+                        output_layout,
+                        page_layout,
+                        coord_system,
+                        vertical_axis,
+                        horizontal_axis,
+                        init_timeline_value,
+                        init_timeline_line,
+                        ref_level_value,
+                        ref_level_line,
+                        data_minmax_eu_mean,
+                        bar_minmax_eu_mean,
+                        data_p1090_eu_mean,
+                        bar_p1090_eu_mean,
+                        data_p2575_eu_mean,
+                        bar_p2575_eu_mean,
+                        data_median_eu_mean,
+                        bar_median_eu_mean,
+                        data_minmax_eu_gust,
+                        bar_minmax_eu_gust,
+                        data_p1090_eu_gust,
+                        bar_p1090_eu_gust,
+                        data_p2575_eu_gust,
+                        bar_p2575_eu_gust,
+                        data_median_eu_gust,
+                        bar_median_eu_gust,
+                        data_minmax_global,
+                        bar_minmax_global,
+                        data_p1090_global,
+                        bar_p1090_global,
+                        data_p2575_global,
+                        bar_p2575_global,
+                        data_median_global,
+                        bar_median_global,
+                        title,
+                        init_time,
+                        data_type_text,
+                        unit,
+                        unit_special,
+                        logo_w2w,
+                        logo_percentiles,
+                        legend,
+                        date1_label,
+                        date2_label,
+                        date3_label,
+                        date4_label,
+                        date5_label,
+                        date6_label,
+                        date7_label,
+                        )
             else:
                 magics.plot(
                         output_layout,
@@ -2810,6 +3014,49 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
                         bar_p2575_global_1h,
                         data_median_global_1h,
                         bar_median_global_1h,
+                        title,
+                        init_time,
+                        data_type_text,
+                        unit,
+                        unit_special,
+                        logo_w2w,
+                        logo_percentiles,
+                        legend,
+                        date1_label,
+                        date2_label,
+                        date3_label,
+                        date4_label,
+                        date5_label,
+                        date6_label,
+                        date7_label,
+                        )
+        elif var == 'wbt_td_2m':
+            magics.plot(
+                        output_layout,
+                        page_layout,
+                        coord_system,
+                        vertical_axis,
+                        horizontal_axis,
+                        init_timeline_value,
+                        init_timeline_line,
+                        ref_level_value,
+                        ref_level_line,
+                        data_minmax_global_td,
+                        bar_minmax_global_td,
+                        data_p1090_global_td,
+                        bar_p1090_global_td,
+                        data_p2575_global_td,
+                        bar_p2575_global_td,
+                        data_median_global_td,
+                        bar_median_global_td,
+                        data_minmax_global_wbt,
+                        bar_minmax_global_wbt,
+                        data_p1090_global_wbt,
+                        bar_p1090_global_wbt,
+                        data_p2575_global_wbt,
+                        bar_p2575_global_wbt,
+                        data_median_global_wbt,
+                        bar_median_global_wbt,
                         title,
                         init_time,
                         data_type_text,
@@ -2930,6 +3177,12 @@ def plot_in_magics_boxplot(path, date, point, var, meta, y_axis_range, filename,
 def get_variable_title_unit(var):
     if var == 't_2m':
         meta = dict(var = '2-m temperature', units = 'C')
+    elif var == 'td_2m':
+        meta = dict(var = '2-m dewpoint', units = 'C')
+    elif var == 'wbt_2m':
+        meta = dict(var = '2-m wet bulb temperature', units = 'C')
+    elif var == 'wbt_td_2m':
+        meta = dict(var = '2-m dewpoint and wet bulb temperature', units = 'C')
     elif var == 'prec_rate':
         meta = dict(var = 'Precipitation rate', units = 'mm/h')
     elif var == 'snow_rate':
@@ -2975,6 +3228,12 @@ def get_meta_data(var):
 
     if var == 't_2m':
         meta = dict(var = 'Temperature at 2m', units = 'degree celsius')
+    elif var == 'td_2m':
+        meta = dict(var = 'Dewpoint at 2m', units = 'degree celsius')
+    elif var == 'wbt_2m':
+        meta = dict(var = 'Wet Bulb Temperature at 2m', units = 'degree celsius')
+    elif var == 'wbt_td_2m':
+        meta = dict(var = 'Dewpoint and Wet Bulb Temperature at 2m', units = 'degree celsius')
     elif var == 'prec_rate':
         meta = dict(var = 'Total Precipitation Rate, Average of Time Interval before fcst_hour',
                     units = 'mm/h')
@@ -3025,6 +3284,19 @@ def get_meta_data(var):
 def fit_y_axis_to_data(var, y_axis_range, pointname):
 
     if var == 't_2m':
+        mean = (y_axis_range['max'] + y_axis_range['min']) / 2
+        if y_axis_range['min'] < mean - 9.0:
+            y_axis_range['min'] -= 1.0
+        else:
+            y_axis_range['min'] = mean - 10.0
+        if y_axis_range['max'] > mean + 8.0:
+            y_axis_range['max'] += 2.0
+        else:
+            y_axis_range['max'] = mean + 10.0
+        y_axis_range['interval'] = 5.0
+        y_axis_range['ref'] = 0.0
+
+    elif var == 'td_2m' or var == 'wbt_2m' or var == 'wbt_td_2m':
         mean = (y_axis_range['max'] + y_axis_range['min']) / 2
         if y_axis_range['min'] < mean - 9.0:
             y_axis_range['min'] -= 1.0

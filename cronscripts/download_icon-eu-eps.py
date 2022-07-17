@@ -44,9 +44,7 @@ def main():
         var_list = [['tot_prec','sl'],['snow_con','sl'],['snow_gsp','sl'],['t_2m','sl'],
                     ['u_10m','sl'],['v_10m','sl'],['ps','sl'],['clct','sl'],
                     ['aswdir_s','sl'],['aswdifd_s','sl'],['vmax_10m','sl'],['tqv','sl'],['cape_ml','sl'],
-                    ['fi','500hPa'],['t','500hPa'],['u','500hPa'],['v','500hPa'],
-                    ['fi','850hPa'],['t','850hPa'],['u','850hPa'],['v','850hPa'],
-                    ['fi','300hPa'],['u','300hPa'],['v','300hPa']]
+                    ['u','500hPa'],['v','500hPa'],['t','850hPa'],['fi','500hPa']]
         vars_to_interpolate = [['t_2m','sl'],['ps','sl'],['t','850hPa'],['fi','500hPa']]
         #var_list = [['snow_con','sl'],['snow_gsp','sl']]
         #vars_to_interpolate = []
