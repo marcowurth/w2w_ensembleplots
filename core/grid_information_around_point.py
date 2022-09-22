@@ -26,6 +26,7 @@ def which_grid_point(pointname, model):
                     dict(lat = 53.549, lon =  9.990, name = 'Hamburg'),\
                     dict(lat = 50.098, lon =  8.761, name = 'Offenbach'),\
                     dict(lat = 48.477, lon =  8.934, name = 'Rottenburg_am_Neckar'),\
+                    dict(lat = 29.741, lon = 35.382, name = 'J-WADI'),\
                     dict(lat = 52.373, lon =  4.899, name = 'Amsterdam'),\
                     dict(lat = 48.210, lon = 16.371, name = 'Vienna'),\
                     dict(lat = 41.898, lon = 12.491, name = 'Rome'),\
@@ -71,6 +72,7 @@ def which_grid_point(pointname, model):
                     dict(lat = 53.500, lon =  9.993, name = 'Hamburg'),\
                     dict(lat = 50.098, lon =  8.761, name = 'Offenbach'),\
                     dict(lat = 48.477, lon =  8.934, name = 'Rottenburg_am_Neckar'),\
+                    dict(lat = 29.741, lon = 35.382, name = 'J-WADI'),\
                     dict(lat = 52.373, lon =  4.899, name = 'Amsterdam'),\
                     dict(lat = 48.256, lon = 16.438, name = 'Vienna'),\
                     dict(lat = 41.890, lon = 12.481, name = 'Rome'),\
@@ -97,6 +99,7 @@ def which_grid_point(pointname, model):
                     dict(lat = 53.500, lon =  9.993, name = 'Hamburg'),\
                     dict(lat = 50.098, lon =  8.761, name = 'Offenbach'),\
                     dict(lat = 48.477, lon =  8.934, name = 'Rottenburg_am_Neckar'),\
+                    dict(lat = 29.741, lon = 35.382, name = 'J-WADI'),\
                     dict(lat = 52.373, lon =  4.899, name = 'Amsterdam'),\
                     dict(lat = 48.256, lon = 16.438, name = 'Vienna'),\
                     dict(lat = 41.890, lon = 12.481, name = 'Rome'),\
@@ -142,6 +145,7 @@ def which_grid_point(pointname, model):
                     dict(lat = 53.549, lon =  9.990, name = 'Hamburg'),\
                     dict(lat = 50.098, lon =  8.761, name = 'Offenbach'),\
                     dict(lat = 48.477, lon =  8.934, name = 'Rottenburg_am_Neckar'),\
+                    dict(lat = 29.741, lon = 35.382, name = 'J-WADI'),\
                     dict(lat = 52.373, lon =  4.899, name = 'Amsterdam'),\
                     dict(lat = 48.210, lon = 16.371, name = 'Vienna'),\
                     dict(lat = 41.898, lon = 12.491, name = 'Rome'),\
@@ -168,6 +172,7 @@ def which_grid_point(pointname, model):
                     dict(lat = 53.549, lon =  9.990, name = 'Hamburg'),\
                     dict(lat = 50.098, lon =  8.761, name = 'Offenbach'),\
                     dict(lat = 48.477, lon =  8.934, name = 'Rottenburg_am_Neckar'),\
+                    dict(lat = 29.741, lon = 35.382, name = 'J-WADI'),\
                     dict(lat = 52.373, lon =  4.899, name = 'Amsterdam'),\
                     dict(lat = 48.210, lon = 16.371, name = 'Vienna'),\
                     dict(lat = 41.898, lon = 12.491, name = 'Rome'),\
